@@ -220,6 +220,66 @@ class EndToEnd(unittest.TestCase):
             self.assertTrue((out / "manifest.webmanifest").exists())
             self.assertEqual(result["brief_source"], "rules")
 
+    def test_spend_ledger_carries_across_builds_and_pauses_at_budget(self):
+        def reply(kw):
+            d = data_of(kw)
+            if "items" in d:
+                return response({"items": [{"id": i["id"], "theaters": [], "severity": 2, "signal": "none", "insight": "n"} for i in d["items"]]})
+            return response({"brief": {"headline": "H", "bullets": [{"text": "B", "story_ids": [d["stories"][0]["id"]]}], "watch": "W"}, "theaters": []})
+        client, calls = fake_client(reply)
+        with tempfile.TemporaryDirectory() as tmp:
+            one = Path(tmp) / "one"
+            self.run_build(one, analyst=Analyst({"budget_usd": 5}, client=client))
+            ledger = json.loads((one / "api" / "v1" / "ai-usage.json").read_text())["data"]
+            self.assertEqual(ledger["calls"], 2)
+            self.assertAlmostEqual(ledger["spent_usd"], 0.00028)
+            self.assertFalse(ledger["paused"])
+
+            # next build: budget already used up -> no calls, rules take over, counter preserved
+            calls.clear()
+            two = Path(tmp) / "two"
+            r = self.run_build(two, previous=str(one / "api" / "v1" / "all.json"),
+                               analyst=Analyst({"budget_usd": 0.0001, "brief_every_hours": 0}, client=client))
+            self.assertEqual(calls, [])
+            ledger2 = json.loads((two / "api" / "v1" / "ai-usage.json").read_text())["data"]
+            self.assertTrue(ledger2["paused"])
+            self.assertAlmostEqual(ledger2["spent_usd"], 0.00028)
+            self.assertEqual(ledger2["calls"], 2)
+            self.assertEqual(r["brief_source"], "ai")  # a recent AI brief is still reused for a while
+
+    def test_unreadable_previous_deploy_leaves_site_untouched(self):
+        import urllib.error
+
+        def boom(url):
+            raise urllib.error.HTTPError(url, 503, "unavailable", {}, None)
+
+        orig_fetch, orig_delays = build.feeds.fetch, build.RETRY_DELAYS
+        build.feeds.fetch, build.RETRY_DELAYS = boom, (0, 0)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                out = Path(tmp) / "site"
+                out.mkdir()
+                (out / "live.txt").write_text("current deploy")
+                with self.assertRaises(build.PreviousUnavailable):
+                    self.run_build(out, previous="https://prev.test/api/v1/all.json")
+                self.assertTrue((out / "live.txt").exists())
+        finally:
+            build.feeds.fetch, build.RETRY_DELAYS = orig_fetch, orig_delays
+
+    def test_first_deploy_404_starts_fresh(self):
+        import urllib.error
+
+        def missing(url):
+            raise urllib.error.HTTPError(url, 404, "not found", {}, None)
+
+        orig_fetch = build.feeds.fetch
+        build.feeds.fetch = missing
+        try:
+            self.assertIsNone(build.load_previous("https://prev.test/api/v1/all.json"))
+            self.assertIsNone(build.load_previous("https://prev.test/api/v1/all.json", "ai-usage.json"))
+        finally:
+            build.feeds.fetch = orig_fetch
+
     def test_ai_build_then_reuse(self):
         def reply(kw):
             d = data_of(kw)
@@ -249,6 +309,33 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(brief2["headline"], "AI headline")
             stories2 = json.loads((Path(tmp) / "two" / "api" / "v1" / "all.json").read_text())["data"]
             self.assertEqual(next(a for a in stories2 if a["id"] == ai_story["id"])["insight"], "AI note")
+
+
+class Budget(unittest.TestCase):
+    def test_cost_from_reported_usage(self):
+        a = Analyst({"model": "claude-haiku-5-5"}, client=object())
+        usage = types.SimpleNamespace(input_tokens=1_000_000, output_tokens=1_000_000)
+        self.assertAlmostEqual(a.cost("claude-haiku-5-5", usage), 0.60)
+        self.assertAlmostEqual(a.cost("claude-opus-5-5", usage), 24.0)
+        self.assertAlmostEqual(a.cost("some-new-model", usage), 0.60)  # falls back to the configured model's price
+
+    def test_no_calls_once_budget_is_spent(self):
+        client, calls = fake_client(lambda kw: response({"items": []}))
+        a = Analyst({"budget_usd": 1.0}, client=client, spent_usd=1.0)
+        self.assertFalse(a.available)
+        self.assertEqual(a.analyze([art("x", "RSF attack")], THEATERS), {})
+        self.assertIsNone(a.brief([briefing.story_digest(art("x", "y"))], []))
+        self.assertEqual(calls, [])
+
+    def test_spend_is_counted_and_stops_mid_run(self):
+        # each fake call costs 10 input + 5 output tokens at Opus prices = $0.00014
+        client, calls = fake_client(lambda kw: response({"items": []}))
+        a = Analyst({"budget_usd": 0.0002}, client=client)
+        a.analyze([art("x", "y")], THEATERS)
+        self.assertAlmostEqual(a.spent, 0.00014)
+        a.analyze([art("x", "y")], THEATERS)  # still under budget before this call, so it runs
+        a.analyze([art("x", "y")], THEATERS)  # now over budget: skipped
+        self.assertEqual(len(calls), 2)
 
 
 class DotEnv(unittest.TestCase):

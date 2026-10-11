@@ -30,7 +30,10 @@ AI runs **once per hourly build, in CI. It never runs per reader**, so the cost 
 
 1. Sends only *new*, conflict-related stories (40 at most) to Claude for tagging. Stories it has already analysed keep their results across builds.
 2. Writes the world brief and the conflict summaries at most every `brief_every_hours` (default 3). In between, the previous brief is reused.
-3. Logs the tokens used in every run (`AI usage: …` in the build log), so you can measure your real spend.
+3. **Enforces a hard budget.** `ai.budget_usd` (set to **$18**) caps total AI spend across all builds. Every build adds up what each call cost from the token counts the API reports, at list prices. The running total is published at `/api/v1/ai-usage.json` and in the build log (`AI usage: … $X total`). Once the cap is reached, the build switches to rule-based analysis, and the app keeps working. Raise the number to resume. The check runs before every call, so the cap can be passed by at most one request, a fraction of a cent on Haiku.
+4. Protects the counter. If the live site can't be read when a build starts, the build retries and then skips publishing that hour rather than starting over, so neither the spend counter nor the 7-day archive is reset by a network glitch.
+
+For an absolute ceiling, keep **auto-reload turned off** in your Anthropic Console billing settings. The API then stops when your prepaid credits run out, and the app falls back to rules.
 
 These are rough monthly estimates, assuming about 15–40 new conflict stories an hour and a brief every 3 hours. They come from list prices, not from measured runs, so check them against your own build logs:
 
@@ -38,7 +41,7 @@ These are rough monthly estimates, assuming about 15–40 new conflict stories a
 |---|---|
 | `claude-opus-5-5` (highest quality) | ~$40–90 |
 | `claude-sonnet-5-5` | ~$20–45 |
-| `claude-haiku-5-5` (configured) | ~$1–3 |
+| `claude-haiku-5-5` (configured) | ~$1–3 (about $0.07/day, so $18 lasts roughly 8 months) |
 
 Changing the model is a one-line edit. Raising `brief_every_hours` or lowering `max_articles_per_run` cuts the cost further.
 

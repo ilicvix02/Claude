@@ -536,7 +536,7 @@
       el("div", { class: "card" },
         el("p", { style: { marginTop: 0 }, text: ai.enabled
           ? `Every hour, Claude (${ai.model}) reads new conflict reports to tag the conflict, severity and signal, and writes the world brief and situation summaries. ${ai.analysed_stories} stories in this edition were analysed by AI.`
-          : "AI analysis is switched off for this edition, so briefs and summaries are automated from rules. Add an Anthropic API key to the build to enable Claude analysis." }),
+          : "AI analysis is off for this edition, so the brief and situation summaries are automated from rules." }),
         el("p", { class: "fine", style: { marginBottom: 0 }, text: "AI output is labelled wherever it appears and always links to the original reporting. It can make mistakes — check the sources for anything important." })),
       sectionHead("Sources"),
       el("div", { class: "card" },

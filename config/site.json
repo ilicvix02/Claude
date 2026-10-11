@@ -12,7 +12,9 @@
     "analysis_effort": "low",
     "brief_effort": "medium",
     "max_articles_per_run": 40,
-    "brief_every_hours": 3
+    "brief_every_hours": 3,
+    "_budget_comment": "Hard cap on total AI spend in US dollars, counted across all builds (see api/v1/ai-usage.json). When it is reached the build switches to rule-based analysis until you raise it. Set to null for no cap.",
+    "budget_usd": 18
   },
   "revenue": {
     "sponsor": {

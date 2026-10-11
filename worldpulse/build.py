@@ -15,6 +15,8 @@ import os
 import re
 import shutil
 import sys
+import time
+import urllib.error
 import urllib.parse
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -146,21 +148,44 @@ def _sibling(location: str, name: str) -> str:
     return location.rsplit("/", 1)[0] + "/" + name if "/" in location else name
 
 
+class PreviousUnavailable(Exception):
+    """The last deployment exists but could not be read; publishing now would reset its state."""
+
+
+RETRY_DELAYS = (3, 10)  # seconds between attempts to read the previous deployment
+
+
 def load_previous(location: str | None, name: str = "all.json"):
-    """Load a file from the previously published API, or None. Never raises."""
+    """Load a file from the previously published API.
+
+    Returns None when there is nothing to load (no location, or the file doesn't exist yet, e.g. on
+    the first deploy). Raises PreviousUnavailable when it exists but can't be read after retries:
+    the archive and the AI spend counter live there, so the build must not overwrite them blind.
+    """
     if not location:
         return None
     where = location if name == "all.json" else _sibling(location, name)
-    try:
-        if where.startswith(("http://", "https://")):
-            payload = json.loads(feeds.fetch(where))
-        else:
-            payload = load_json(Path(where))
-        print(f"  loaded previous {name} from {where}", file=sys.stderr)
-        return payload
-    except Exception as exc:
-        print(f"  previous {name} unavailable ({type(exc).__name__}); starting fresh", file=sys.stderr)
-        return None
+    error = None
+    for delay in (0, *RETRY_DELAYS):
+        time.sleep(delay)
+        try:
+            if where.startswith(("http://", "https://")):
+                payload = json.loads(feeds.fetch(where))
+            else:
+                payload = load_json(Path(where))
+            print(f"  loaded previous {name} from {where}", file=sys.stderr)
+            return payload
+        except FileNotFoundError:
+            return None
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                print(f"  no previous {name} (first deploy?); starting fresh", file=sys.stderr)
+                return None
+            error = exc
+        except Exception as exc:  # timeouts, 5xx, truncated JSON: worth a retry
+            error = exc
+        print(f"  previous {name} not readable yet ({type(error).__name__}: {error})", file=sys.stderr)
+    raise PreviousUnavailable(f"{where}: {type(error).__name__}: {error}")
 
 
 def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days: int) -> list[dict]:
@@ -442,6 +467,12 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     if not articles:
         raise SystemExit("No articles collected — refusing to publish an empty site.")
 
+    # AI spend so far (the counter is carried from deploy to deploy, like the archive)
+    prev_ledger = (load_previous(previous, "ai-usage.json") or {}).get("data") or {}
+    analyst.spent = float(prev_ledger.get("spent_usd") or 0)
+    if analyst.client is not None and analyst.over_budget:
+        analyst.reason = f"budget reached (${analyst.spent:.2f} of ${analyst.budget:.2f} spent); raise ai.budget_usd to resume"
+
     # 1. rule-based conflict tagging for everything not already judged by AI
     for a in articles:
         if a.get("analysis") != "ai":
@@ -606,13 +637,30 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
             encoding="utf-8",
         )
     (out / ".nojekyll").write_text("")
-    if analyst.usage["calls"]:
-        u = analyst.usage
-        print(f"  AI usage: {u['calls']} calls, {u['input_tokens']} input / {u['output_tokens']} output tokens ({analyst.model})", file=sys.stderr)
+    u = analyst.usage
+    ledger = {
+        "budget_usd": analyst.budget,
+        "spent_usd": round(analyst.spent, 6),
+        "remaining_usd": round(max(0.0, analyst.budget - analyst.spent), 6) if analyst.budget is not None else None,
+        "paused": analyst.client is not None and analyst.over_budget,
+        "model": analyst.model,
+        "calls": int(prev_ledger.get("calls") or 0) + u["calls"],
+        "input_tokens": int(prev_ledger.get("input_tokens") or 0) + u["input_tokens"],
+        "output_tokens": int(prev_ledger.get("output_tokens") or 0) + u["output_tokens"],
+        "last_run_usd": round(u["cost_usd"], 6),
+        "since": prev_ledger.get("since") or (iso(now) if u["calls"] else None),
+        "updated_at": iso(now),
+    }
+    write_json(api / "ai-usage.json", {"meta": M(), "data": ledger})
+    if u["calls"]:
+        budget = f" of ${analyst.budget:.2f}" if analyst.budget is not None else ""
+        print(f"  AI usage: {u['calls']} calls, {u['input_tokens']} input / {u['output_tokens']} output tokens, "
+              f"${u['cost_usd']:.4f} this run, ${analyst.spent:.4f}{budget} total ({analyst.model})", file=sys.stderr)
     print(f"Built {len(articles)} articles ({len(fresh)} fresh), brief: {brief_source} → {out}", file=sys.stderr)
     return {
         "articles": len(articles), "fresh": len(fresh), "sources_ok": sum(s["ok"] for s in status),
         "brief_source": brief_source, "ai_analysed": sum(1 for a in articles if a.get("analysis") == "ai"),
+        "ai_spent_usd": ledger["spent_usd"],
     }
 
 
@@ -636,7 +684,13 @@ def main(argv=None) -> None:
     p.add_argument("--out", default="public", type=Path, help="output directory (default: public)")
     p.add_argument("--previous", help="URL or path of a previous all.json to merge, keeping a rolling archive")
     args = p.parse_args(argv)
-    build(args.out, args.previous)
+    try:
+        build(args.out, args.previous)
+    except PreviousUnavailable as exc:
+        raise SystemExit(
+            f"Could not read the previous deployment ({exc}). Not publishing, so the live site, its archive "
+            "and the AI spend counter stay as they are. The next scheduled run will try again."
+        )
 
 
 if __name__ == "__main__":
