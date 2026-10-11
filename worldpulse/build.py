@@ -30,7 +30,7 @@ from .ai import Analyst
 ROOT = Path(__file__).resolve().parent.parent
 API_VERSION = "v1"
 AI_FIELDS = ("theaters", "severity", "signal", "insight", "analysis", "ai_model")
-REPO_URL = "https://github.com/ilicvix02/Claude"
+REPO_URL = f'{os.environ.get("GITHUB_SERVER_URL", "https://github.com")}/{os.environ.get("GITHUB_REPOSITORY", "ilicvix02/Claude")}'
 
 STOPWORDS = set(
     """a an and are as at be been but by for from has have he her his how in into is it its

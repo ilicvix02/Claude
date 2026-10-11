@@ -19,12 +19,18 @@ concurrency:
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install the voiceover engine
+        run: pip install -r requirements-video.txt
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/world-pulse/kokoro
+          key: kokoro-v1.0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -40,7 +46,7 @@ jobs:
       - name: Install Chromium, ffmpeg and fonts
         run: |
           npx playwright install --with-deps chromium
-          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+          sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Render video
         run: npm run video

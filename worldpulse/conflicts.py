@@ -198,6 +198,7 @@ def theater_metrics(theater: dict, articles: list[dict], now: datetime, since: d
     return {
         "id": tid,
         "name": theater["name"],
+        "spoken": theater.get("spoken", theater["name"]),
         "region": theater["region"],
         "lat": theater["lat"],
         "lon": theater["lon"],
