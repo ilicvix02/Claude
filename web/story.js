@@ -147,15 +147,15 @@
     };
 
     const out = [];
-    out.push({ id: "intro", kind: "intro", min: 3.8, date,
+    out.push({ id: "intro", kind: "intro", min: 2.6, date,
       say: `This is World Pulse, with your world brief for ${date.weekday}, ${date.month} ${ordinal(date.day)}.`,
       focus: { lat: 22, lon: 34, dist: 6.9, shift: 0.2, spin: 5 } });
-    out.push({ id: "headline", kind: "headline", min: 4.8, headline: brief.headline, state,
+    out.push({ id: "headline", kind: "headline", min: 3.2, headline: brief.headline, state,
       say: speakable(brief.headline),
       focus: { lat: 25, lon: 40, dist: 5.4, shift: 0.42, spin: 2.5 } });
     if (live.length) {
       const top = live.slice(0, 3);
-      out.push({ id: "hotspots", kind: "hotspots", min: 6.6, count: live.length, top,
+      out.push({ id: "hotspots", kind: "hotspots", min: 4.5, count: live.length, top,
         say: `Right now, ${live.length} conflicts are in the news. The most intense: ${listOf(top.map(spokenName))}.`,
         seq: top.map((t) => ({ lat: t.lat, lon: t.lon, dist: 3.6, shift: 0.44, spin: 0, theater: t.id })) });
     }
@@ -164,17 +164,17 @@
       const th = theaterOf(b);
       const text = speakable(b.text);
       const say = i === n - 1 && n > 2 ? `And finally, ${text}` : text;
-      out.push({ id: `point${i + 1}`, kind: "point", index: i, text: b.text, stories: b.stories || [], theater: th, min: 4,
+      out.push({ id: `point${i + 1}`, kind: "point", index: i, text: b.text, stories: b.stories || [], theater: th, min: 2.8,
         say, prefix: say.length - text.length,
         focus: th ? { lat: th.lat, lon: th.lon, dist: 3.0, shift: 0.46, spin: 0, theater: th.id } : null });
     });
     if (brief.watch) {
       const text = speakable(brief.watch);
-      out.push({ id: "watch", kind: "watch", text: brief.watch, theater: hottest, min: 4,
+      out.push({ id: "watch", kind: "watch", text: brief.watch, theater: hottest, min: 2.8,
         say: `What to watch: ${text}`, prefix: "What to watch: ".length,
         focus: hottest ? { lat: hottest.lat, lon: hottest.lon, dist: 3.4, shift: 0.46, spin: 1.5, theater: hottest.id } : null });
     }
-    out.push({ id: "outro", kind: "outro", min: 5.2, ai: brief.source === "ai",
+    out.push({ id: "outro", kind: "outro", min: 3.6, ai: brief.source === "ai",
       say: "Every point links to its sources. Get World Pulse free. The link is in our bio.",
       focus: { lat: 16, lon: (hottest ? hottest.lon : 30) + 30, dist: 6.4, shift: 0.3, spin: 7 } });
     return { scenes: out, active: live, byId: ids };
@@ -183,9 +183,9 @@
   // ---------------------------------------------------------------------------
   // timeline and camera
 
-  const LEAD = 0.35, TAIL = 0.6, END_HOLD = 1.2;
+  const LEAD = 0.15, TAIL = 0.3, END_HOLD = 0.8;
   let scenes = [], active = [], byId = new Map(), total = 0, camKeys = [];
-  const estimate = (text) => text.split(/\s+/).filter(Boolean).length / 2.6;
+  const estimate = (text) => text.split(/\s+/).filter(Boolean).length / 3.1;
 
   function setTimeline(speech) {
     let t = 0;
@@ -222,7 +222,7 @@
 
   /** Camera at time t: a critically damped spring chasing the active key, integrated from t = 0. */
   function cameraAt(t) {
-    const w = 2.3, dt = 1 / 60;
+    const w = 3.4, dt = 1 / 60;
     const x = { ...CAM0 }, v = { lat: 0, lon: 0, dist: 0, shift: 0 };
     let k = 0;
     const steps = Math.floor(t / dt);
@@ -885,7 +885,7 @@ void main() {
       s.dom.root.style.visibility = visible ? "visible" : "hidden";
       if (!visible) return;
       s.dom.update(tl, s, t, cam);
-      const e = last ? 0 : E.inCubic(prog(tl, s.dur - 0.42, 0.42));
+      const e = last ? 0 : E.inCubic(prog(tl, s.dur - 0.3, 0.3));
       s.dom.root.style.opacity = e > 0 ? (1 - e).toFixed(3) : "";
       s.dom.root.style.transform = e > 0 ? `translate3d(0,${(-e * 5).toFixed(3)}cqh,${(-e * 12).toFixed(3)}cqw)` : "";
       s.dom.root.style.filter = e > 0 ? `blur(${(e * 1.1).toFixed(3)}cqw)` : "";

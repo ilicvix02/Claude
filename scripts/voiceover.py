@@ -70,7 +70,7 @@ def main(argv=None) -> None:
     p.add_argument("--in", dest="src", required=True, type=Path, help="narration JSON: [{id, say}]")
     p.add_argument("--out", required=True, type=Path, help="directory for the WAV files and durations.json")
     p.add_argument("--voice", default="af_heart", help="Kokoro voice, e.g. af_heart, am_michael, bf_emma, bm_george")
-    p.add_argument("--speed", type=float, default=1.0)
+    p.add_argument("--speed", type=float, default=1.15)
     p.add_argument("--models", type=Path, default=DEFAULT_CACHE, help="model cache directory")
     args = p.parse_args(argv)
 
