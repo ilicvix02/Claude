@@ -36,9 +36,9 @@ These are rough monthly estimates, assuming about 15–40 new conflict stories a
 
 | `ai.model` in `config/site.json` | Approx. per month |
 |---|---|
-| `claude-opus-5-5` (default, highest quality) | ~$40–90 |
+| `claude-opus-5-5` (highest quality) | ~$40–90 |
 | `claude-sonnet-5-5` | ~$20–45 |
-| `claude-haiku-5-5` | ~$1–3 |
+| `claude-haiku-5-5` (configured) | ~$1–3 |
 
 Changing the model is a one-line edit. Raising `brief_every_hours` or lowering `max_articles_per_run` cuts the cost further.
 
