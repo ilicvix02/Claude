@@ -1,0 +1,2 @@
+# Optional: enables Claude-powered analysis during the build (see config/site.json → ai).
+anthropic>=1.13,<2

@@ -1,0 +1,43 @@
+{
+  "_comment": "Site settings and revenue hooks. Every revenue field is optional; empty values are simply not rendered.",
+  "title": "World Pulse",
+  "tagline": "Live conflict tracker, AI world brief, and global deals & crises — free app and public API.",
+  "base_url": "",
+  "retention_days": 7,
+  "latest_limit": 300,
+  "ai": {
+    "_comment": "Claude-powered analysis, run once per build in CI (never per reader). Needs the ANTHROPIC_API_KEY repository secret; without it the build uses rule-based analysis and costs nothing. Cost scales with model choice: see README → AI.",
+    "enabled": true,
+    "model": "claude-haiku-5-5",
+    "analysis_effort": "low",
+    "brief_effort": "medium",
+    "max_articles_per_run": 40,
+    "brief_every_hours": 3,
+    "_budget_comment": "Hard cap on total AI spend in US dollars, counted across all builds (see api/v1/ai-usage.json). When it is reached the build switches to rule-based analysis until you raise it. Set to null for no cap.",
+    "budget_usd": 18
+  },
+  "revenue": {
+    "sponsor": {
+      "_comment": "A paid 'Presented by' slot shown on the site and in every API response. Sell it weekly/monthly.",
+      "text": "",
+      "url": ""
+    },
+    "ethicalads_publisher": "",
+    "donate": [
+      {
+        "label": "GitHub Sponsors",
+        "url": ""
+      },
+      {
+        "label": "Ko-fi",
+        "url": ""
+      },
+      {
+        "label": "Open Collective",
+        "url": ""
+      }
+    ],
+    "newsletter_url": "",
+    "advertise_email": ""
+  }
+}

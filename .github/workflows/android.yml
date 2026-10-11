@@ -1,0 +1,77 @@
+name: Android app
+
+# Builds an installable APK of the World Pulse app on GitHub's free runners.
+# Run it from the Actions tab, or push a tag like v1.0.0 to attach the APK to a GitHub Release.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # only used to attach the APK to a release on tag pushes
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build the bundled web app
+        env:
+          APP_API_BASE: ${{ vars.APP_API_BASE }}
+        run: |
+          # The app loads live data from your GitHub Pages site and ships a bundled copy for offline first launch.
+          REPO="${GITHUB_REPOSITORY#*/}"
+          SITE="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${REPO}"
+          export WORLDPULSE_APP_API_BASE="${APP_API_BASE:-$SITE/api/v1/}"
+          export WORLDPULSE_BASE_URL="${WORLDPULSE_APP_API_BASE%/api/v1/}"
+          echo "App API: $WORLDPULSE_APP_API_BASE"
+          python -m worldpulse.build --out public --previous "${WORLDPULSE_APP_API_BASE}all.json"
+
+      - run: npm ci
+      - name: Generate the Android project, icons and splash screens
+        run: npm run cap:android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      # Optional Play Store build: add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      # ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD as repository secrets.
+      - name: Build signed release bundle (AAB)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          npx cap build android --androidreleasetype AAB --keystorepath "$RUNNER_TEMP/release.keystore" \
+            --keystorepass "$KEYSTORE_PASS" --keystorealias "$KEY_ALIAS" --keystorealiaspass "$KEY_PASS"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: world-pulse-android
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk

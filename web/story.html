@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Video brief · World Pulse</title>
+  <meta name="description" content="Today's world brief as a motion-graphics video for TikTok, Reels and Shorts.">
+  <meta name="theme-color" content="#0b0908">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="story.css">
+</head>
+<body>
+  <div class="stage" id="stage" aria-label="Video brief" role="img">
+    <canvas id="bg"></canvas>
+    <canvas id="globe"></canvas>
+    <canvas id="fx"></canvas>
+    <div class="scrim"></div>
+    <div class="ui" id="ui"></div>
+    <canvas id="grain"></canvas>
+    <div class="vignette"></div>
+  </div>
+
+  <div class="intro" id="intro" role="dialog" aria-labelledby="intro-h" hidden>
+    <div class="intro-card">
+      <p class="intro-kicker">Video brief</p>
+      <h1 id="intro-h">Today's video</h1>
+      <ol>
+        <li>Start your phone's screen recording.</li>
+        <li>Tap <b>Play</b>. It runs by itself for about 45 seconds.</li>
+        <li>Stop recording on the last frame, trim the start in TikTok, and add a sound or your own voice.</li>
+      </ol>
+      <button class="play" id="play" type="button" disabled>Loading…</button>
+      <a class="alt" id="download" href="#" hidden>Or download today's finished video with voiceover</a>
+      <a class="back" href="./#/brief">Back to the app</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="land.js"></script>
+  <script src="story.js"></script>
+</body>
+</html>

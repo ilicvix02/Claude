@@ -1,0 +1,15 @@
+{
+  "appId": "io.github.worldpulse.app",
+  "appName": "World Pulse",
+  "webDir": "public",
+  "backgroundColor": "#14110f",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  }
+}
