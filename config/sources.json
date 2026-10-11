@@ -13,6 +13,19 @@
     {"id": "un-news", "name": "UN News", "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "homepage": "https://news.un.org"},
     {"id": "reliefweb", "name": "ReliefWeb", "url": "https://reliefweb.int/updates/rss.xml", "homepage": "https://reliefweb.int", "max_items": 40},
     {"id": "who", "name": "World Health Organization", "url": "https://www.who.int/rss-feeds/news-english.xml", "homepage": "https://www.who.int", "max_items": 25},
-    {"id": "gdacs", "name": "GDACS Disaster Alerts", "url": "https://www.gdacs.org/xml/rss.xml", "homepage": "https://www.gdacs.org", "max_items": 30, "categories": ["crises", "disasters"]}
+    {"id": "gdacs", "name": "GDACS Disaster Alerts", "url": "https://www.gdacs.org/xml/rss.xml", "homepage": "https://www.gdacs.org", "max_items": 30, "categories": ["crises", "disasters"]},
+    {"id": "crisisgroup", "name": "International Crisis Group", "url": "https://www.crisisgroup.org/rss", "homepage": "https://www.crisisgroup.org", "max_items": 20},
+    {"id": "un-peace", "name": "UN News – Peace & Security", "url": "https://news.un.org/feed/subscribe/en/news/topic/peace-and-security/feed/rss.xml", "homepage": "https://news.un.org/en/news/topic/peace-and-security"},
+    {"id": "new-humanitarian", "name": "The New Humanitarian", "url": "https://www.thenewhumanitarian.org/rss/all.xml", "homepage": "https://www.thenewhumanitarian.org"},
+    {"id": "kyiv-independent", "name": "The Kyiv Independent", "url": "https://kyivindependent.com/news-archive/rss/", "homepage": "https://kyivindependent.com", "max_items": 30},
+    {"id": "guardian-ukraine", "name": "The Guardian – Ukraine", "url": "https://www.theguardian.com/world/ukraine/rss", "homepage": "https://www.theguardian.com/world/ukraine", "max_items": 30},
+    {"id": "guardian-middleeast", "name": "The Guardian – Middle East", "url": "https://www.theguardian.com/world/middleeast/rss", "homepage": "https://www.theguardian.com/world/middleeast", "max_items": 30},
+    {"id": "bbc-middleeast", "name": "BBC News – Middle East", "url": "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml", "homepage": "https://www.bbc.com/news/world/middle_east"},
+    {"id": "bbc-africa", "name": "BBC News – Africa", "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml", "homepage": "https://www.bbc.com/news/world/africa"},
+    {"id": "bbc-asia", "name": "BBC News – Asia", "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml", "homepage": "https://www.bbc.com/news/world/asia"},
+    {"id": "bbc-europe", "name": "BBC News – Europe", "url": "https://feeds.bbci.co.uk/news/world/europe/rss.xml", "homepage": "https://www.bbc.com/news/world/europe"},
+    {"id": "middle-east-eye", "name": "Middle East Eye", "url": "https://www.middleeasteye.net/rss", "homepage": "https://www.middleeasteye.net", "max_items": 30},
+    {"id": "irrawaddy", "name": "The Irrawaddy", "url": "https://www.irrawaddy.com/feed", "homepage": "https://www.irrawaddy.com", "max_items": 20},
+    {"id": "allafrica-conflict", "name": "AllAfrica – Conflict", "url": "https://allafrica.com/tools/headlines/rdf/conflict/headlines.rdf", "homepage": "https://allafrica.com/conflict/", "max_items": 30}
   ]
 }

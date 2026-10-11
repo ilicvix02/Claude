@@ -1,0 +1,19 @@
+{
+  "name": "world-pulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native Android/iOS wrapper for the World Pulse web app (Capacitor). The site and API themselves need only Python.",
+  "license": "MIT",
+  "scripts": {
+    "build:web": "python3 -m worldpulse.build --out public",
+    "cap:android": "cap add android && capacitor-assets generate --android --iconBackgroundColor '#14110f' --iconBackgroundColorDark '#14110f' --splashBackgroundColor '#14110f' --splashBackgroundColorDark '#14110f' && cap sync android",
+    "cap:ios": "cap add ios && capacitor-assets generate --ios --iconBackgroundColor '#14110f' --splashBackgroundColor '#14110f' && cap sync ios"
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.2",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2"
+  }
+}

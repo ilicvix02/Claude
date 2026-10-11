@@ -2,85 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>World Pulse</title>
-  <meta name="description" content="Global deals, crises and the state of the world — open-source news aggregator with a free public JSON API.">
-  <meta property="og:title" content="World Pulse — the state of the world, hourly">
-  <meta property="og:description" content="Global deals, crises and the state of the world. Free public API, open source.">
+  <meta name="description" content="Live conflict tracker, AI world brief, and global deals and crises. Free app and public API, open source.">
+  <meta name="theme-color" content="#14110f">
+  <meta name="color-scheme" content="dark light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="World Pulse">
+  <meta property="og:title" content="World Pulse — conflicts and the state of the world">
+  <meta property="og:description" content="Live conflict tracker, AI world brief, global deals and crises. Free app and public API.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="alternate" type="application/rss+xml" title="World Pulse" href="feed.xml">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='none' stroke='%23c2410c' stroke-width='3'/><path d='M4 17h6l3-7 5 13 3-6h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linejoin='round'/></svg>">
+  <link rel="alternate" type="application/rss+xml" title="World Pulse – Conflicts" href="api/v1/conflicts.xml">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    try { const t = localStorage.getItem("wp.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}
+  </script>
 </head>
 <body>
-  <header class="masthead">
-    <div class="wrap masthead-row">
-      <a class="brand" href="./">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14"/><path d="M4 17h6l3-7 5 13 3-6h7"/></svg>
-        <span>World&nbsp;Pulse</span>
-      </a>
-      <nav class="top-links">
-        <a href="docs.html">API</a>
-        <a href="feed.xml">RSS</a>
-        <a id="source-link" href="https://github.com/ilicvix02/Claude">Source</a>
-        <a id="support-link" class="support" href="#support" hidden>Support</a>
-      </nav>
+  <a class="skip" href="#view">Skip to content</a>
+  <header class="appbar">
+    <button class="icon-btn back" id="back" aria-label="Back" hidden>
+      <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <a class="brand" href="#/brief" aria-label="World Pulse home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11"/><path d="M3 17h6l3-7 5 13 3-6h9"/></svg>
+    </a>
+    <div class="appbar-title">
+      <h1 id="view-title">World Pulse</h1>
+      <span id="updated" class="updated"></span>
     </div>
-    <p class="wrap tagline" id="tagline">Global deals, crises and the state of the world — refreshed hourly.</p>
+    <button class="icon-btn" id="refresh" aria-label="Refresh">
+      <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+    </button>
   </header>
 
-  <div class="wrap sponsor-bar" id="sponsor" hidden></div>
+  <div class="banner" id="offline" hidden>You're offline — showing the last saved update.</div>
+  <div class="banner sponsor" id="sponsor" hidden></div>
 
-  <main class="wrap layout">
-    <section class="state" aria-labelledby="state-h">
-      <h2 id="state-h" class="eyebrow">State of the world · last 24h</h2>
-      <div class="gauge-card">
-        <div class="gauge-head">
-          <span class="mood" id="mood">—</span>
-          <span class="index"><b id="tension">—</b><small>/100</small></span>
-        </div>
-        <div class="gauge" role="img" id="gauge-img" aria-label="Tension index">
-          <div class="gauge-fill" id="gauge-fill"></div>
-          <div class="gauge-marker" id="gauge-marker"></div>
-        </div>
-        <div class="gauge-legend"><span>Deals</span><span>Crises</span></div>
-        <p class="fine" id="state-explain"></p>
-        <div class="history" id="history" aria-label="Tension over the last 7 days"></div>
-      </div>
-
-      <h3 class="eyebrow">Regions</h3>
-      <ul class="regions" id="regions"></ul>
-
-      <h3 class="eyebrow">Trending</h3>
-      <div class="chips" id="trending"></div>
-
-      <div class="ad-slot" id="ad-slot" hidden></div>
-
-      <div class="support-card" id="support" hidden>
-        <h3>Keep this free</h3>
-        <p>World Pulse is open source and has no paywall. Sponsorships and donations pay for maintenance.</p>
-        <div class="support-links" id="support-links"></div>
-      </div>
-    </section>
-
-    <section class="feed" aria-labelledby="feed-h">
-      <h2 id="feed-h" class="sr-only">Articles</h2>
-      <div class="controls">
-        <div class="tabs" id="tabs" role="tablist"></div>
-        <div class="filters">
-          <select id="region" aria-label="Region"><option value="">All regions</option></select>
-          <input id="q" type="search" placeholder="Search headlines…" aria-label="Search headlines">
-        </div>
-      </div>
-      <p class="status" id="status">Loading…</p>
-      <ol class="articles" id="articles"></ol>
-      <button class="more" id="more" hidden>Show more</button>
-    </section>
+  <main id="view" class="view" tabindex="-1" aria-live="polite">
+    <div class="skeleton" aria-hidden="true"><div></div><div></div><div></div></div>
   </main>
 
-  <footer class="wrap footer">
-    <p>Headlines and excerpts belong to their publishers and link to the original story. Classification is automatic and rule-based — <a href="docs.html#method">see the method</a>.</p>
-    <p id="footer-meta"></p>
-  </footer>
-  <script src="app.js"></script>
+  <nav class="tabbar" aria-label="Sections">
+    <a href="#/brief" data-tab="brief">
+      <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg><span>Brief</span>
+    </a>
+    <a href="#/conflicts" data-tab="conflicts">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg><span>Conflicts</span>
+    </a>
+    <a href="#/feed" data-tab="feed">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Feed</span>
+    </a>
+    <a href="#/saved" data-tab="saved">
+      <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Saved</span>
+    </a>
+    <a href="#/more" data-tab="more">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>More</span>
+    </a>
+  </nav>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <noscript><p class="noscript">World Pulse needs JavaScript. The raw data is at <a href="api/v1/index.json">api/v1/index.json</a>.</p></noscript>
+  <script src="config.js"></script>
+  <script src="land.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

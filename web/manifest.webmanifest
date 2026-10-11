@@ -1,0 +1,23 @@
+{
+  "name": "World Pulse — Conflicts & World News",
+  "short_name": "World Pulse",
+  "description": "Live conflict tracker, AI world brief, and global deals and crises.",
+  "id": "./",
+  "start_url": "./#/brief",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14110f",
+  "theme_color": "#14110f",
+  "categories": ["news", "politics"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ],
+  "shortcuts": [
+    {"name": "Conflict tracker", "url": "./#/conflicts", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Latest news", "url": "./#/feed", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}

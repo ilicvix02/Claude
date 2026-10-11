@@ -210,7 +210,16 @@ _EXCLUDE_RE = _compile_keywords(EXCLUDE)
 
 
 def is_off_topic(title: str, summary: str) -> bool:
-    return bool(_EXCLUDE_RE.search(f"{title} {summary}"))
+    return bool(_EXCLUDE_RE.search(f"{title} {summary}")) or not is_latin_script(title)
+
+
+def is_latin_script(text: str) -> bool:
+    """The rules and the app are English-language; skip headlines in other scripts (e.g. Arabic editions)."""
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return False
+    latin = sum(1 for c in letters if c.isascii() or "\u00c0" <= c <= "\u024f")
+    return latin / len(letters) >= 0.6
 
 
 def score_categories(title: str, summary: str) -> dict[str, int]:

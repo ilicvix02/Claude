@@ -22,10 +22,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import classify, feeds
+from . import briefing, classify, cluster, conflicts, feeds
+from .ai import Analyst
 
 ROOT = Path(__file__).resolve().parent.parent
 API_VERSION = "v1"
+AI_FIELDS = ("theaters", "severity", "signal", "insight", "analysis", "ai_model")
 REPO_URL = "https://github.com/ilicvix02/Claude"
 
 STOPWORDS = set(
@@ -139,20 +141,26 @@ def collect(sources: list[dict], fetched_at: datetime, fetcher=feeds.fetch) -> t
     return articles, status
 
 
-def load_previous(location: str | None) -> list[dict]:
+def _sibling(location: str, name: str) -> str:
+    """Location of another API file next to the previous all.json (URL or path)."""
+    return location.rsplit("/", 1)[0] + "/" + name if "/" in location else name
+
+
+def load_previous(location: str | None, name: str = "all.json"):
+    """Load a file from the previously published API, or None. Never raises."""
     if not location:
-        return []
+        return None
+    where = location if name == "all.json" else _sibling(location, name)
     try:
-        if location.startswith(("http://", "https://")):
-            payload = json.loads(feeds.fetch(location))
+        if where.startswith(("http://", "https://")):
+            payload = json.loads(feeds.fetch(where))
         else:
-            payload = load_json(Path(location))
-        items = payload.get("data", [])
-        print(f"  loaded {len(items)} previous articles from {location}", file=sys.stderr)
-        return items
+            payload = load_json(Path(where))
+        print(f"  loaded previous {name} from {where}", file=sys.stderr)
+        return payload
     except Exception as exc:
-        print(f"  previous store unavailable ({exc}); starting fresh", file=sys.stderr)
-        return []
+        print(f"  previous {name} unavailable ({type(exc).__name__}); starting fresh", file=sys.stderr)
+        return None
 
 
 def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days: int) -> list[dict]:
@@ -162,6 +170,8 @@ def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days
         old = by_id.get(a["id"])
         if old:
             a = {**a, "fetched_at": old.get("fetched_at", a["fetched_at"]), "published_at": old["published_at"]}
+            if old.get("analysis") == "ai":  # keep paid-for AI judgements across builds
+                a.update({k: old[k] for k in AI_FIELDS if k in old})
         by_id[a["id"]] = a
     cutoff = now - timedelta(days=retention_days)
     items = sorted(
@@ -253,8 +263,11 @@ def state_of_world(articles: list[dict], now: datetime) -> dict:
     }
 
 
+SLIM_FIELDS = ("id", "title", "url", "source", "published_at", "categories", "regions", "theaters", "severity", "coverage")
+
+
 def slim(a: dict) -> dict:
-    return {k: a[k] for k in ("id", "title", "url", "source", "published_at", "categories", "regions")}
+    return {k: a[k] for k in SLIM_FIELDS if k in a}
 
 
 # ---------------------------------------------------------------------------
@@ -306,7 +319,7 @@ def rss(title: str, link: str, self_url: str, description: str, articles: list[d
     )
 
 
-def openapi(site: dict, base_url: str) -> dict:
+def openapi(site: dict, base_url: str, theater_ids: list[str]) -> dict:
     def path(summary, desc, params=None):
         op = {"summary": summary, "description": desc, "responses": {"200": {"description": "OK"}}}
         if params:
@@ -328,6 +341,9 @@ def openapi(site: dict, base_url: str) -> dict:
             "/latest.json": path("Latest articles", "Most recent articles across all sources."),
             "/all.json": path("Rolling archive", f"Every article from the last {site.get('retention_days', 7)} days."),
             "/state.json": path("State of the world", "Tension index, mood, category and region breakdowns, 7-day history, trending terms."),
+            "/brief.json": path("World brief", "AI-written (or automated) summary of the last 24h with cited stories."),
+            "/conflicts.json": path("Conflict tracker", "Every tracked conflict theater: intensity, status, trend, 7-day history, situation summary, latest stories."),
+            "/conflicts/{theater}.json": path("Conflict theater", "One theater with all its stories from the last 7 days.", slug("theater", theater_ids)),
             "/sources.json": path("Sources", "Feed list with health status from the last build."),
             "/categories/{category}.json": path("Articles by category", "Filter by topic.", slug("category", list(classify.CATEGORIES))),
             "/regions/{region}.json": path("Articles by region", "Filter by world region.", slug("region", list(classify.REGIONS))),
@@ -335,18 +351,163 @@ def openapi(site: dict, base_url: str) -> dict:
     }
 
 
-def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | None = None) -> dict:
+def hours_since(stamp: str | None, now: datetime) -> float:
+    if not stamp:
+        return float("inf")
+    try:
+        return (now - from_iso(stamp)).total_seconds() / 3600
+    except ValueError:
+        return float("inf")
+
+
+def ai_candidates(articles: list[dict], limit: int) -> list[dict]:
+    """Stories still on rule-based values that are worth an AI read: conflict-related, newest first."""
+    pending = [
+        a for a in articles
+        if a.get("analysis") != "ai" and (a.get("theaters") or {"conflict", "crises"} & set(a["categories"]))
+    ]
+    pending.sort(key=lambda a: (bool(a.get("theaters")), a["published_at"]), reverse=True)
+    return pending[:limit]
+
+
+def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
+    """Return (brief, theater_summaries, source, model, generated_at), reusing recent AI output."""
+    stories = briefing.top_stories(articles, now)
+    active = [t for t in stats if t["stories_7d"]]
+    per_theater = {}
+    for t in active:
+        leads = [a for a in articles if t["id"] in a.get("theaters", []) and a.get("cluster", a["id"]) == a["id"]]
+        per_theater[t["id"]] = leads[:6]
+
+    prev_brief = (load_previous(previous, "brief.json") or {}).get("data") if previous else None
+    prev_conf = (load_previous(previous, "conflicts.json") or {}).get("data") if previous else None
+    prev_ok = prev_brief and prev_brief.get("source") == "ai"
+    prev_age = hours_since(prev_brief.get("generated_at"), now) if prev_ok else float("inf")
+
+    def reuse():
+        summaries = {}
+        for t in (prev_conf or {}).get("theaters", []):
+            an = t.get("analysis") or {}
+            if an.get("source") == "ai":
+                summaries[t["id"]] = {
+                    "summary": an.get("summary"), "outlook": an.get("outlook"),
+                    "developments": [{"text": d["text"], "story_id": d["story"]["id"]} for d in an.get("developments", []) if d.get("story")],
+                }
+        brief = {
+            "headline": prev_brief["headline"],
+            "bullets": [{"text": b["text"], "story_ids": [s["id"] for s in b.get("stories", [])]} for b in prev_brief["bullets"]],
+            "watch": prev_brief.get("watch"),
+        }
+        return brief, summaries, "ai", prev_brief.get("model"), prev_brief["generated_at"]
+
+    if prev_ok and prev_age < float(ai_cfg.get("brief_every_hours", 3)):
+        print(f"  AI brief reused ({prev_age:.1f}h old)", file=sys.stderr)
+        return reuse()
+
+    if analyst.available and stories:
+        pool = {a["id"]: a for a in stories}
+        for leads in per_theater.values():
+            pool.update({a["id"]: a for a in leads})
+        theater_input = [
+            {k: t[k] for k in ("id", "name", "status", "trend", "intensity", "stories_24h", "stories_7d", "signals_24h")}
+            | {"story_ids": [a["id"] for a in per_theater[t["id"]]]}
+            for t in active
+        ]
+        result = analyst.brief([briefing.story_digest(a) for a in pool.values()], theater_input)
+        if result:
+            return result["brief"], result["theaters"], "ai", result["model"], iso(now)
+
+    if prev_ok and prev_age < 12:  # AI temporarily unavailable: a few-hours-old AI brief beats rules
+        print(f"  AI unavailable; reusing {prev_age:.1f}h-old AI brief", file=sys.stderr)
+        return reuse()
+
+    summaries = {t["id"]: briefing.rule_theater_summary(t, per_theater.get(t["id"], [])) for t in stats}
+    brief = briefing.rule_brief(stories, stats, mood_label)
+    return brief, summaries, "rules", None, iso(now)
+
+
+def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | None = None, analyst: Analyst | None = None) -> dict:
     now = now or now_utc()
     site = load_json(ROOT / "config" / "site.json")
     sources = load_json(ROOT / "config" / "sources.json")["sources"]
+    theaters = conflicts.Theaters(load_json(ROOT / "config" / "conflicts.json")["theaters"])
+    ai_cfg = site.get("ai", {})
+    analyst = analyst or Analyst(ai_cfg)
     base_url = (os.environ.get("WORLDPULSE_BASE_URL") or site.get("base_url") or "").rstrip("/")
 
     print(f"Fetching {len(sources)} sources…", file=sys.stderr)
     fresh, status = collect(sources, now, fetcher)
-    articles = merge(load_previous(previous), fresh, now, int(site.get("retention_days", 7)))
+    prev_all = load_previous(previous) or {}
+    articles = merge(prev_all.get("data", []), fresh, now, int(site.get("retention_days", 7)))
     if not articles:
         raise SystemExit("No articles collected — refusing to publish an empty site.")
+
+    # 1. rule-based conflict tagging for everything not already judged by AI
+    for a in articles:
+        if a.get("analysis") != "ai":
+            conflicts.annotate(a, theaters)
+    # 2. AI judgements for new conflict-related stories (only stories never analysed before)
+    if analyst.available:
+        batch = ai_candidates(articles, int(ai_cfg.get("max_articles_per_run", 40)))
+        results = analyst.analyze(batch, theaters.items)
+        for a in articles:
+            if a["id"] in results:
+                a.update(results[a["id"]])
+        print(f"  AI analysed {len(results)}/{len(batch)} stories", file=sys.stderr)
+    else:
+        print(f"  AI off: {analyst.reason}", file=sys.stderr)
+    # 3. group coverage of the same event
+    cluster.assign(articles)
+
     latest = articles[: int(site.get("latest_limit", 300))]
+    by_id = {a["id"]: a for a in articles}
+    state = state_of_world(articles, now)
+    since = conflicts.observed_since(articles)
+    stats = [conflicts.theater_metrics(t, articles, now, since) for t in theaters.items]
+    brief, summaries, brief_source, brief_model, brief_at = make_briefing(
+        articles, stats, now, state["mood"], analyst, ai_cfg, previous
+    )
+
+    def cite(ids):
+        return [slim(by_id[i]) for i in ids if i in by_id]
+
+    brief_doc = {
+        "headline": brief["headline"],
+        "bullets": [{"text": b["text"], "stories": cite(b["story_ids"])} for b in brief["bullets"]],
+        "watch": brief.get("watch"),
+        "source": brief_source,
+        "model": brief_model,
+        "generated_at": brief_at,
+        "disclaimer": "Written by AI from the linked reports; it can make mistakes. Check the original sources."
+        if brief_source == "ai" else "Automated digest of the most-covered stories.",
+    }
+    conflict_docs = []
+    for t in stats:
+        items = [a for a in articles if t["id"] in a.get("theaters", [])]
+        leads = [a for a in items if a.get("cluster", a["id"]) == a["id"]]
+        s, src = summaries.get(t["id"]), brief_source
+        if not s:  # AI wrote summaries only for theaters with coverage
+            s, src = briefing.rule_theater_summary(t, leads), "rules"
+        analysis = {
+            "summary": s["summary"],
+            "outlook": s.get("outlook"),
+            "developments": [
+                {"text": d["text"], "story": slim(by_id[d["story_id"]])}
+                for d in s.get("developments", []) if d.get("story_id") in by_id
+            ],
+            "source": src,
+            "model": brief_model if src == "ai" else None,
+            "generated_at": brief_at if src == "ai" else iso(now),
+        }
+        conflict_docs.append({**t, "analysis": analysis, "latest": [slim(a) for a in leads[:8]], "_items": items})
+    conflict_docs.sort(key=lambda t: (t["intensity"], t["stories_7d"]), reverse=True)
+    overview = {
+        "active": sum(1 for t in stats if t["stories_24h"]),
+        "critical": sum(1 for t in stats if t["status"] == "critical"),
+        "escalating": sum(1 for t in stats if t["trend"] == "escalating"),
+        "de_escalating": sum(1 for t in stats if t["trend"] == "de-escalating"),
+    }
+    state["conflicts"] = overview | {"hotspots": [{k: t[k] for k in ("id", "name", "status", "trend", "intensity")} for t in conflict_docs[:5]]}
 
     if out.exists():
         shutil.rmtree(out)
@@ -354,13 +515,25 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     api = out / "api" / API_VERSION
     M = lambda count=None, **kw: meta(site, now, base_url, count, **kw)  # noqa: E731
 
-    state = state_of_world(articles, now)
     write_json(api / "latest.json", {"meta": M(len(latest)), "data": latest})
     write_json(api / "all.json", {"meta": M(len(articles), retention_days=site.get("retention_days", 7)), "data": articles})
     write_json(api / "state.json", {"meta": M(), "data": state})
     write_json(api / "sources.json", {"meta": M(len(status)), "data": status})
+    write_json(api / "brief.json", {"meta": M(), "data": brief_doc})
+    write_json(
+        api / "conflicts.json",
+        {"meta": M(len(conflict_docs)), "data": {"overview": overview, "theaters": [{k: v for k, v in t.items() if k != "_items"} for t in conflict_docs]}},
+    )
+    for t in conflict_docs:
+        doc = {k: v for k, v in t.items() if k != "_items"}
+        write_json(api / "conflicts" / f"{t['id']}.json", {"meta": M(len(t["_items"]), theater=t["id"]), "data": doc | {"stories": t["_items"]}})
 
     link = base_url or "."
+    conflict_items = [a for a in articles if a.get("theaters")]
+    (api / "conflicts.xml").write_text(
+        rss(f"{site['title']} – Conflicts", link, f"{link}/api/v1/conflicts.xml", "Reports from tracked conflict theaters.", conflict_items, now),
+        encoding="utf-8",
+    )
     cat_index, region_index = [], []
     for slug, c in classify.CATEGORIES.items():
         items = [a for a in articles if slug in a["categories"]]
@@ -379,7 +552,7 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     (out / "feed.xml").write_text(
         rss(site["title"], link, f"{link}/feed.xml", site["tagline"], latest, now), encoding="utf-8"
     )
-    write_json(api / "openapi.json", openapi(site, base_url))
+    write_json(api / "openapi.json", openapi(site, base_url, theaters.ids()))
 
     revenue = site.get("revenue", {})
     write_json(
@@ -389,11 +562,19 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
             "data": {
                 "site": {"title": site["title"], "tagline": site["tagline"], "base_url": base_url},
                 "endpoints": {
-                    "latest": "latest.json", "all": "all.json", "state": "state.json", "sources": "sources.json",
-                    "openapi": "openapi.json", "rss": "../../feed.xml",
+                    "latest": "latest.json", "all": "all.json", "state": "state.json", "brief": "brief.json",
+                    "conflicts": "conflicts.json", "sources": "sources.json", "openapi": "openapi.json",
+                    "rss": "../../feed.xml", "conflicts_rss": "conflicts.xml",
                 },
                 "categories": cat_index,
                 "regions": region_index,
+                "theaters": [{"id": t["id"], "name": t["name"], "json": f"conflicts/{t['id']}.json"} for t in theaters.items],
+                "ai": {
+                    "enabled": analyst.available,
+                    "model": analyst.model if analyst.available else None,
+                    "brief_source": brief_source,
+                    "analysed_stories": sum(1 for a in articles if a.get("analysis") == "ai"),
+                },
                 "sources_ok": sum(s["ok"] for s in status),
                 "sources_total": len(status),
                 "revenue": {
@@ -406,6 +587,16 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
             },
         },
     )
+
+    # App shell: API location (absolute for native builds) and a build id that refreshes the offline cache.
+    build_id = now.strftime("%Y%m%d%H%M%S")
+    app_api = os.environ.get("WORLDPULSE_APP_API_BASE", "api/v1/")
+    (out / "config.js").write_text(
+        "window.WP_CONFIG = " + json.dumps({"apiBase": app_api, "bundledApi": "api/v1/", "build": build_id}) + ";\n", encoding="utf-8"
+    )
+    sw = out / "sw.js"
+    sw.write_text(sw.read_text(encoding="utf-8").replace("__BUILD__", build_id), encoding="utf-8")
+
     if base_url:
         urls = ["/", "/docs.html", "/feed.xml"]
         (out / "sitemap.xml").write_text(
@@ -415,8 +606,14 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
             encoding="utf-8",
         )
     (out / ".nojekyll").write_text("")
-    print(f"Built {len(articles)} articles ({len(fresh)} fresh) → {out}", file=sys.stderr)
-    return {"articles": len(articles), "fresh": len(fresh), "sources_ok": sum(s["ok"] for s in status)}
+    if analyst.usage["calls"]:
+        u = analyst.usage
+        print(f"  AI usage: {u['calls']} calls, {u['input_tokens']} input / {u['output_tokens']} output tokens ({analyst.model})", file=sys.stderr)
+    print(f"Built {len(articles)} articles ({len(fresh)} fresh), brief: {brief_source} → {out}", file=sys.stderr)
+    return {
+        "articles": len(articles), "fresh": len(fresh), "sources_ok": sum(s["ok"] for s in status),
+        "brief_source": brief_source, "ai_analysed": sum(1 for a in articles if a.get("analysis") == "ai"),
+    }
 
 
 def main(argv=None) -> None:

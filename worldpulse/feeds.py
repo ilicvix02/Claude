@@ -46,6 +46,21 @@ def clean_text(value: str | None, limit: int | None = None) -> str:
     return text
 
 
+_LOOSE_FORMATS = ("%B %d, %Y %H:%M", "%B %d, %Y", "%d %B %Y %H:%M", "%d %B %Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M")
+
+
+def _loose_date(value: str) -> datetime | None:
+    """Handle non-standard feed dates like 'Friday, October 2, 2026 - 00:00' (treated as UTC)."""
+    text = re.sub(r"^[A-Za-z]+,\s*", "", value.strip())
+    text = re.sub(r"\s+-\s+", " ", text)
+    for fmt in _LOOSE_FORMATS:
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def parse_date(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -58,7 +73,9 @@ def parse_date(value: str | None) -> datetime | None:
         try:
             dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError:
-            return None
+            dt = _loose_date(value)
+            if dt is None:
+                return None
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
@@ -107,7 +124,14 @@ def _image(item: ET.Element) -> str:
 
 def parse(data: bytes) -> list[dict]:
     """Return a list of raw entries: title, link, summary, published (datetime|None), image, tags."""
-    root = ET.fromstring(data)
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError:
+        # Some publishers append junk (ads, debug output) after the closing tag; cut it off.
+        ends = [data.rfind(t) + len(t) for t in (b"</rss>", b"</feed>", b"</rdf:RDF>") if data.rfind(t) != -1]
+        if not ends:
+            raise
+        root = ET.fromstring(data[: max(ends)])
     items = [el for el in root.iter() if _local(el.tag) in ("item", "entry")]
     out = []
     for item in items:

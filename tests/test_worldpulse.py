@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from worldpulse import build, classify, feeds
+from worldpulse.ai import Analyst
 
 NOW = datetime(2026, 10, 11, 12, 0, tzinfo=timezone.utc)
 
@@ -108,7 +109,7 @@ class Build(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 out = Path(tmp) / "site"
-                result = build.build(out, None, fetcher=fetcher, now=NOW)
+                result = build.build(out, None, fetcher=fetcher, now=NOW, analyst=Analyst({"enabled": False}))
                 api = out / "api" / "v1"
                 latest = json.loads((api / "latest.json").read_text())
                 state = json.loads((api / "state.json").read_text())["data"]
@@ -130,7 +131,7 @@ class Build(unittest.TestCase):
                 self.assertEqual(latest["data"][0]["url"].count("utm_"), 0)
 
                 # second build merges the previous archive
-                result2 = build.build(Path(tmp) / "site2", str(api / "all.json"), fetcher=lambda u: RSS, now=NOW)
+                result2 = build.build(Path(tmp) / "site2", str(api / "all.json"), fetcher=lambda u: RSS, now=NOW, analyst=Analyst({"enabled": False}))
                 self.assertEqual(result2["articles"], result["articles"])
         finally:
             build.load_json = orig
@@ -140,7 +141,7 @@ class Build(unittest.TestCase):
         build.load_json = lambda p: {"sources": []} if p.name == "sources.json" else orig(p)
         try:
             with tempfile.TemporaryDirectory() as tmp, self.assertRaises(SystemExit):
-                build.build(Path(tmp) / "out", None, fetcher=lambda u: b"", now=NOW)
+                build.build(Path(tmp) / "out", None, fetcher=lambda u: b"", now=NOW, analyst=Analyst({"enabled": False}))
         finally:
             build.load_json = orig
 
