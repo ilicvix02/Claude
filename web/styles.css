@@ -136,6 +136,10 @@ svg { display: block; }
 .cites { display: flex; flex-wrap: wrap; gap: 6px; }
 .cite { font-size: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cite:hover { color: var(--ink); border-color: var(--muted); }
+.brief-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.brief-foot .fine { margin: 10px 0 0; }
+.share-brief { flex: none; gap: 6px; min-height: 40px; padding: 0 14px; margin-top: 8px; }
+.share-brief svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .watch { margin: 12px 0 0; padding: 12px; border-radius: 10px; background: var(--surface-2); font-size: 14.5px; }
 .watch b { color: var(--accent); }
 

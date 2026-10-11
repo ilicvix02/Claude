@@ -70,6 +70,12 @@
     if (s < 86400) return `${Math.round(s / 3600)}h ago`;
     return `${Math.round(s / 86400)}d ago`;
   }
+  // Shareable link to a view of the public web app (in the native app, location is a local file URL).
+  const appUrl = (hash) => {
+    const fromApi = /^https?:/.test(CFG.apiBase) ? CFG.apiBase.replace(/api\/v1\/?$/, "") : "";
+    const site = (S.index && S.index.site && S.index.site.base_url) || fromApi || location.href.split("#")[0];
+    return `${site.replace(/\/$/, "")}/${hash}`;
+  };
   const hoursOld = (iso) => (Date.now() - new Date(iso).getTime()) / 3.6e6;
 
   let toastTimer;
@@ -303,7 +309,10 @@
         el("p", { text: x.text }),
         x.stories.length ? el("div", { class: "cites" }, ...x.stories.map((s) => el("a", { class: "cite", href: safeUrl(s.url), target: "_blank", rel: "noopener", text: s.coverage > 1 ? `${s.source.name} +${s.coverage - 1}` : s.source.name }))) : null))),
       b.watch ? el("p", { class: "watch" }, el("b", { text: "Watch next · " }), b.watch) : null,
-      el("p", { class: "fine", text: `${ago(b.generated_at)} · ${b.disclaimer}` }));
+      el("div", { class: "brief-foot" },
+        el("p", { class: "fine", text: `${ago(b.generated_at)} · ${b.disclaimer}` }),
+        el("button", { class: "btn ghost share-brief", onclick: () => share(`Today's world brief: ${b.headline}`, appUrl("#/brief")) },
+          icon("share"), "Share")));
   }
 
   function renderBrief() {
@@ -427,7 +436,7 @@
           el("span", { text: `◆ ${sig.diplomatic} diplomatic` })),
         el("p", { class: "fine", text: "Signals count today's reports by what they describe." })),
       el("div", { class: "section-h" }, el("h2", { text: `Reports (${stories.length})` }),
-        el("button", { onclick: () => share(`${t.name} — World Pulse`, location.href), text: "Share" })),
+        el("button", { onclick: () => share(`${t.name}: ${STATUS_LABEL[t.status]}, ${t.trend} — World Pulse conflict tracker`, appUrl(`#/conflict/${t.id}`)), text: "Share" })),
       timeline);
   }
 

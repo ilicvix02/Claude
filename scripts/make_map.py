@@ -47,7 +47,21 @@ def main(path):
                 raw = ring(r, arcs)
                 if len(raw) < 3 or max(lat for _, lat in raw) < BOTTOM:
                     continue  # Antarctica and anything else wholly below the crop
-                pts = [(lon + 180, TOP - lat) for lon, lat in raw]
+                # Rings that cross the 180° meridian (Chukotka, Fiji) jump from one map edge to the other
+                # and corrupt the fill; unwrap longitudes so each ring stays continuous (the overhang is
+                # clipped at the map edge).
+                pts, prev = [], None
+                for lon, lat in raw:
+                    if prev is not None:
+                        while lon - prev > 180:
+                            lon -= 360
+                        while lon - prev < -180:
+                            lon += 360
+                    pts.append((lon, lat))
+                    prev = lon
+                # Re-centre the unwrapped ring so most of it sits inside -180..180.
+                shift = 360 * round(sum(x for x, _ in pts) / len(pts) / 360)
+                pts = [(x - shift + 180, TOP - y) for x, y in pts]
                 d, last = [], None
                 for x, y in pts:
                     p = f"{x:.1f} {min(y, TOP - BOTTOM):.1f}"

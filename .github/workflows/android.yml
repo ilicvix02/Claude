@@ -36,6 +36,7 @@ jobs:
           REPO="${GITHUB_REPOSITORY#*/}"
           SITE="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${REPO}"
           export WORLDPULSE_APP_API_BASE="${APP_API_BASE:-$SITE/api/v1/}"
+          export WORLDPULSE_BASE_URL="${WORLDPULSE_APP_API_BASE%/api/v1/}"
           echo "App API: $WORLDPULSE_APP_API_BASE"
           python -m worldpulse.build --out public --previous "${WORLDPULSE_APP_API_BASE}all.json"
 

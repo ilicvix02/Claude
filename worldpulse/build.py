@@ -625,6 +625,12 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     (out / "config.js").write_text(
         "window.WP_CONFIG = " + json.dumps({"apiBase": app_api, "bundledApi": "api/v1/", "build": build_id}) + ";\n", encoding="utf-8"
     )
+    # Social previews and search engines need absolute URLs.
+    for page in ("index.html", "docs.html"):
+        f = out / page
+        f.write_text(f.read_text(encoding="utf-8").replace("%BASE_URL%", base_url or "."), encoding="utf-8")
+    if base_url:
+        (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {base_url}/sitemap.xml\n", encoding="utf-8")
     sw = out / "sw.js"
     sw.write_text(sw.read_text(encoding="utf-8").replace("__BUILD__", build_id), encoding="utf-8")
 
