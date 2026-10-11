@@ -7,13 +7,15 @@
   "scripts": {
     "build:web": "python3 -m worldpulse.build --out public",
     "cap:android": "cap add android && capacitor-assets generate --android --iconBackgroundColor '#14110f' --iconBackgroundColorDark '#14110f' --splashBackgroundColor '#14110f' --splashBackgroundColorDark '#14110f' && cap sync android",
-    "cap:ios": "cap add ios && capacitor-assets generate --ios --iconBackgroundColor '#14110f' --splashBackgroundColor '#14110f' && cap sync ios"
+    "cap:ios": "cap add ios && capacitor-assets generate --ios --iconBackgroundColor '#14110f' --splashBackgroundColor '#14110f' && cap sync ios",
+    "video": "node scripts/render_story.mjs --site public --out world-brief.mp4"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.2",
     "@capacitor/assets": "3.0.5",
     "@capacitor/cli": "8.5.2",
     "@capacitor/core": "8.5.2",
-    "@capacitor/ios": "8.5.2"
+    "@capacitor/ios": "8.5.2",
+    "playwright": "1.56.1"
   }
 }

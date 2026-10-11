@@ -81,6 +81,16 @@ npm ci && npm run cap:android && (cd android && ./gradlew assembleDebug)
 
 On a Mac with Xcode, run `npm ci && npm run cap:ios && npx cap open ios`. Distributing through the App Store requires the Apple Developer Program. Without it, iPhone users can install the PWA for free: open the site in Safari, then **Share → Add to Home Screen**.
 
+## Daily video for TikTok, Reels and Shorts
+
+The app turns each day's brief into a vertical video, about 40 seconds long, with a hotspot map. Every point names its sources, and the end card has a "link in bio" call to action and an AI disclosure. Text stays clear of TikTok's buttons and caption area. There are two ways to get it:
+
+- **Ready-made MP4, every morning.** The `Daily video` workflow renders it at 1080×1920 and publishes it at
+  `https://github.com/<user>/<repo>/releases/download/daily-video/world-brief.mp4`. Open that link on your phone, save the video, and post it. It reuses the AI brief from the live site, so it spends no AI credits. Run it once from **Actions → Daily video → Run workflow** to create the link.
+- **Record it yourself.** Open **Brief → Video** in the app (or `/story.html`), start your phone's screen recording and tap **Play**.
+
+To render locally: `npm ci && npx playwright install chromium`, build the site, then run `npm run video` (needs ffmpeg).
+
 ## API
 
 The base path is `/api/v1/`. Full docs are at `/docs.html`; the spec is at `/api/v1/openapi.json`.
@@ -142,8 +152,8 @@ config/       sources.json, conflicts.json (theaters), site.json (branding, AI, 
 worldpulse/   feeds.py · classify.py · conflicts.py · cluster.py · briefing.py · ai.py · build.py
 web/          the app: index.html, app.js, styles.css, sw.js (offline), manifest, icons, land.js (map)
 assets/       logo used to generate native icons and splash screens
-scripts/      make_map.py (map data generator)
+scripts/      make_map.py (map data), render_story.mjs (daily video)
 tests/        offline unit + end-to-end tests (AI tested with a fake client)
-.github/      hourly build-and-deploy workflow, Android APK workflow
+.github/      hourly build-and-deploy, Android APK, and daily video workflows
 package.json, capacitor.config.json   native wrapper (Capacitor 8)
 ```

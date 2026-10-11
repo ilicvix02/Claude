@@ -138,6 +138,7 @@ svg { display: block; }
 .cite:hover { color: var(--ink); border-color: var(--muted); }
 .brief-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
 .brief-foot .fine { margin: 10px 0 0; }
+.brief-actions { display: flex; gap: 8px; flex: none; }
 .share-brief { flex: none; gap: 6px; min-height: 40px; padding: 0 14px; margin-top: 8px; }
 .share-brief svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .watch { margin: 12px 0 0; padding: 12px; border-radius: 10px; background: var(--surface-2); font-size: 14.5px; }

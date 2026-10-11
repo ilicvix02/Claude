@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Video brief · World Pulse</title>
+  <meta name="description" content="Today's world brief as vertical slides, ready to screen-record for TikTok, Reels and Shorts.">
+  <meta name="theme-color" content="#14110f">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="story.css">
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="bars" id="bars" aria-hidden="true"></div>
+    <div class="slides" id="slides" aria-live="polite"></div>
+  </div>
+
+  <div class="intro" id="intro" role="dialog" aria-labelledby="intro-h">
+    <div class="intro-card">
+      <p class="intro-kicker">Video brief</p>
+      <h1 id="intro-h">Make today's video</h1>
+      <ol>
+        <li>Start your phone's screen recording.</li>
+        <li>Tap <b>Play</b>. The slides run by themselves for about 40 seconds.</li>
+        <li>Stop recording on the last slide.</li>
+        <li>In TikTok, trim the start, add a sound, and post with the caption from the launch kit.</li>
+      </ol>
+      <button class="play" id="play" type="button" disabled>Loading…</button>
+      <a class="back" href="./#/brief">Back to the app</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="land.js" defer></script>
+  <script src="story.js" defer></script>
+</body>
+</html>

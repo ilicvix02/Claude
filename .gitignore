@@ -47,3 +47,6 @@ node_modules/
 /ios/
 __pycache__/
 *.pyc
+
+# Rendered videos
+world-brief*.mp4

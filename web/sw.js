@@ -4,7 +4,7 @@ const SHELL = `wp-shell-${BUILD}`;
 const DATA = "wp-data";
 const SHELL_FILES = [
   "./", "index.html", "styles.css", "app.js", "config.js", "land.js", "manifest.webmanifest",
-  "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg",
+  "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "story.html", "story.css", "story.js",
 ];
 
 self.addEventListener("install", (event) => {

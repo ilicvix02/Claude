@@ -53,6 +53,7 @@
     share: "M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6",
     bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
     empty: "M6 3h12v18l-6-4-6 4z",
+    video: "M3 7h12v10H3zM15 11l6-3.5v9L15 13",
     globe: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z",
   };
   const icon = (name) => svg("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" }, svg("path", { d: ICONS[name] }));
@@ -311,8 +312,10 @@
       b.watch ? el("p", { class: "watch" }, el("b", { text: "Watch next · " }), b.watch) : null,
       el("div", { class: "brief-foot" },
         el("p", { class: "fine", text: `${ago(b.generated_at)} · ${b.disclaimer}` }),
-        el("button", { class: "btn ghost share-brief", onclick: () => share(`Today's world brief: ${b.headline}`, appUrl("#/brief")) },
-          icon("share"), "Share")));
+        el("div", { class: "brief-actions" },
+          el("a", { class: "btn ghost share-brief", href: "story.html", title: "Today's brief as vertical slides for TikTok, Reels and Shorts" }, icon("video"), "Video"),
+          el("button", { class: "btn ghost share-brief", onclick: () => share(`Today's world brief: ${b.headline}`, appUrl("#/brief")) },
+            icon("share"), "Share"))));
   }
 
   function renderBrief() {
@@ -540,6 +543,7 @@
       el("div", { class: "card" }, el("ul", { class: "list" },
         el("li", {}, el("span", { text: "Install on this device" }), install),
         el("li", {}, el("span", { text: "Appearance" }), seg),
+        el("li", {}, el("a", { href: "story.html", text: "Video of today's brief" }), el("span", { class: "fine", text: "TikTok · Reels · Shorts" })),
         el("li", {}, el("span", { text: "Data updated" }), el("span", { class: "fine", text: S.generatedAt ? new Date(S.generatedAt).toLocaleString() : "—" })))),
       sectionHead("AI analysis"),
       el("div", { class: "card" },

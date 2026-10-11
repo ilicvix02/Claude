@@ -1,0 +1,55 @@
+name: Daily video
+
+# Every morning, renders the world brief as a 1080x1920 MP4 for TikTok, Reels and Shorts, and
+# publishes it at a fixed link:
+#   https://github.com/<owner>/<repo>/releases/download/daily-video/world-brief.mp4
+# It reuses the AI brief from the live site, so it never spends AI credits itself.
+on:
+  schedule:
+    - cron: "37 5 * * *" # 05:37 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write # to update the daily-video release
+
+concurrency:
+  group: daily-video
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Build today's data
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          export WORLDPULSE_BASE_URL="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${REPO}"
+          python -m worldpulse.build --out public --previous "$WORLDPULSE_BASE_URL/api/v1/all.json"
+
+      - run: npm ci
+      - name: Install Chromium, ffmpeg and fonts
+        run: |
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+
+      - name: Render video
+        run: npm run video
+
+      - name: Publish to the daily-video release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view daily-video >/dev/null 2>&1 || gh release create daily-video \
+            --title "Daily video brief" --latest=false \
+            --notes "Today's World Pulse brief as a 1080x1920 video for TikTok, Reels and Shorts. Replaced every morning."
+          gh release upload daily-video world-brief.mp4 --clobber
