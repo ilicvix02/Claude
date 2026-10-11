@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Pulse API</title>
+  <meta name="description" content="Free, keyless, CORS-enabled JSON API for global deals, crises and the state of the world.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap masthead-row">
+      <a class="brand" href="./">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14"/><path d="M4 17h6l3-7 5 13 3-6h7"/></svg>
+        <span>World&nbsp;Pulse</span>
+      </a>
+      <nav class="top-links"><a href="./">News</a><a href="api/v1/openapi.json">OpenAPI</a><a href="https://github.com/ilicvix02/Claude">Source</a></nav>
+    </div>
+  </header>
+  <main class="wrap doc">
+    <h1>Public API</h1>
+    <p>Static JSON files, regenerated every hour. No key, no sign-up, no rate-limit server — CORS is open, so you can call it straight from a browser. Base path: <code>/api/v1/</code>.</p>
+    <pre>curl -s https://YOUR-SITE/api/v1/state.json | jq '.data | {mood, tension_index}'</pre>
+
+    <h2>Endpoints</h2>
+    <table>
+      <tr><th>Path</th><th>Returns</th></tr>
+      <tr><td><code>index.json</code></td><td>Discovery: endpoints, categories, regions, source health.</td></tr>
+      <tr><td><code>latest.json</code></td><td>Most recent 300 articles.</td></tr>
+      <tr><td><code>all.json</code></td><td>Rolling archive of the last 7 days.</td></tr>
+      <tr><td><code>state.json</code></td><td>State of the world: tension index, mood, category/region breakdown, 7-day history, trending terms, top crises and deals.</td></tr>
+      <tr><td><code>categories/{id}.json</code></td><td><code>deals</code>, <code>crises</code>, <code>conflict</code>, <code>disasters</code>, <code>humanitarian</code>, <code>economy</code>, <code>diplomacy</code>, <code>climate</code>, <code>health</code>, <code>tech</code>. Also as RSS: <code>categories/{id}.xml</code>.</td></tr>
+      <tr><td><code>regions/{id}.json</code></td><td><code>africa</code>, <code>asia</code>, <code>europe</code>, <code>middle-east</code>, <code>americas</code>, <code>oceania</code>.</td></tr>
+      <tr><td><code>sources.json</code></td><td>Every feed with its status from the latest build.</td></tr>
+      <tr><td><code>openapi.json</code></td><td>OpenAPI 3 description (import into Postman, RapidAPI, etc.).</td></tr>
+      <tr><td><code>/feed.xml</code></td><td>RSS of the latest stories.</td></tr>
+    </table>
+
+    <h2>Response shape</h2>
+    <p>Every response is an envelope with <code>meta</code> and <code>data</code>:</p>
+<pre>{
+  "meta": { "api_version": "v1", "generated_at": "2026-10-11T12:00:00Z", "count": 300, ... },
+  "data": [
+    {
+      "id": "3f1c0a9b2d4e5f60",
+      "title": "Leaders sign regional trade accord",
+      "url": "https://publisher.example/story",
+      "summary": "Short excerpt from the feed…",
+      "image": "https://…/thumb.jpg",
+      "source": { "id": "bbc-world", "name": "BBC News – World" },
+      "published_at": "2026-10-11T11:42:00Z",
+      "fetched_at": "2026-10-11T12:00:00Z",
+      "categories": ["deals", "economy", "diplomacy"],
+      "regions": ["asia"],
+      "tone": "deal"
+    }
+  ]
+}</pre>
+    <p><code>tone</code> is one of <code>deal</code>, <code>crisis</code>, <code>mixed</code>, <code>neutral</code>.</p>
+
+    <h2 id="method">Method</h2>
+    <p>Articles come from public RSS/Atom feeds listed in <code>config/sources.json</code>. Categories and regions are assigned by transparent keyword rules in <code>worldpulse/classify.py</code> — no black-box model, so anyone can audit and improve them. The <b>tension index</b> is the share of crisis stories among crisis + deal stories over the last 24 hours (0 = all dealmaking, 100 = all crisis). It measures <em>coverage</em>, not ground truth.</p>
+
+    <h2>Fair use</h2>
+    <p>Only headlines, short excerpts and links are republished. Always link to <code>url</code> and credit <code>source.name</code>. Please cache responses — the data only changes hourly.</p>
+  </main>
+</body>
+</html>

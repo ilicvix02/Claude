@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Pulse</title>
+  <meta name="description" content="Global deals, crises and the state of the world — open-source news aggregator with a free public JSON API.">
+  <meta property="og:title" content="World Pulse — the state of the world, hourly">
+  <meta property="og:description" content="Global deals, crises and the state of the world. Free public API, open source.">
+  <link rel="alternate" type="application/rss+xml" title="World Pulse" href="feed.xml">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='none' stroke='%23c2410c' stroke-width='3'/><path d='M4 17h6l3-7 5 13 3-6h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap masthead-row">
+      <a class="brand" href="./">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14"/><path d="M4 17h6l3-7 5 13 3-6h7"/></svg>
+        <span>World&nbsp;Pulse</span>
+      </a>
+      <nav class="top-links">
+        <a href="docs.html">API</a>
+        <a href="feed.xml">RSS</a>
+        <a id="source-link" href="https://github.com/ilicvix02/Claude">Source</a>
+        <a id="support-link" class="support" href="#support" hidden>Support</a>
+      </nav>
+    </div>
+    <p class="wrap tagline" id="tagline">Global deals, crises and the state of the world — refreshed hourly.</p>
+  </header>
+
+  <div class="wrap sponsor-bar" id="sponsor" hidden></div>
+
+  <main class="wrap layout">
+    <section class="state" aria-labelledby="state-h">
+      <h2 id="state-h" class="eyebrow">State of the world · last 24h</h2>
+      <div class="gauge-card">
+        <div class="gauge-head">
+          <span class="mood" id="mood">—</span>
+          <span class="index"><b id="tension">—</b><small>/100</small></span>
+        </div>
+        <div class="gauge" role="img" id="gauge-img" aria-label="Tension index">
+          <div class="gauge-fill" id="gauge-fill"></div>
+          <div class="gauge-marker" id="gauge-marker"></div>
+        </div>
+        <div class="gauge-legend"><span>Deals</span><span>Crises</span></div>
+        <p class="fine" id="state-explain"></p>
+        <div class="history" id="history" aria-label="Tension over the last 7 days"></div>
+      </div>
+
+      <h3 class="eyebrow">Regions</h3>
+      <ul class="regions" id="regions"></ul>
+
+      <h3 class="eyebrow">Trending</h3>
+      <div class="chips" id="trending"></div>
+
+      <div class="ad-slot" id="ad-slot" hidden></div>
+
+      <div class="support-card" id="support" hidden>
+        <h3>Keep this free</h3>
+        <p>World Pulse is open source and has no paywall. Sponsorships and donations pay for maintenance.</p>
+        <div class="support-links" id="support-links"></div>
+      </div>
+    </section>
+
+    <section class="feed" aria-labelledby="feed-h">
+      <h2 id="feed-h" class="sr-only">Articles</h2>
+      <div class="controls">
+        <div class="tabs" id="tabs" role="tablist"></div>
+        <div class="filters">
+          <select id="region" aria-label="Region"><option value="">All regions</option></select>
+          <input id="q" type="search" placeholder="Search headlines…" aria-label="Search headlines">
+        </div>
+      </div>
+      <p class="status" id="status">Loading…</p>
+      <ol class="articles" id="articles"></ol>
+      <button class="more" id="more" hidden>Show more</button>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <p>Headlines and excerpts belong to their publishers and link to the original story. Classification is automatic and rule-based — <a href="docs.html#method">see the method</a>.</p>
+    <p id="footer-meta"></p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

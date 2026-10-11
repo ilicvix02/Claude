@@ -1,0 +1,23 @@
+{
+  "_comment": "Site settings and revenue hooks. Every revenue field is optional; empty values are simply not rendered.",
+  "title": "World Pulse",
+  "tagline": "Global deals, crises and the state of the world — as a free public API.",
+  "base_url": "",
+  "retention_days": 7,
+  "latest_limit": 300,
+  "revenue": {
+    "sponsor": {
+      "_comment": "A paid 'Presented by' slot shown on the site and in every API response. Sell it weekly/monthly.",
+      "text": "",
+      "url": ""
+    },
+    "ethicalads_publisher": "",
+    "donate": [
+      {"label": "GitHub Sponsors", "url": ""},
+      {"label": "Ko-fi", "url": ""},
+      {"label": "Open Collective", "url": ""}
+    ],
+    "newsletter_url": "",
+    "advertise_email": ""
+  }
+}

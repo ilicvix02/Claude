@@ -1,0 +1,18 @@
+{
+  "_comment": "Public RSS/Atom feeds. Only headline, link, date and a short excerpt are republished, always linking back to the publisher. Add or remove feeds freely; failed feeds are skipped.",
+  "sources": [
+    {"id": "bbc-world", "name": "BBC News – World", "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "homepage": "https://www.bbc.com/news/world"},
+    {"id": "bbc-business", "name": "BBC News – Business", "url": "https://feeds.bbci.co.uk/news/business/rss.xml", "homepage": "https://www.bbc.com/news/business"},
+    {"id": "aljazeera", "name": "Al Jazeera", "url": "https://www.aljazeera.com/xml/rss/all.xml", "homepage": "https://www.aljazeera.com"},
+    {"id": "guardian-world", "name": "The Guardian – World", "url": "https://www.theguardian.com/world/rss", "homepage": "https://www.theguardian.com/world"},
+    {"id": "guardian-business", "name": "The Guardian – Business", "url": "https://www.theguardian.com/uk/business/rss", "homepage": "https://www.theguardian.com/business"},
+    {"id": "dw", "name": "Deutsche Welle", "url": "https://rss.dw.com/rdf/rss-en-all", "homepage": "https://www.dw.com/en"},
+    {"id": "france24", "name": "France 24", "url": "https://www.france24.com/en/rss", "homepage": "https://www.france24.com/en"},
+    {"id": "npr-world", "name": "NPR – World", "url": "https://feeds.npr.org/1004/rss.xml", "homepage": "https://www.npr.org/sections/world"},
+    {"id": "cnbc-world", "name": "CNBC – World", "url": "https://www.cnbc.com/id/100727362/device/rss/rss.html", "homepage": "https://www.cnbc.com/world"},
+    {"id": "un-news", "name": "UN News", "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "homepage": "https://news.un.org"},
+    {"id": "reliefweb", "name": "ReliefWeb", "url": "https://reliefweb.int/updates/rss.xml", "homepage": "https://reliefweb.int", "max_items": 40},
+    {"id": "who", "name": "World Health Organization", "url": "https://www.who.int/rss-feeds/news-english.xml", "homepage": "https://www.who.int", "max_items": 25},
+    {"id": "gdacs", "name": "GDACS Disaster Alerts", "url": "https://www.gdacs.org/xml/rss.xml", "homepage": "https://www.gdacs.org", "max_items": 30, "categories": ["crises", "disasters"]}
+  ]
+}
