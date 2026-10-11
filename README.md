@@ -50,7 +50,7 @@ python3 -m http.server -d public 8000             # open http://localhost:8000
 python3 -m unittest discover -s tests             # offline tests
 ```
 
-To enable AI locally: `pip install -r requirements-ai.txt` and `export ANTHROPIC_API_KEY=…` before building.
+To enable AI locally: `pip install -r requirements-ai.txt`, copy `.env.example` to `.env` and put your key there. `.env` is git-ignored, so it never reaches GitHub; for the hourly build on GitHub, store the key as the `ANTHROPIC_API_KEY` repository secret.
 
 ## Deploy
 

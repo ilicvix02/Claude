@@ -34,6 +34,11 @@ google-services.json
 # Android Profiling
 *.hprof
 
+# Local secrets (API keys) — never committed. Copy .env.example to .env.
+.env
+.env.*
+!.env.example
+
 # World Pulse build output
 public/
 node_modules/

@@ -251,6 +251,23 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(next(a for a in stories2 if a["id"] == ai_story["id"])["insight"], "AI note")
 
 
+class DotEnv(unittest.TestCase):
+    def test_reads_file_without_overriding_real_env(self):
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            env = Path(tmp) / ".env"
+            env.write_text("# comment\nexport WP_DOTENV_A='one'\nWP_DOTENV_B=\"two\"\nWP_DOTENV_C=\n")
+            os.environ["WP_DOTENV_B"] = "real"
+            try:
+                build.load_dotenv(env)
+                self.assertEqual(os.environ["WP_DOTENV_A"], "one")
+                self.assertEqual(os.environ["WP_DOTENV_B"], "real")
+                self.assertNotIn("WP_DOTENV_C", os.environ)
+            finally:
+                for k in ("WP_DOTENV_A", "WP_DOTENV_B"):
+                    os.environ.pop(k, None)
+
+
 class FeedQuirks(unittest.TestCase):
     def test_loose_dates_and_trailing_junk(self):
         self.assertEqual(feeds.parse_date("Friday, October 2, 2026 - 00:00"), datetime(2026, 10, 2, tzinfo=timezone.utc))

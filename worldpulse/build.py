@@ -616,7 +616,22 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     }
 
 
+def load_dotenv(path: Path = ROOT / ".env") -> None:
+    """Read KEY=VALUE lines from a local, git-ignored .env file. Real environment variables win."""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip().removeprefix("export ").strip(), value.strip().strip("'\"")
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+
+
 def main(argv=None) -> None:
+    load_dotenv()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--out", default="public", type=Path, help="output directory (default: public)")
     p.add_argument("--previous", help="URL or path of a previous all.json to merge, keeping a rolling archive")
