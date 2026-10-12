@@ -1120,7 +1120,10 @@
   // router
 
   // Each route's page title is the string route.<name>.
+  // The Stories home (stories.js) reuses the app's data and helpers through this small surface.
+  const STORIES_API = { S, storyText, briefText, itemFor, readLang, tName, statusLabel, isSaved, toggleSave, share, appUrl, toast };
   const ROUTES = {
+    stories: (arg) => window.WP_STORIES.render(STORIES_API, arg),
     brief: renderBrief,
     conflicts: renderConflicts,
     conflict: renderConflict,
@@ -1137,7 +1140,7 @@
     const raw = location.hash.replace(/^#\/?/, "");
     const [path, qs] = raw.split("?");
     const [name, arg] = (path || "").split("/");
-    return { name: ROUTES[name] ? name : "brief", arg: arg ? decodeURIComponent(arg) : "", params: new URLSearchParams(qs || "") };
+    return { name: ROUTES[name] ? name : "stories", arg: arg ? decodeURIComponent(arg) : "", params: new URLSearchParams(qs || "") };
   }
 
   function setTitle(text) {
@@ -1155,7 +1158,7 @@
     document.body.dataset.route = r.name;
     $("#back").hidden = !PARENT[r.name];
     $(".brand").hidden = !!PARENT[r.name];
-    setTitle(r.name === "brief" ? null : tr(`route.${r.name}`));
+    setTitle(r.name === "brief" || r.name === "stories" ? null : tr(`route.${r.name}`));
     markSections();
     if (!S.index) return;
     view.replaceChildren(ROUTES[r.name](r.arg, r.params));

@@ -3,7 +3,7 @@
   "short_name": "World Pulse",
   "description": "Live conflict tracker, AI world brief, and global deals and crises.",
   "id": "./",
-  "start_url": "./#/brief",
+  "start_url": "./#/stories",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
