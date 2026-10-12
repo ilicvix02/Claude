@@ -27,7 +27,7 @@
   },
   "pro": {
     "_comment": "World Pulse Pro (docs/PRO.md). api_url is the license server; the Deploy Pro workflow writes it. Empty keeps Pro dormant: no bundle, and the app shows 'Pro is launching soon' instead of buy buttons. sender_email is the verified Brevo sender of the license emails.",
-    "api_url": "",
+    "api_url": "https://worldpulse-pro.ilicvix.workers.dev",
     "sender_email": "ilicvix@gmail.com",
     "sender_name": "World Pulse"
   },
