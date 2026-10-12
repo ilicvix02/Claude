@@ -25,17 +25,13 @@
   <meta name="twitter:image" content="https://ilicvix02.github.io/Claude/og-image.png">
   <link rel="stylesheet" href="../fonts/fonts.css">
   <script>
-    // In-app browsers (TikTok, Instagram, Facebook) cannot install apps: leave them before anything renders.
+    // In-app browsers (TikTok, Instagram, Facebook) cannot install apps. They often block automatic jumps
+    // to another browser, so the page offers a tap-to-open button instead (taps are allowed far more often).
     (function () {
       var ua = navigator.userAgent || "";
       var inApp = /musical_ly|Bytedance|BytedanceWebview|TikTok|trill|Instagram|FBAN|FBAV|FB_IAB/i.test(ua);
       var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       window.WP_GET = { inApp: inApp, android: android, ios: ios };
-      if (inApp && android && !/[?&](noescape|via=intent)/.test(location.search)) {
-        var qs = location.search ? location.search + "&via=intent" : "?via=intent";
-        var path = "ilicvix02.github.io/Claude/get/" + qs;
-        location.href = "intent://" + path + "#Intent;scheme=https;package=com.android.chrome;end";
-      }
     })();
   </script>
   <style>
@@ -219,7 +215,7 @@
     };
     $("ios-link").onclick = function () { if (G.inApp && G.ios) inApp(); else open("ios"); };
     function inApp() {
-      if (G.android) { var c = $("chrome"); c.hidden = false; c.href = "intent://ilicvix02.github.io/Claude/get/" + (location.search ? location.search + "&" : "?") + "via=intent#Intent;scheme=https;package=com.android.chrome;end"; }
+      if (G.android) { $("inapp-h").setAttribute("data-i18n", "get.inapp_title_android"); $("inapp-h").nextElementSibling.setAttribute("data-i18n", "get.inapp_text_android"); var c = $("chrome"); c.hidden = false; var q = (location.search ? location.search + "&" : "?") + "via=intent"; c.href = "intent://" + location.host + location.pathname + q + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(location.origin + location.pathname + q) + ";end"; }
       open("inapp");
     }
     if (G.inApp) inApp();

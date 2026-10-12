@@ -64,6 +64,8 @@ WP_I18N.add("sr", {
   "get.ios_title": "Додајте на почетни екран",
   "get.ios_step1": "Додирните Дели на траци у Safariju",
   "get.ios_step2": "Изаберите „Додај на почетни екран“, па Додај",
+  "get.inapp_title_android": "Отворите у Chrome-у за инсталацију",
+  "get.inapp_text_android": "TikTok прегледач не може да инсталира апликације. Додирните дугме испод или ⋮ горе десно, па „Отвори у прегледачу“.",
   "get.inapp_title": "Отворите у Safariju",
   "get.inapp_text": "Додирните ••• горе десно, па „Отвори у Safariju“ (или „Отвори у прегледачу“).",
   "get.open_chrome": "Отвори у Chrome-у",

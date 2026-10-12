@@ -63,6 +63,8 @@ WP_I18N.add("de", {
   "get.ios_title": "Zum Home-Bildschirm hinzufügen",
   "get.ios_step1": "Tippen Sie in Safari unten auf Teilen",
   "get.ios_step2": "Wählen Sie „Zum Home-Bildschirm“, dann Hinzufügen",
+  "get.inapp_title_android": "Zum Installieren in Chrome öffnen",
+  "get.inapp_text_android": "Der TikTok-Browser kann keine Apps installieren. Tippen Sie unten auf die Schaltfläche oder oben rechts auf ⋮ und dann auf „Im Browser öffnen“.",
   "get.inapp_title": "In Safari öffnen",
   "get.inapp_text": "Tippen Sie oben rechts auf ••• und dann auf „In Safari öffnen“ (oder „Im Browser öffnen“).",
   "get.open_chrome": "In Chrome öffnen",

@@ -77,6 +77,8 @@
     "get.ios_title": "Add to your Home Screen",
     "get.ios_step1": "Tap Share in Safari's toolbar",
     "get.ios_step2": "Choose “Add to Home Screen”, then Add",
+    "get.inapp_title_android": "Open in Chrome to install",
+    "get.inapp_text_android": "TikTok's browser can't install apps. Tap the button below, or tap ⋮ at the top right, then “Open in browser”.",
     "get.inapp_title": "Open in Safari",
     "get.inapp_text": "Tap ••• at the top right, then “Open in Safari” (or “Open in browser”).",
     "get.open_chrome": "Open in Chrome",
