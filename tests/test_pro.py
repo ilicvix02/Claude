@@ -185,7 +185,7 @@ class Bundle(unittest.TestCase):
             bpath, kpath = Path(tmp) / "bundle.json", Path(tmp) / "key.json"
             bpath.write_text(json.dumps({"meta": {}, "data": bundle}))
             kpath.write_text(json.dumps(self.priv_jwk))
-            out = subprocess.run(["node", str(ROOT / "worker" / "test" / "browser_unlock.mjs"), str(bpath), str(kpath)],
+            out = subprocess.run(["node", str(ROOT / "worker" / "scripts" / "browser_unlock.mjs"), str(bpath), str(kpath)],
                                  capture_output=True, text=True, timeout=120)
         self.assertEqual(out.returncode, 0, out.stderr[-2000:])
         result = json.loads(out.stdout.strip().splitlines()[-1])

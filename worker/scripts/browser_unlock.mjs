@@ -1,5 +1,5 @@
 // End-to-end check of the Pro unlock path in a real browser, run by tests/test_pro.py:
-//   node worker/test/browser_unlock.mjs <bundle.json> <private-jwk.json>
+//   node worker/scripts/browser_unlock.mjs <bundle.json> <private-jwk.json>
 // Serves a page plus the real Worker code as a local mock /unlock (test keys, in-memory KV) and has
 // Chromium's WebCrypto fetch the bundle, unlock its content key and decrypt it. Prints the plaintext.
 import http from "node:http";

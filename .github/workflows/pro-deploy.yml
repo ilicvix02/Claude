@@ -1,0 +1,153 @@
+name: Deploy Pro
+
+# Deploys the World Pulse Pro license server (worker/) to Cloudflare. See docs/PRO.md.
+# Without CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets every step is skipped.
+# Public repo: no step may print a secret.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["worker/**", ".github/workflows/pro-deploy.yml"]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: pro-deploy
+  cancel-in-progress: false
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  WRANGLER: npx --yes wrangler@4
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check Cloudflare secrets
+        id: cf
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set; skipping Pro deploy."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cf.outputs.ok == 'true'
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        if: steps.cf.outputs.ok == 'true'
+        with:
+          node-version: "22"
+
+      - name: Test worker
+        if: steps.cf.outputs.ok == 'true'
+        working-directory: worker
+        run: npm test
+
+      - name: Ensure KV namespace
+        if: steps.cf.outputs.ok == 'true'
+        working-directory: worker
+        run: |
+          set -euo pipefail
+          find_id() { $WRANGLER kv namespace list 2>/dev/null | jq -r '[.[] | select(.title | test("LICENSES$"))][0].id // empty'; }
+          ID="$(find_id)"
+          if [ -z "$ID" ]; then
+            $WRANGLER kv namespace create LICENSES > /dev/null
+            ID="$(find_id)"
+          fi
+          [ -n "$ID" ] || { echo "::error::could not find or create the LICENSES KV namespace"; exit 1; }
+          # Patched only in the runner's checkout; never committed.
+          sed -i "s/__KV_NAMESPACE_ID__/$ID/" wrangler.toml
+
+      - name: Deploy worker
+        id: deploy
+        if: steps.cf.outputs.ok == 'true'
+        working-directory: worker
+        run: |
+          set -euo pipefail
+          $WRANGLER deploy 2>&1 | tee deploy.log
+          URL="$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
+          [ -n "$URL" ] || { echo "::error::no workers.dev URL in deploy output"; exit 1; }
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Set worker secrets
+        if: steps.cf.outputs.ok == 'true'
+        working-directory: worker
+        env:
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          KOFI_VERIFICATION_TOKEN: ${{ secrets.KOFI_VERIFICATION_TOKEN }}
+        run: |
+          set -euo pipefail
+          put() { printf '%s' "$2" | $WRANGLER secret put "$1" > /dev/null && echo "set $1"; }
+          EXISTING="$($WRANGLER secret list 2>/dev/null | jq -r '.[].name' || true)"
+          # The P-256 key is generated once and lives only in Cloudflare; regenerating it would
+          # orphan every bundle already encrypted to the old public key.
+          if ! grep -qx PRO_PRIVATE_KEY <<< "$EXISTING"; then
+            node -e '
+              const { subtle } = globalThis.crypto;
+              subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"])
+                .then(k => subtle.exportKey("jwk", k.privateKey))
+                .then(j => process.stdout.write(JSON.stringify({ kty: j.kty, crv: j.crv, x: j.x, y: j.y, d: j.d })));
+            ' | $WRANGLER secret put PRO_PRIVATE_KEY > /dev/null
+            echo "generated PRO_PRIVATE_KEY"
+          fi
+          [ -n "$BREVO_API_KEY" ] && put BREVO_API_KEY "$BREVO_API_KEY"
+          [ -n "$ADMIN_TOKEN" ] && put ADMIN_TOKEN "$ADMIN_TOKEN"
+          if [ -n "$KOFI_VERIFICATION_TOKEN" ]; then
+            put KOFI_VERIFICATION_TOKEN "$KOFI_VERIFICATION_TOKEN"
+          else
+            echo "::warning::KOFI_VERIFICATION_TOKEN not set yet; Ko-fi webhooks will be rejected. See docs/PRO.md."
+          fi
+
+      - name: Health check
+        if: steps.cf.outputs.ok == 'true'
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "${{ steps.deploy.outputs.url }}/health" && curl -fsS -o /dev/null "${{ steps.deploy.outputs.url }}/pubkey"; then
+              echo; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::worker health check failed"; exit 1
+
+      - name: Write api_url to config/site.json
+        id: cfg
+        if: steps.cf.outputs.ok == 'true'
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re
+          p = "config/site.json"
+          s = open(p, encoding="utf-8").read()
+          n = re.sub(r'("api_url"\s*:\s*)"[^"]*"', lambda m: m.group(1) + '"' + os.environ["URL"] + '"', s, count=1)
+          open(p, "w", encoding="utf-8").write(n)
+          PY
+          if git diff --quiet -- config/site.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Pro: set license server URL" -- config/site.json
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pushes made with GITHUB_TOKEN don't trigger workflows, so start the site build explicitly.
+      - name: Rebuild site
+        if: steps.cf.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --ref main
