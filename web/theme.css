@@ -85,3 +85,13 @@ body { background: radial-gradient(120% 50% at 50% -10%, color-mix(in srgb, var(
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .desk-row:active { transform: none; } }
 .story.lead img, .story.lead picture { border-radius: var(--radius) var(--radius) 0 0; }
+
+/* notification permission sheet */
+#notify-sheet { position: fixed; inset: auto 0 calc(76px + env(safe-area-inset-bottom)) 0; z-index: 60; display: flex; justify-content: center; padding: 0 16px; }
+#notify-sheet .ns-card { width: min(440px, 100%); background: #1c1714; color: #f7f1e8; border: 1px solid rgba(249,115,22,.35); border-radius: 18px; padding: 18px; box-shadow: 0 18px 48px rgba(0,0,0,.45); }
+#notify-sheet h2 { margin: 0 0 6px; font: 700 20px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+#notify-sheet p { margin: 0 0 14px; font: 16px/1.4 "Source Serif 4", Georgia, serif; color: #d8cfc2; }
+#notify-sheet .ns-actions { display: flex; gap: 10px; }
+#notify-sheet button { flex: 1; min-height: 46px; border-radius: 12px; border: 0; font: 700 16px "Barlow", sans-serif; cursor: pointer; }
+#notify-sheet .ns-yes { background: #f97316; color: #160b04; }
+#notify-sheet .ns-no { background: rgba(255,255,255,.08); color: #f7f1e8; }
