@@ -277,6 +277,18 @@
     return parts.length ? el("p", { class: "kicker" }, ...spaced(...parts)) : null;
   }
 
+  // Story text in the reader's language: the original when the story is in it, else the cached AI
+  // translation (title_i18n/summary_i18n/insight_i18n), else the original. sr-Latn reads the Serbian data in Latin.
+  const readLang = () => (I18N.lang.startsWith("sr") ? "sr" : I18N.lang);
+  function storyText(a) {
+    const L = readLang(), own = (a.lang || "en") === L;
+    const tIns = L === "en" ? a.insight : (a.insight_i18n || {})[L];
+    const t = own ? null : (a.title_i18n || {})[L];
+    // Untranslated: an English story keeps its English AI insight; other originals show their excerpt.
+    if (!t) return { title: tx(a.title), summary: tx(a.summary), insight: tIns ? tx(tIns) : (a.lang || "en") === "en" ? a.insight : null, translated: false };
+    return { title: tx(t), summary: tx((a.summary_i18n || {})[L] || ""), insight: tIns ? tx(tIns) : null, translated: true };
+  }
+
   // One story. kind: "list" (ruled list, thumbnail on the right), "lead" (front-page lead) or "wire" (time column).
   function storyItem(a, opts = {}) {
     const url = safeUrl(a.url);
@@ -286,31 +298,34 @@
     const saveBtn = el("button", { class: "icon-btn", "aria-label": tr("story.save"), "aria-pressed": String(isSaved(a.id)) }, icon("bookmark"));
     saveBtn.addEventListener("click", () => { toggleSave(a, saveBtn); if (opts.onChange) opts.onChange(); });
 
+    const st = storyText(a);
+    const insight = st.insight;
     const others = opts.cluster ? S.all.filter((x) => x.cluster === a.id && x.id !== a.id) : [];
     return el(opts.tag || "li", { class: `story${kind === "list" ? "" : ` ${kind}`}${img ? "" : " noimg"}` },
       kind === "wire" ? el("time", { class: "stamp", datetime: a.published_at, title: longTime(a.published_at), text: clock(a.published_at) }) : null,
       el("div", { class: "story-main" },
         el("div", { class: "story-text" },
           kicker(a, opts.theater),
-          el(kind === "lead" ? "h2" : "h3", { class: "hl" }, el("a", { href: url, target: "_blank", rel: "noopener", text: a.title })),
-          a.insight
-            ? el("p", { class: "insight" }, el("span", { class: "badge ai", text: tr("ai.short") }), " ", a.insight)
-            : a.summary ? el("p", { class: "excerpt", text: a.summary }) : null),
+          el(kind === "lead" ? "h2" : "h3", { class: "hl" }, el("a", { href: `#/story/${encodeURIComponent(a.id)}`, text: st.title })),
+          insight
+            ? el("p", { class: "insight" }, el("span", { class: "badge ai", text: tr("ai.short") }), " ", insight)
+            : st.summary ? el("p", { class: "excerpt", text: st.summary }) : null),
         img ? el("img", { src: img, alt: "", loading: kind === "lead" ? "eager" : "lazy", decoding: "async", referrerpolicy: "no-referrer", onerror: (e) => { e.target.closest(".story").classList.add("noimg"); e.target.remove(); } }) : null),
       others.length
         ? el("details", { class: "also" },
             el("summary", { text: tr("story.more_reports", { n: others.length }) }),
-            el("ul", {}, ...others.map((o) => el("li", {}, el("a", { href: safeUrl(o.url), target: "_blank", rel: "noopener" }, el("b", { text: o.source.name }), ` ${o.title}`)))))
+            el("ul", {}, ...others.map((o) => el("li", {}, el("a", { href: `#/story/${encodeURIComponent(o.id)}` }, el("b", { text: o.source.name }), ` ${storyText(o).title}`)))))
         : null,
       el("div", { class: "story-foot" },
         el("p", { class: "meta" }, ...spaced(
           a.severity >= 2 ? sevBars(a.severity) : (tone ? el("span", { class: `tone ${a.tone}`, text: tone }) : null),
           el("b", { text: a.source.name }),
           kind === "wire" ? null : timeEl(a.published_at, ago(a.published_at)),
-          a.coverage > 1 ? el("span", { text: tr("story.outlets", { n: a.coverage }) }) : null)),
+          a.coverage > 1 ? el("span", { text: tr("story.outlets", { n: a.coverage }) }) : null,
+          st.translated ? el("span", { class: "tr-mark", title: a.title }, tr("story.translated"), " · ", el("a", { href: url, target: "_blank", rel: "noopener", lang: a.lang || "en", text: tr("story.original") })) : null)),
         el("div", { class: "actions" },
           saveBtn,
-          el("button", { class: "icon-btn", "aria-label": tr("story.share"), onclick: () => share(a.title, url) }, icon("share")))));
+          el("button", { class: "icon-btn", "aria-label": tr("story.share"), onclick: () => share(st.title, url) }, icon("share")))));
   }
 
   function dayLabel(iso) {
@@ -400,7 +415,9 @@
   function topStories(limit) {
     const now = Date.now();
     const leads = S.all.filter((a) => (a.cluster || a.id) === a.id && now - new Date(a.published_at) < 864e5);
-    const score = (a) => 2 * (a.coverage || 1) + 1.5 * (a.severity || 0) + ((a.categories || []).some((c) => c === "crises" || c === "deals") ? 1.5 : 0) - hoursOld(a.published_at) / 8;
+    const L = readLang();
+    // Non-English readers get stories from outlets in their language lifted up the ranking.
+    const score = (a) => (L !== "en" && (a.lang || "en") === L ? 3 : 0) + 2 * (a.coverage || 1) + 1.5 * (a.severity || 0) + ((a.categories || []).some((c) => c === "crises" || c === "deals") ? 1.5 : 0) - hoursOld(a.published_at) / 8;
     return leads.sort((a, b) => score(b) - score(a)).slice(0, limit);
   }
 
@@ -631,6 +648,45 @@
     return out;
   }
 
+  // In-app article page for one story: headline and standfirst in the reader's language, the AI detailed
+  // brief (or the excerpt plus the conflict's background), related reports, the theater box and the original link.
+  function renderStory(id) {
+    const a = S.all.find((x) => x.id === id) || savedList().find((x) => x.id === id);
+    if (!a) return el("div", { class: "page" }, el("p", { class: "empty", text: tr("story.not_found") }), el("a", { class: "more-link", href: "#/feed", text: tr("front.all_latest") }));
+    const L = readLang(), st = storyText(a), url = safeUrl(a.url);
+    setTitle(st.title);
+    const t = (a.theaters || []).map(theaterById).find(Boolean);
+    const ai = ((a.story_brief || {})[L] || []).map(tx);
+    let paras = ai;
+    if (!paras.length) {
+      paras = [st.insight, t ? tDesc(t) : null, t && t.analysis ? analysisText(t).summary : null].filter(Boolean);
+    }
+    const lead = (a.cluster || a.id);
+    const related = S.all.filter((x) => x.id !== a.id && (x.cluster === lead || x.id === lead || (t && (x.theaters || []).includes(t.id) && (x.cluster || x.id) === x.id))).slice(0, 6);
+    const img = a.image && safeUrl(a.image);
+    const box = t ? el("aside", { class: `story-theater st st-${t.status}` },
+      el("p", { class: "kicker" }, el("a", { href: `#/conflict/${t.id}`, text: tr("conflicts.title") })),
+      el("h2", {}, el("a", { href: `#/conflict/${t.id}`, text: tName(t) })),
+      el("p", { class: "status-line" }, statusPill(t), trendBadge(t)),
+      el("p", { class: "fine", text: tr("conflict.kpi_24h", { n: t.stories_24h }) + `: ${I18N.num(t.stories_24h)}` })) : null;
+    return el("article", { class: "page article" },
+      el("header", { class: "page-head" },
+        kicker(a),
+        el("h1", { text: st.title }),
+        st.summary ? el("p", { class: "dek standfirst", text: st.summary }) : null,
+        el("p", { class: "meta" }, ...spaced(el("b", { text: a.source.name }), timeEl(a.published_at, ago(a.published_at)),
+          st.translated ? el("span", { class: "tr-mark", text: tr("story.translated") }) : null))),
+      img ? el("img", { class: "article-img", src: img, alt: "", decoding: "async", referrerpolicy: "no-referrer", onerror: (e) => e.target.remove() }) : null,
+      paras.length ? el("section", { class: "article-body" },
+        el("div", { class: "section-h" }, el("h2", { text: tr("story.brief") }), aiLabel(ai.length > 0, tr("story.background"))),
+        ...paras.map((p) => el("p", { class: "body-text", text: p })),
+        el("p", { class: "fine", text: ai.length ? tr("story.ai_fine") : tr("story.rules_fine") })) : null,
+      box,
+      related.length ? el("section", { class: "article-related" }, sectionHead(tr("story.related")),
+        el("ul", { class: "stories" }, ...related.map((x) => storyItem(x, { noImage: true })))) : null,
+      el("p", { class: "article-original" }, el("a", { href: url, target: "_blank", rel: "noopener", lang: a.lang || "en", text: tr("story.read_original", { source: a.source.name }) })));
+  }
+
   function renderConflict(id) {
     const t = theaterById(id);
     if (!t) return el("div", { class: "page" }, el("p", { class: "empty", text: tr("conflict.untracked") }));
@@ -698,6 +754,7 @@
     const f = S.feed;
     const cat = params.get("c") || "";
     if (cat !== f.cat) f.shown = PAGE;
+    const L = readLang();
     f.cat = cat; f.region = params.get("r") || ""; f.q = params.get("q") || "";
     const section = (S.index.categories || []).find((c) => c.id === f.cat);
     if (section) setTitle(catLabel(section.id));
@@ -705,6 +762,7 @@
       ...S.index.regions.map((r) => el("option", { value: r.id, text: regionLabel(r.id) })));
     const q = el("input", { type: "search", placeholder: tr("feed.search"), "aria-label": tr("feed.search"), value: f.q, enterkeyhint: "search" });
     const count = el("p", { class: "count" });
+    const only = L === "en" ? null : el("button", { class: "chip only-lang", "aria-pressed": String(!!f.only), onclick: () => { f.only = !f.only; only.setAttribute("aria-pressed", String(f.only)); f.shown = PAGE; draw(); } }, tr("feed.only_lang"));
     const list = el("div", { class: "wire" });
     const more = el("button", { class: "more-btn", text: tr("feed.more") });
 
@@ -721,7 +779,8 @@
         (a.cluster || a.id) === a.id &&
         (!f.cat || (a.categories || []).includes(f.cat)) &&
         (!f.region || (a.regions || []).includes(f.region)) &&
-        (!needle || `${a.title} ${a.summary} ${a.source.name} ${a.insight || ""}`.toLowerCase().includes(needle)));
+        (!only || !f.only || (a.lang || "en") === L) &&
+        (!needle || `${a.title} ${a.summary} ${a.source.name} ${a.insight || ""} ${Object.values(a.title_i18n || {}).join(" ")} ${Object.values(a.summary_i18n || {}).join(" ")}`.toLowerCase().includes(needle)));
     };
     const draw = () => {
       writeHash();
@@ -738,7 +797,7 @@
     draw();
     return el("div", { class: "page" },
       pageHead(section ? catLabel(section.id) : tr("feed.title"), { dek: section ? catDesc(section) : tr("feed.dek", { n: S.index.sources_total }) }),
-      el("div", { class: "filters" }, region, q), count, list, more);
+      el("div", { class: "filters" }, region, q, only), count, list, more);
   }
 
   function renderSaved() {
@@ -1039,13 +1098,14 @@
     brief: renderBrief,
     conflicts: renderConflicts,
     conflict: renderConflict,
+    story: renderStory,
     feed: renderFeed,
     saved: renderSaved,
     more: renderMore,
     support: renderSupport,
     pro: renderPro,
   };
-  const PARENT = { conflict: "conflicts", support: "more", pro: "more" }; // detail views: highlighted tab and back target
+  const PARENT = { story: "brief", conflict: "conflicts", support: "more", pro: "more" }; // detail views: highlighted tab and back target
 
   function parseHash() {
     const raw = location.hash.replace(/^#\/?/, "");

@@ -16,6 +16,12 @@
     "_translate_comment": "Languages the AI brief and conflict summaries are translated into after each new brief (one short call per language, counted against budget_usd): de German, sr Serbian Cyrillic. [] turns translations off.",
     "translate": ["de", "sr"],
     "translate_effort": "low",
+    "_translate_stories_comment": "Reader languages story titles, excerpts and AI insights are translated into (one call per language per build, newest untranslated stories first, cached per story). German and Serbian stories are translated into English too. [] turns it off.",
+    "translate_stories": ["en", "de", "sr"],
+    "translate_stories_per_run": 40,
+    "_story_briefs_comment": "Languages of the AI-written detailed briefs on in-app story pages (3-5 paragraphs, for the most-covered and conflict stories of the last 48h; one call per language per build, cached per story). [] turns them off; the app then shows the excerpt plus the conflict's background.",
+    "story_briefs": ["en", "de", "sr"],
+    "story_briefs_per_run": 8,
     "_budget_comment": "Hard cap on total AI spend in US dollars, counted across all builds (see api/v1/ai-usage.json). When it is reached the build switches to rule-based analysis until you raise it. Set to null for no cap.",
     "budget_usd": 18
   },

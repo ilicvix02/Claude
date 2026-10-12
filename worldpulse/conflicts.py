@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import math
 import re
+
+from . import lang as L
 from datetime import datetime, timedelta
 
 SIGNALS = ["escalation", "de-escalation", "humanitarian", "diplomatic", "none"]
@@ -60,22 +62,32 @@ class Theaters:
         self.by_id = {t["id"]: t for t in theaters}
         self._names = {}
         self._pairs = {}
+        self._local = {}
         for t in theaters:
             alts = sorted((re.escape(n) for n in t.get("names", [])), key=len, reverse=True)
             self._names[t["id"]] = re.compile(r"(?<![\w.])(?:" + "|".join(alts) + r")(?![\w])") if alts else None
             self._pairs[t["id"]] = [[_term(x) for x in pair] for pair in t.get("pairs", [])]
+            self._local[t["id"]] = {lg: L.compile_words(ws) for lg, ws in (t.get("names_i18n") or {}).items() if ws}
 
     def ids(self) -> list[str]:
         return [t["id"] for t in self.items]
 
-    def match(self, title: str, summary: str) -> list[str]:
-        """Theaters a story is about: a title mention, or two mentions in the excerpt."""
+    def match(self, title: str, summary: str, lang: str = "en") -> list[str]:
+        """Theaters a story is about: a title mention, or two mentions in the excerpt.
+
+        German and Serbian stories are matched after normalisation, on the English names plus the
+        theater's names_i18n for that language."""
+        if lang != "en":
+            title, summary = L.normalize(title), L.normalize(summary)
         out = []
         for tid in self.ids():
             pattern = self._names[tid]
             score = 0
             if pattern:
                 score = 2 * len(pattern.findall(title)) + len(pattern.findall(summary))
+            local = self._local[tid].get(lang) if lang != "en" else None
+            if local:
+                score += 2 * len(local.findall(title)) + len(local.findall(summary))
             text = f"{title} {summary}"
             if score < 2 and any(all(p.search(text) for p in pair) for pair in self._pairs[tid]):
                 score = 2
@@ -85,16 +97,27 @@ class Theaters:
         return out[:3]
 
 
-def rule_signal(title: str, summary: str) -> str:
+def _local_count(table: str, lang: str, key, text: str) -> int:
+    p = L.pattern(table, lang, key) if lang != "en" else None
+    return len(p.findall(L.normalize(text))) if p else 0
+
+
+def rule_signal(title: str, summary: str, lang: str = "en") -> str:
     scores = {k: 2 * len(p.findall(title)) + len(p.findall(summary)) for k, p in _SIGNAL_RE.items()}
+    if lang != "en":
+        scores = {k: 2 * _local_count("signals", lang, k, title) + _local_count("signals", lang, k, summary) for k in scores}
     # De-escalation words are rarer and more specific, so they win ties against escalation.
     order = ["de-escalation", "escalation", "humanitarian", "diplomatic"]
     best = max(order, key=lambda k: (scores[k], -order.index(k)))
     return best if scores[best] >= 2 else "none"
 
 
-def rule_severity(title: str, summary: str, signal: str) -> int:
+def rule_severity(title: str, summary: str, signal: str, lang: str = "en") -> int:
     text = f"{title} {summary}"
+    if lang != "en":
+        sev = 1 + (signal == "escalation") + bool(_local_count("casualty", lang, None, text)) \
+            + bool(_local_count("scale", lang, None, text) or re.search(r"\b\d{2,}\b", text)) - (signal == "de-escalation")
+        return max(0, min(5, sev))
     sev = 1
     if signal == "escalation":
         sev += 1
@@ -109,10 +132,11 @@ def rule_severity(title: str, summary: str, signal: str) -> int:
 
 def annotate(article: dict, theaters: Theaters) -> dict:
     """Add rule-based conflict fields to an article (in place) and return it."""
-    tids = theaters.match(article["title"], article["summary"])
+    lang = article.get("lang", "en")
+    tids = theaters.match(article["title"], article["summary"], lang)
     if tids or "conflict" in article["categories"]:
-        signal = rule_signal(article["title"], article["summary"])
-        severity = rule_severity(article["title"], article["summary"], signal)
+        signal = rule_signal(article["title"], article["summary"], lang)
+        severity = rule_severity(article["title"], article["summary"], signal, lang)
     else:
         signal, severity = "none", 0
     article.update({"theaters": tids, "signal": signal, "severity": severity})

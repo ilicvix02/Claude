@@ -8,7 +8,8 @@
     "build:web": "python3 -m worldpulse.build --out public",
     "cap:android": "cap add android && capacitor-assets generate --android --iconBackgroundColor '#14110f' --iconBackgroundColorDark '#14110f' --splashBackgroundColor '#14110f' --splashBackgroundColorDark '#14110f' && cap sync android",
     "cap:ios": "cap add ios && capacitor-assets generate --ios --iconBackgroundColor '#14110f' --splashBackgroundColor '#14110f' && cap sync ios",
-    "video": "node scripts/render_story.mjs --site public --out world-brief.mp4"
+    "video": "node scripts/render_story.mjs --site public --out world-brief.mp4",
+    "promo": "node scripts/render_story.mjs --site public --page promo.html --voice af_bella --speed 1.2 --music promo --out world-pulse-promo.mp4"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.2",

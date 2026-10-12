@@ -649,3 +649,14 @@ body.docs { padding-bottom: 0; }
   .doc { padding-top: 32px; }
   .doc h1 { font-size: 3rem; }
 }
+.tr-mark { color: var(--muted); font-style: italic; }
+.tr-mark a { color: inherit; text-decoration: underline; }
+.filters .only-lang { padding-left: 11px; }
+.article { max-width: 46rem; }
+.article .standfirst { font-size: 1.15rem; line-height: 1.5; }
+.article-img { width: 100%; height: auto; border-radius: 4px; margin: 12px 0; }
+.article-body .body-text { font-family: var(--serif, Georgia, serif); font-size: 1.05rem; line-height: 1.65; margin: 0 0 1em; }
+.story-theater { border: 1px solid var(--rule, currentColor); padding: 12px 16px; margin: 20px 0; }
+.story-theater h2 { margin: 4px 0; font-size: 1.15rem; }
+.article-original { margin: 28px 0 8px; font-size: .875rem; }
+.article-original a { color: var(--muted); text-decoration: underline; }

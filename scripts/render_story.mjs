@@ -27,6 +27,9 @@ const fps = Number(args.fps || 30);
 const workers = Math.max(1, Number(args.workers || Math.min(4, Math.max(1, cpus().length - 1))));
 const voice = args.voice || "af_heart";
 const python = args.python || process.env.PYTHON || "python3";
+const pageFile = args.page || "story.html"; // e.g. --page promo.html
+const speed = args.speed; // voice speed, passed to scripts/voiceover.py
+const music = args.music || "none"; // none | promo | brief: synthesized bed from scripts/music.py, cut to the edit
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml" };
 
@@ -62,7 +65,7 @@ function makeVoice(script, dir) {
   if (voice === "none") return null;
   const narration = join(dir, "narration.json");
   writeFileSync(narration, JSON.stringify(script));
-  const r = spawnSync(python, [join(ROOT, "scripts", "voiceover.py"), "--in", narration, "--out", join(dir, "voice"), "--voice", voice], { stdio: "inherit" });
+  const r = spawnSync(python, [join(ROOT, "scripts", "voiceover.py"), "--in", narration, "--out", join(dir, "voice"), "--voice", voice, ...(speed ? ["--speed", String(speed)] : [])], { stdio: "inherit" });
   if (r.status !== 0) {
     console.warn("Voiceover unavailable (install requirements-video.txt); rendering without voice.");
     return null;
@@ -87,10 +90,10 @@ async function renderChunk(browser, url, durations, from, to, file) {
   if (errors.length) throw new Error(`page errors: ${errors.join("; ")}`);
 }
 
-if (!existsSync(join(site, "story.html"))) throw new Error(`${site}/story.html not found: build the site first`);
+if (!existsSync(join(site, pageFile))) throw new Error(`${site}/${pageFile} not found: build the site first`);
 const started = Date.now();
 const server = await serve(site);
-const url = `http://127.0.0.1:${server.address().port}/story.html#render`;
+const url = `http://127.0.0.1:${server.address().port}/${pageFile}#render`;
 const tmp = mkdtempSync(join(tmpdir(), "wp-video-"));
 const browsers = [];
 try {
@@ -98,6 +101,7 @@ try {
   const first = await launch();
   const probe = await openStory(first, url);
   const script = await probe.page.evaluate(() => window.__story.script());
+  const hints = await probe.page.evaluate(() => window.__story.music || {});
   await probe.page.close();
 
   const lines = makeVoice(script, tmp);
@@ -119,6 +123,16 @@ try {
   await Promise.all(chunks.map((c, i) => renderChunk(pool[i], url, durations, c.from, c.to, c.file)));
   const rendered = Date.now();
 
+  // music bed, cut to the scene changes (and any extra cuts the page reports)
+  let bed = null;
+  if (music !== "none") {
+    const cutsAt = [...new Set([...timeline.scenes.slice(1).map((s) => s.start), ...(timeline.cuts || [])].map((c) => c.toFixed(3)))].sort((a, b) => a - b);
+    bed = join(tmp, "music.wav");
+    const r = spawnSync(python, [join(ROOT, "scripts", "music.py"), "--out", bed, "--total", timeline.total.toFixed(3), "--style", music,
+      "--bpm", String(hints.bpm || 132), "--cuts", cutsAt.join(","), ...(hints.endSting ? ["--end-sting"] : [])], { stdio: "inherit" });
+    if (r.status !== 0) { console.warn("Music unavailable; rendering without it."); bed = null; }
+  }
+
   // join the chunks, mix the voice lines at their cues, normalise loudness
   writeFileSync(join(tmp, "chunks.txt"), chunks.map((c) => `file '${c.file}'`).join("\n"));
   const inputs = ["-f", "concat", "-safe", "0", "-i", join(tmp, "chunks.txt")];
@@ -130,7 +144,13 @@ try {
       const ms = Math.round((cue[l.id] || 0) * 1000);
       filter += `[${i + 1}:a]aresample=48000,adelay=delays=${ms}:all=1,apad=whole_dur=${timeline.total.toFixed(3)}[a${i}];`;
     });
-    filter += `${lines.map((_, i) => `[a${i}]`).join("")}amix=inputs=${lines.length}:normalize=0:duration=longest,`
+    let mixIn = lines.map((_, i) => `[a${i}]`).join(""), count = lines.length;
+    if (bed) {
+      inputs.push("-i", bed);
+      filter += `[${lines.length + 1}:a]aresample=48000,volume=${music === "promo" ? 0.55 : 0.4}[mus];`;
+      mixIn += "[mus]"; count++;
+    }
+    filter += `${mixIn}amix=inputs=${count}:normalize=0:duration=longest,`
       + `loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,atrim=0:${timeline.total.toFixed(3)}[aout]`;
   } else {
     inputs.push("-f", "lavfi", "-t", timeline.total.toFixed(3), "-i", "anullsrc=channel_layout=stereo:sample_rate=48000");
