@@ -587,7 +587,7 @@
   function deskRow(t) {
     const item = S.all.find((a) => (a.theaters || []).includes(t.id));
     const last = item && { published_at: item.published_at, title: storyText(item).title };
-    return el("li", {}, el("a", { class: `desk-row st st-${t.status}`, href: `#/conflict/${t.id}` },
+    return el("li", {}, el("a", { class: `desk-row st st-${t.status}`, href: `#/conflict/${t.id}`, style: `--iv:${Math.max(0, Math.min(100, +t.intensity || 0))}` },
       el("span", { class: "c-status" }, statusPill(t)),
       el("span", { class: "c-main" },
         el("b", { class: "c-name", text: tName(t) }),

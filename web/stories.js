@@ -215,6 +215,7 @@
     const k = e.key;
     if (["ArrowDown", "PageDown", "j", "ArrowRight"].includes(k)) { e.preventDefault(); go(idx + 1, true); }
     else if (["ArrowUp", "PageUp", "k", "ArrowLeft"].includes(k)) { e.preventDefault(); go(idx - 1, true); }
+    else if (k === "Escape" || k === "Backspace") { e.preventDefault(); location.hash = "#/brief"; }
     else if (k === "Enter" && !e.target.closest("button, a") && cur() && cur().id) location.hash = `#/story/${cur().id}`;
   }
   document.addEventListener("keydown", onKey);

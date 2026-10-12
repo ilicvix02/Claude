@@ -3,7 +3,7 @@ const BUILD = "__BUILD__";
 const SHELL = `wp-shell-${BUILD}`;
 const DATA = "wp-data";
 const SHELL_FILES = [
-  "./", "index.html", "styles.css", "app.js", "stories.js", "stories.css", "get/index.html", "i18n.js", "i18n-de.js", "i18n-sr.js", "config.js", "land.js", "manifest.webmanifest",
+  "./", "index.html", "styles.css", "app.js", "stories.js", "notify.js", "stories.css", "theme.css", "get/index.html", "i18n.js", "i18n-de.js", "i18n-sr.js", "config.js", "land.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "story.html", "story.css", "story.js",
   "fonts/fonts.css", "fonts/newsreader-500-700-latin.woff2", "fonts/newsreader-500-700-latin-ext.woff2",
   "fonts/newsreader-400-latin.woff2", "fonts/newsreader-400-latin-ext.woff2",
@@ -58,4 +58,13 @@ self.addEventListener("fetch", (event) => {
       return hit || net;
     }),
   );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "./", self.registration.scope).href;
+  event.waitUntil(self.clients.matchAll({ type: "window" }).then((cs) => {
+    for (const c of cs) if ("focus" in c) { c.navigate(url); return c.focus(); }
+    return self.clients.openWindow(url);
+  }));
 });
