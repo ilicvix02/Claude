@@ -146,5 +146,43 @@ class Build(unittest.TestCase):
             build.load_json = orig
 
 
+class TestRevenue(unittest.TestCase):
+    CONFIG = json.loads((build.ROOT / "config" / "site.json").read_text())["revenue"]
+
+    def test_hidden_until_configured(self):
+        r = build.resolve_revenue(self.CONFIG, env={})
+        self.assertEqual((r["plans"], r["donate"], r["sponsor"], r["kofi_url"]), ([], [], None, None))
+        self.assertIsNone(r["social"]["tiktok"])
+
+    def test_kofi_page_turns_on_plans_and_tips(self):
+        r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_KOFI": " https://ko-fi.com/worldpulse/ "})
+        self.assertEqual({p["id"]: p["url"] for p in r["plans"]},
+                         {"supporter": "https://ko-fi.com/worldpulse/tiers", "business": "https://ko-fi.com/worldpulse/tiers"})
+        self.assertIn({"label": "Ko-fi", "url": "https://ko-fi.com/worldpulse"}, r["donate"])
+        self.assertNotIn("kofi", r["plans"][0])  # config-only keys stay out of the API
+
+    def test_email_books_sponsors_and_kofi_wins_for_business(self):
+        r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_KOFI": "@worldpulse", "WORLDPULSE_CONTACT_EMAIL": "ads@example.org"})
+        urls = {p["id"]: p["url"] for p in r["plans"]}
+        self.assertEqual(urls["sponsor"], "mailto:ads@example.org?subject=Sponsoring%20World%20Pulse")
+        self.assertEqual(urls["business"], "https://ko-fi.com/worldpulse/tiers")
+        self.assertEqual(build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_CONTACT_EMAIL": "x@y"})["plans"], [])
+
+    def test_rejects_unsafe_values(self):
+        r = build.resolve_revenue(self.CONFIG, env={
+            "WORLDPULSE_SPONSOR_TEXT": "Acme", "WORLDPULSE_SPONSOR_URL": "javascript:alert(1)",
+            "WORLDPULSE_KOFI": "a b/../c", "WORLDPULSE_NEWSLETTER_URL": "ftp://x.org", "WORLDPULSE_CONTACT_EMAIL": 'a@b.co"><x',
+        })
+        self.assertEqual((r["sponsor"], r["kofi_url"], r["newsletter_url"], r["advertise_email"]), (None, None, None, None))
+
+    def test_sponsor_reaches_api_meta(self):
+        r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_SPONSOR_TEXT": "Acme VPN", "WORLDPULSE_SPONSOR_URL": "https://acme.example",
+                                                    "WORLDPULSE_TIKTOK": "https://www.tiktok.com/@world.pulse?lang=en"})
+        self.assertEqual(r["social"]["tiktok"], "https://www.tiktok.com/@world.pulse")
+        m = build.meta({"revenue": r}, NOW, "")
+        self.assertEqual(m["sponsor"], {"text": "Acme VPN", "url": "https://acme.example"})
+        self.assertNotIn("sponsor", build.meta({"revenue": self.CONFIG}, NOW, ""))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,16 @@ concurrency:
   group: daily-video
   cancel-in-progress: true
 
+# Revenue links, set as repository Variables (Settings → Secrets and variables → Actions → Variables).
+# All optional; see README → Revenue.
+env:
+  WORLDPULSE_KOFI: ${{ vars.KOFI_PAGE }}
+  WORLDPULSE_NEWSLETTER_URL: ${{ vars.NEWSLETTER_URL }}
+  WORLDPULSE_CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+  WORLDPULSE_SPONSOR_TEXT: ${{ vars.SPONSOR_TEXT }}
+  WORLDPULSE_SPONSOR_URL: ${{ vars.SPONSOR_URL }}
+  WORLDPULSE_TIKTOK: ${{ vars.TIKTOK_HANDLE }}
+
 jobs:
   render:
     runs-on: ubuntu-latest
