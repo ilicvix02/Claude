@@ -309,11 +309,73 @@ def meta(site: dict, generated_at: datetime, base_url: str, count: int | None = 
     }
     if count is not None:
         m["count"] = count
-    sponsor = site.get("revenue", {}).get("sponsor", {})
-    if sponsor.get("text") and sponsor.get("url"):
+    sponsor = (site.get("revenue") or {}).get("sponsor") or {}
+    if sponsor.get("text") and http_url(sponsor.get("url")):
         m["sponsor"] = {"text": sponsor["text"], "url": sponsor["url"]}
     m.update(extra)
     return m
+
+
+# ---------------------------------------------------------------------------
+# revenue settings
+
+
+def http_url(value) -> str | None:
+    value = (value or "").strip() if isinstance(value, str) else ""
+    parts = urllib.parse.urlsplit(value)
+    return value if parts.scheme in ("http", "https") and parts.netloc else None
+
+
+def _handle(value: str, host: str) -> str | None:
+    """'name', '@name' or a profile URL on `host` → 'name'."""
+    value = re.sub(rf"^(https?://)?(www\.)?{re.escape(host)}/", "", value.strip(), flags=re.I).lstrip("@")
+    value = value.split("/")[0].split("?")[0]
+    return value if re.fullmatch(r"[A-Za-z0-9_.-]{2,40}", value) else None
+
+
+def resolve_revenue(revenue: dict, env=os.environ) -> dict:
+    """The revenue settings the app and API show: config/site.json, overridden by the repository
+    Variables passed in as WORLDPULSE_* (see README → Revenue). Links must be http(s); a plan is only
+    listed once it has somewhere to pay (its own url, the Ko-fi page, or the contact email)."""
+    revenue = revenue or {}
+    var = lambda name: (env.get(name) or "").strip()  # noqa: E731
+    kofi = _handle(var("WORLDPULSE_KOFI") or revenue.get("kofi") or "", "ko-fi.com")
+    kofi_url = f"https://ko-fi.com/{kofi}" if kofi else None
+    email = var("WORLDPULSE_CONTACT_EMAIL") or revenue.get("advertise_email") or ""
+    email = email if re.fullmatch(r"[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}", email) else None
+    tiktok = _handle(var("WORLDPULSE_TIKTOK") or (revenue.get("social") or {}).get("tiktok") or "", "tiktok.com")
+
+    sponsor = dict(revenue.get("sponsor") or {})
+    if var("WORLDPULSE_SPONSOR_TEXT") or var("WORLDPULSE_SPONSOR_URL"):
+        sponsor = {"text": var("WORLDPULSE_SPONSOR_TEXT"), "url": var("WORLDPULSE_SPONSOR_URL")}
+    sponsor = {"text": sponsor["text"][:80], "url": sponsor["url"]} if sponsor.get("text") and http_url(sponsor.get("url")) else None
+
+    donate = []
+    for d in revenue.get("donate", []):
+        url = http_url(d.get("url")) or (kofi_url if d.get("label", "").lower() == "ko-fi" else None)
+        if url:
+            donate.append({"label": d["label"], "url": url})
+
+    plans = []
+    for p in revenue.get("plans", []):
+        url = http_url(p.get("url"))
+        if not url and kofi_url and p.get("kofi"):
+            url = f"{kofi_url}/{p['kofi'].strip('/')}"
+        if not url and email and p.get("email_subject"):
+            url = f"mailto:{email}?subject={urllib.parse.quote(p['email_subject'])}"
+        if url:
+            plans.append({k: p.get(k) for k in ("id", "name", "price", "period", "blurb", "features", "cta")} | {"url": url})
+
+    return {
+        "sponsor": sponsor,
+        "ethicalads_publisher": revenue.get("ethicalads_publisher") or None,
+        "donate": donate,
+        "plans": plans,
+        "kofi_url": kofi_url,
+        "newsletter_url": http_url(var("WORLDPULSE_NEWSLETTER_URL") or revenue.get("newsletter_url")),
+        "advertise_email": email,
+        "social": {"tiktok": f"https://www.tiktok.com/@{tiktok}" if tiktok else None},
+    }
 
 
 def rss(title: str, link: str, self_url: str, description: str, articles: list[dict], generated_at: datetime) -> str:
@@ -454,7 +516,8 @@ def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
 def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | None = None, analyst: Analyst | None = None) -> dict:
     now = now or now_utc()
     site = load_json(ROOT / "config" / "site.json")
-    sources = load_json(ROOT / "config" / "sources.json")["sources"]
+    site["revenue"] = resolve_revenue(site.get("revenue", {}))
+    sources =load_json(ROOT / "config" / "sources.json")["sources"]
     theaters = conflicts.Theaters(load_json(ROOT / "config" / "conflicts.json")["theaters"])
     ai_cfg = site.get("ai", {})
     analyst = analyst or Analyst(ai_cfg)
@@ -585,7 +648,6 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     )
     write_json(api / "openapi.json", openapi(site, base_url, theaters.ids()))
 
-    revenue = site.get("revenue", {})
     write_json(
         api / "index.json",
         {
@@ -608,13 +670,7 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
                 },
                 "sources_ok": sum(s["ok"] for s in status),
                 "sources_total": len(status),
-                "revenue": {
-                    "sponsor": revenue.get("sponsor") if revenue.get("sponsor", {}).get("url") else None,
-                    "ethicalads_publisher": revenue.get("ethicalads_publisher") or None,
-                    "donate": [d for d in revenue.get("donate", []) if d.get("url")],
-                    "newsletter_url": revenue.get("newsletter_url") or None,
-                    "advertise_email": revenue.get("advertise_email") or None,
-                },
+                "revenue": site["revenue"],
             },
         },
     )

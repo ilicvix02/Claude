@@ -68,6 +68,9 @@ curl -s https://YOUR-SITE/api/v1/brief.json | jq '.data | {headline, source}'</p
     <p><b>AI.</b> When enabled, Claude reviews new conflict-related stories once per hourly build and replaces the rule values with its own judgement. It also writes the world brief and the situation summaries. Its output is constrained to a schema, validated, and labelled everywhere it appears. It can still make mistakes, so every claim links to its sources.</p>
     <p><b>Intensity</b> is the summed severity of a theater's reports over 24h, mapped to 0–100. The <b>trend</b> compares the last 24h with the theater's own baseline over the days the archive has observed. Both measure <em>news coverage</em>, not verified events or casualties.</p>
 
+    <h2 id="business">Business use and sponsorship</h2>
+    <p>The API stays free and keyless for everyone, including commercial projects. If your organisation relies on it, the <a href="./#/support">Business plan</a> adds priority support, integration help and receipts, and lets you request new sources and conflict theaters. Sponsors can book the &ldquo;Presented by&rdquo; slot, which appears in the app, on the end card of the daily video and in the <code>meta.sponsor</code> field of every API response.</p>
+
     <h2>Fair use</h2>
     <p>Always link to <code>url</code> and credit <code>source.name</code>. Please cache responses, because the data only changes hourly.</p>
   </main>

@@ -128,18 +128,38 @@ curl -s https://YOUR-SITE/api/v1/conflicts.json | jq '.data.theaters[] | {name, 
 
 ## Making money from it
 
-The revenue hooks are built in and stay off until you fill in `config/site.json`. **Nothing here guarantees income.** It depends on traffic, and traffic depends on promotion.
+The revenue hooks are built in and stay hidden until they're configured. **Nothing here guarantees income.** It depends on traffic, and traffic depends on promotion.
+
+### Set up payments (about 15 minutes, no code)
+
+1. **Ko-fi** (free, pays out to PayPal or Stripe): create a page at [ko-fi.com](https://ko-fi.com). Under *Memberships*, add two tiers with the same prices as the app: **Supporter** $3/month, **Business** $49/month. Tips work automatically.
+2. **Newsletter** (optional): create a free list on [beehiiv](https://www.beehiiv.com) or [Buttondown](https://buttondown.com) and copy its sign-up page link.
+3. In the repository, open **Settings → Secrets and variables → Actions → Variables** (the *Variables* tab, not *Secrets*) and add any of:
+
+| Variable | Example | What it turns on |
+|---|---|---|
+| `KOFI_PAGE` | `worldpulse` | Supporter and Business plans, and the tip button |
+| `CONTACT_EMAIL` | `hello@example.com` | Business and Sponsor plans by email, and a Contact button. It is public, so use a dedicated address |
+| `NEWSLETTER_URL` | `https://worldpulse.beehiiv.com` | "Daily email" button |
+| `TIKTOK_HANDLE` | `worldpulse` | "Follow on TikTok" button |
+| `SPONSOR_TEXT` + `SPONSOR_URL` | `Acme VPN` + `https://acme.example` | "Presented by" in the app, on the daily video's end card (spoken too) and in `meta.sponsor` of every API response |
+
+The next hourly build (or **Actions → Build & publish → Run workflow**) publishes them. Plans appear at `#/support` in the app (a good link for your TikTok bio), in the More tab and on the Today page.
+
+Plan names, prices and perks live in `revenue.plans` in `config/site.json`. Each plan checks out at its own `url` if set, otherwise at the Ko-fi path in `kofi` (for example `tiers`), otherwise by email using `email_subject`. Keep the prices in step with your Ko-fi tiers.
+
+### Revenue streams
 
 | Stream | How |
 |---|---|
-| **Sponsor slot** | `revenue.sponsor` shows "Presented by …" in the app **and in the `meta` of every API response**. Sell it weekly or monthly |
+| **Sponsor slot** | Sold as the "Sponsor a week" plan. When someone books, set `SPONSOR_TEXT` and `SPONSOR_URL`; clear them when the week ends |
+| **Supporters** | Ko-fi memberships and tips |
+| **Business plan** | Priority support and receipts for organisations that build on the free API |
+| **Newsletter** | Send the daily `brief.json` as a digest. Sell sponsorships or a paid tier |
 | **Privacy-friendly ads** | `revenue.ethicalads_publisher` once you're approved at [EthicalAds](https://www.ethicalads.io/publishers/). No tracking cookies |
-| **Donations** | `revenue.donate` links (GitHub Sponsors, Ko-fi, Open Collective) appear in the app's "Keep it free" card. Uncomment `.github/FUNDING.yml` too |
-| **Newsletter** | Point `revenue.newsletter_url` at Buttondown or Substack and send the daily `brief.json` as a digest. Sell sponsorships or a paid tier |
-| **API plans** | List `openapi.json` on RapidAPI for higher-SLA or historical access. The static API stays free |
-| **Paid archive / alerts** | Long-term history of `conflicts.json` and escalation alerts are natural paid products for analysts, NGOs and newsrooms |
+| **GitHub Sponsors** | Add its link to `revenue.donate` and uncomment `.github/FUNDING.yml` |
 
-For traffic: submit `feed.xml` and `conflicts.xml` to feed readers, list the API in public-API directories, share the daily brief on social media, and set `base_url` to enable the sitemap.
+For traffic: submit `feed.xml` and `conflicts.xml` to feed readers, list the API in public-API directories, post the daily video, and set `base_url` to enable the sitemap.
 
 ## Content and fair use
 

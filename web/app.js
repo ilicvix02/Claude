@@ -342,6 +342,7 @@
         el("div", { class: "gauge", role: "img", "aria-label": `Tension index ${st.tension_index} of 100` }, el("i", { style: { left: `${st.tension_index}%` } })),
         el("div", { class: "gauge-legend" }, el("span", { text: "Deals" }), el("span", { text: "Crises" })),
         el("p", { class: "fine", text: st.explanation })) : null,
+      supportNudge(),
       adSlot());
     return el("div", { class: "brief-grid" }, left, right);
   }
@@ -532,10 +533,8 @@
         el("span", { class: s.ok ? "ok fine" : "bad fine", text: s.ok ? `${s.items} items` : "unavailable" })))));
     }
 
-    const support = [...(rev.donate || []).map((d) => [d.label, d.url])];
-    if (rev.newsletter_url) support.push(["Newsletter", rev.newsletter_url]);
-    if (rev.advertise_email) support.push(["Advertise", `mailto:${rev.advertise_email}`]);
-    const supportLinks = support.filter(([, u]) => u.startsWith("mailto:") || safeUrl(u));
+    const plans = (rev.plans || []).filter((p) => payUrl(p.url));
+    const links = supportLinks(rev);
     const docs = new URL("docs.html", location.href).href;
 
     return el("div", {},
@@ -561,12 +560,55 @@
         el("li", {}, el("a", { href: new URL(CFG.apiBase + "openapi.json", location.href).href, text: "OpenAPI spec" }), el("span", { class: "fine", text: "v1" })),
         el("li", {}, el("a", { href: new URL(CFG.apiBase + "conflicts.xml", location.href).href, text: "Conflicts RSS" }), el("span", { class: "fine", text: "RSS" })),
         el("li", {}, el("a", { href: "https://github.com/ilicvix02/Claude", target: "_blank", rel: "noopener", text: "Source code" }), el("span", { class: "fine", text: "MIT" })))),
-      supportLinks.length ? sectionHead("Keep it free") : null,
-      supportLinks.length ? el("div", { class: "card" },
+      plans.length || links.length ? sectionHead("Keep it free") : null,
+      plans.length || links.length ? el("div", { class: "card" },
         el("p", { style: { marginTop: 0 }, text: "World Pulse has no paywall and no tracking. Sponsors and readers keep it running." }),
-        el("div", { class: "support-links" }, ...supportLinks.map(([l, u]) => el("a", { class: "btn", href: u, target: "_blank", rel: "noopener", text: l })))) : null,
+        el("div", { class: "support-links" },
+          plans.length ? el("a", { class: "btn", href: "#/support", text: "Plans & sponsorship" }) : null,
+          ...links.map(([l, u]) => el("a", { class: "btn ghost", href: u, target: "_blank", rel: "noopener", text: l })))) : null,
       adSlot(),
       el("p", { class: "fine", style: { textAlign: "center", marginTop: "28px" }, text: `World Pulse · build ${CFG.build}` }));
+  }
+
+  // Checkout links are http(s) or a prefilled email to the contact address.
+  const payUrl = (u) => (/^mailto:[^\s<>"]+$/.test(u || "") ? u : safeUrl(u));
+
+  function supportLinks(rev) {
+    const links = (rev.donate || []).map((d) => [d.label === "Ko-fi" ? "Tip on Ko-fi" : d.label, d.url]);
+    if (rev.newsletter_url) links.push(["Daily email", rev.newsletter_url]);
+    if (rev.social && rev.social.tiktok) links.push(["Follow on TikTok", rev.social.tiktok]);
+    if (rev.advertise_email) links.push(["Contact", `mailto:${rev.advertise_email}`]);
+    return links.filter(([, u]) => payUrl(u));
+  }
+
+  function supportNudge() {
+    const rev = (S.index && S.index.revenue) || {};
+    if (!(rev.plans || []).some((p) => payUrl(p.url))) return null;
+    return el("a", { class: "card nudge", href: "#/support" },
+      el("b", { text: "Free, no paywall, no tracking" }),
+      el("span", { text: "Readers and sponsors keep World Pulse running. Support it →" }));
+  }
+
+  function renderSupport() {
+    const rev = S.index.revenue || {};
+    const plans = (rev.plans || []).filter((p) => payUrl(p.url));
+    const links = supportLinks(rev);
+    if (!plans.length && !links.length) {
+      return el("div", { class: "empty" }, icon("globe"), el("p", { text: "World Pulse is free for everyone. Ways to support it are coming soon." }));
+    }
+    const planCard = (p) => el("article", { class: `card plan plan-${p.id || "x"}` },
+      el("h3", { text: p.name }),
+      p.price ? el("p", { class: "price" }, el("b", { text: p.price }), p.period ? el("span", { text: ` / ${p.period}` }) : null) : null,
+      p.blurb ? el("p", { class: "muted", text: p.blurb }) : null,
+      (p.features || []).length ? el("ul", { class: "ticks" }, ...p.features.map((f) => el("li", { text: f }))) : null,
+      el("a", { class: "btn", href: payUrl(p.url), target: "_blank", rel: "noopener", text: p.cta || "Choose" }));
+    return el("div", {},
+      el("p", { class: "lede", text: "World Pulse is free for everyone, with no paywall and no tracking. Supporters, businesses and sponsors pay for the AI analysis and keep it that way." }),
+      plans.length ? el("div", { class: "plans" }, ...plans.map(planCard)) : null,
+      links.length ? sectionHead("Other ways to help") : null,
+      links.length ? el("div", { class: "card" }, el("div", { class: "support-links", style: { marginTop: 0 } },
+        ...links.map(([l, u]) => el("a", { class: "btn ghost", href: payUrl(u), target: "_blank", rel: "noopener", text: l })))) : null,
+      el("p", { class: "fine", style: { textAlign: "center", marginTop: "20px" }, text: "Payments are handled by the checkout provider (for example Ko-fi or PayPal). World Pulse never sees your card details." }));
   }
 
   let adLoaded = false;
@@ -596,7 +638,9 @@
     feed: ["Latest news", renderFeed],
     saved: ["Saved", renderSaved],
     more: ["More", renderMore],
+    support: ["Support World Pulse", renderSupport],
   };
+  const PARENT = { conflict: "conflicts", support: "more" }; // detail views: highlighted tab and back target
 
   function parseHash() {
     const raw = location.hash.replace(/^#\/?/, "");
@@ -614,12 +658,12 @@
     const r = parseHash();
     const changed = !S.route || S.route.name !== r.name || S.route.arg !== r.arg;
     S.route = r;
-    const tab = r.name === "conflict" ? "conflicts" : r.name;
+    const tab = PARENT[r.name] || r.name;
     document.querySelectorAll(".tabbar a").forEach((a) => {
       if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    $("#back").hidden = r.name !== "conflict";
-    $(".brand").hidden = r.name === "conflict";
+    $("#back").hidden = !PARENT[r.name];
+    $(".brand").hidden = !!PARENT[r.name];
     setTitle(ROUTES[r.name][0]);
     if (!S.index) return;
     view.replaceChildren(ROUTES[r.name][1](r.arg, r.params));
@@ -655,7 +699,7 @@
   let inAppNavs = 0;
   $("#back").addEventListener("click", () => {
     if (inAppNavs > 0) history.back();
-    else location.hash = "#/conflicts";
+    else location.hash = `#/${PARENT[S.route.name] || "brief"}`;
   });
   window.addEventListener("hashchange", () => { inAppNavs++; render(); });
   document.addEventListener("visibilitychange", () => {

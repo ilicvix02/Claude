@@ -1,5 +1,5 @@
 {
-  "_comment": "Site settings and revenue hooks. Every revenue field is optional; empty values are simply not rendered.",
+  "_comment": "Site settings and revenue hooks.",
   "title": "World Pulse",
   "tagline": "Live conflict tracker, AI world brief, and global deals & crises — free app and public API.",
   "base_url": "",
@@ -17,8 +17,58 @@
     "budget_usd": 18
   },
   "revenue": {
+    "_comment": "Every revenue field is optional; empty values are not shown. The repository Variables KOFI_PAGE, NEWSLETTER_URL, CONTACT_EMAIL, SPONSOR_TEXT, SPONSOR_URL and TIKTOK_HANDLE override these without editing this file (README → Revenue).",
+    "kofi": "",
+    "plans": [
+      {
+        "id": "supporter",
+        "name": "Supporter",
+        "price": "$3",
+        "period": "month",
+        "blurb": "Keep World Pulse free, independent and ad-light for everyone.",
+        "features": [
+          "Pays for the hourly AI analysis and hosting",
+          "Your name on our Ko-fi supporter wall",
+          "Vote on the conflicts and regions we add next"
+        ],
+        "cta": "Become a supporter",
+        "kofi": "tiers",
+        "url": ""
+      },
+      {
+        "id": "business",
+        "name": "Business",
+        "price": "$49",
+        "period": "month",
+        "blurb": "For newsrooms, NGOs, researchers and apps that build on the API.",
+        "features": [
+          "Priority email support and integration help",
+          "Request new sources and conflict theaters",
+          "Receipts for your accounts team"
+        ],
+        "cta": "Start Business",
+        "kofi": "tiers",
+        "email_subject": "World Pulse Business plan",
+        "url": ""
+      },
+      {
+        "id": "sponsor",
+        "name": "Sponsor a week",
+        "price": "$99",
+        "period": "week",
+        "blurb": "Put your brand in front of people who follow world news closely.",
+        "features": [
+          "“Presented by” banner in the app",
+          "Your link in every API response",
+          "Credit on the end card of each daily video"
+        ],
+        "cta": "Book a week",
+        "email_subject": "Sponsoring World Pulse",
+        "url": ""
+      }
+    ],
     "sponsor": {
-      "_comment": "A paid 'Presented by' slot shown on the site and in every API response. Sell it weekly/monthly.",
+      "_comment": "A paid 'Presented by' slot shown in the app, on the daily video's end card and in every API response. Sell it weekly (the 'sponsor' plan).",
       "text": "",
       "url": ""
     },
@@ -38,6 +88,9 @@
       }
     ],
     "newsletter_url": "",
-    "advertise_email": ""
+    "advertise_email": "",
+    "social": {
+      "tiktok": ""
+    }
   }
 }
