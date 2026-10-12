@@ -35,6 +35,7 @@
   <link rel="preload" href="fonts/barlow-600-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="stories.css">
   <script>
     try { const t = JSON.parse(localStorage.getItem("wp.theme")); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}
   </script>
@@ -76,6 +77,9 @@
   </main>
 
   <nav class="tabbar" aria-label="App" data-i18n-aria="chrome.tabs">
+    <a href="#/stories" data-tab="stories">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M9 8h6M9 12h6"/></svg><span data-i18n="stories.tab">Stories</span>
+    </a>
     <a href="#/brief" data-tab="brief">
       <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg><span data-i18n="tab.today">Today</span>
     </a>
@@ -101,6 +105,7 @@
   <script src="i18n-sr.js"></script>
   <script>WP_I18N.apply();</script>
   <script src="land.js" defer></script>
+  <script src="stories.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

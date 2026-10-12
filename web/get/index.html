@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Get World Pulse</title>
+  <meta name="description" content="Free AI world brief and live conflict tracker. Installs in one tap, no app store, no account.">
+  <meta name="theme-color" content="#0E0C0B">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="World Pulse">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="World Pulse">
+  <meta property="og:title" content="World Pulse · the world in six swipes">
+  <meta property="og:description" content="Free AI world brief and live conflict tracker. Installs in one tap, no app store, no account.">
+  <meta property="og:url" content="https://ilicvix02.github.io/Claude/get/">
+  <meta property="og:image" content="https://ilicvix02.github.io/Claude/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="World Pulse · the world in six swipes">
+  <meta name="twitter:description" content="Free AI world brief and live conflict tracker. Installs in one tap.">
+  <meta name="twitter:image" content="https://ilicvix02.github.io/Claude/og-image.png">
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <script>
+    // In-app browsers (TikTok, Instagram, Facebook) cannot install apps: leave them before anything renders.
+    (function () {
+      var ua = navigator.userAgent || "";
+      var inApp = /musical_ly|Bytedance|BytedanceWebview|TikTok|trill|Instagram|FBAN|FBAV|FB_IAB/i.test(ua);
+      var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      window.WP_GET = { inApp: inApp, android: android, ios: ios };
+      if (inApp && android && !/[?&](noescape|via=intent)/.test(location.search)) {
+        var qs = location.search ? location.search + "&via=intent" : "?via=intent";
+        var path = "ilicvix02.github.io/Claude/get/" + qs;
+        location.href = "intent://" + path + "#Intent;scheme=https;package=com.android.chrome;end";
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --ink: #0E0C0B; --ink2: #171310; --card: #1E1915; --line: rgba(247,242,236,.12);
+      --paper: #F7F2EC; --muted: #B3A99F; --dim: #857B72; --ember: #F97316; --ember-soft: #FDBA74; --crit: #FF4D3D; --deal: #5EE3A1;
+      --cond: "Barlow Condensed", "Roboto", sans-serif; --ui: "Barlow", "Roboto", system-ui, sans-serif; --serif: "Source Serif 4", "Newsreader", Georgia, serif;
+      color-scheme: dark;
+    }
+    /* The landing is dark in both themes, like the app's Stories home. */
+    @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { color-scheme: dark; } }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { background: radial-gradient(100% 50% at 50% 0%, rgba(249,115,22,.22), transparent 70%), var(--ink); background-color: var(--ink); color: var(--paper);
+      font-family: var(--ui); -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 440px; margin: 0 auto; min-height: 100svh; display: flex; flex-direction: column; align-items: stretch;
+      padding: calc(14px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); }
+    .ico { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .ok { display: flex; align-items: center; gap: 8px; font: 600 12.5px var(--ui); color: #9FF0C6; min-height: 18px; }
+    .ok i { width: 18px; height: 18px; border-radius: 50%; background: rgba(94,227,161,.18); display: grid; place-items: center; flex: none; }
+    .ok[hidden] { display: flex; visibility: hidden; }
+    .brand { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 14px 0 22px; }
+    .brand img { border-radius: 28%; display: block; }
+    .wm { font: 700 18px/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; }
+    .card { position: relative; align-self: center; width: 208px; height: 370px; border-radius: 22px; overflow: hidden; transform: rotate(-3deg); padding: 14px; text-decoration: none; color: inherit;
+      background: radial-gradient(120% 70% at 70% 25%, rgba(249,115,22,.35), transparent 60%), linear-gradient(180deg, #1f1410, #0E0C0B);
+      border: 1px solid rgba(249,115,22,.35); box-shadow: 0 30px 60px rgba(0,0,0,.6), 0 0 0 6px rgba(247,242,236,.03); }
+    .card .bars { display: flex; gap: 3px; } .card .bars i { flex: 1; height: 2px; background: rgba(247,242,236,.3); border-radius: 1px; } .card .bars i:first-child { background: var(--paper); }
+    .rd { position: absolute; left: 130px; top: 96px; }
+    .rd i { position: absolute; border: 1px solid rgba(249,115,22,.5); border-radius: 50%; transform: translate(-50%,-50%); }
+    .rd b { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--ember-soft); transform: translate(-50%,-50%); box-shadow: 0 0 18px 5px rgba(249,115,22,.6); }
+    .k { position: absolute; left: 14px; right: 14px; bottom: 40px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px; border-radius: 99px; font: 700 9px/1 var(--ui); letter-spacing: .06em; text-transform: uppercase;
+      background: rgba(255,77,61,.16); color: #FF8A7D; border: 1px solid rgba(255,77,61,.45); }
+    .chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--crit); }
+    .card h3 { font: 700 30px/.94 var(--cond); text-transform: uppercase; margin: 9px 0 8px; text-wrap: balance; overflow-wrap: anywhere; }
+    .card h3.long { font-size: 24px; }
+    .card h3 em { font-style: normal; color: var(--ember); }
+    .card p { margin: 0; font: 400 11px/1.4 var(--serif); color: #E5DDD4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .ft { position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 6px; font: 700 9.5px var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .ft img { border-radius: 28%; }
+    .from { margin: 30px 0 10px; text-align: center; font: 600 12.5px var(--ui); color: var(--muted); }
+    .from b { color: var(--paper); }
+    .install { width: 100%; height: 60px; border: 0; border-radius: 18px; background: var(--ember); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 10px;
+      font: 700 19px var(--ui); box-shadow: 0 12px 30px rgba(249,115,22,.35); cursor: pointer; text-decoration: none; }
+    .install .ico { width: 24px; height: 24px; stroke-width: 2.4; }
+    .install:focus-visible, .langs button:focus-visible, .ios:focus-visible { outline: 2px solid var(--ember-soft); outline-offset: 3px; }
+    .note { margin: 10px 0 0; text-align: center; font: 500 13px/1.4 var(--ui); color: var(--muted); }
+    .facts { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 12px 0 0; font: 600 12px var(--ui); color: var(--muted); }
+    .facts i { width: 4px; height: 4px; border-radius: 50%; background: var(--dim); }
+    .langs { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; }
+    .langs button { height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: none; font: 700 12.5px var(--ui); color: var(--muted); cursor: pointer; }
+    .langs button[aria-pressed="true"] { background: rgba(247,242,236,.1); color: var(--paper); border-color: rgba(247,242,236,.3); }
+    .ios { display: block; margin: auto auto 0; padding-top: 22px; background: none; border: 0; text-align: center; font: 500 12px var(--ui); color: var(--dim); cursor: pointer; }
+    .ios u { color: var(--ember-soft); text-decoration: none; font-weight: 700; }
+    .sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.6); }
+    .sheet[hidden] { display: none; }
+    .sheet .in { width: 100%; max-width: 440px; background: var(--ink2); border: 1px solid var(--line); border-bottom: 0; border-radius: 28px 28px 0 0; padding: 14px 18px calc(24px + env(safe-area-inset-bottom)); }
+    .sheet.top { align-items: flex-start; }
+    .sheet.top .in { border-radius: 0 0 28px 28px; border: 1px solid var(--line); border-top: 0; padding-top: calc(18px + env(safe-area-inset-top)); }
+    .grab { width: 40px; height: 4px; border-radius: 3px; background: rgba(247,242,236,.25); margin: 0 auto 14px; }
+    .sheet h2 { margin: 0 0 12px; font: 700 28px/1 var(--cond); text-transform: uppercase; }
+    .step { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); font: 400 16px/1.4 var(--serif); }
+    .step b { font: 700 24px/1 var(--cond); color: var(--ember); }
+    .step svg { vertical-align: -5px; color: var(--ember-soft); }
+    .arrow { position: absolute; right: 18px; top: calc(4px + env(safe-area-inset-top)); font: 700 30px/1 var(--ui); color: var(--ember); animation: nudge 1.2s ease-in-out infinite alternate; }
+    .arrow.down { top: auto; right: 50%; bottom: calc(6px + env(safe-area-inset-bottom)); }
+    .close { margin-top: 14px; width: 100%; height: 48px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); color: var(--paper); font: 700 15px var(--ui); cursor: pointer; }
+    @keyframes nudge { to { transform: translateY(-6px); } }
+    @media (prefers-reduced-motion: reduce) { .arrow { animation: none; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="ok" id="ok" hidden><i><svg class="ico" style="width:12px;height:12px;stroke:#5EE3A1;stroke-width:3" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></i><span data-i18n="get.escaped">Opened in your browser, out of the in-app browser</span></div>
+    <div class="brand"><img src="../icons/icon.svg" width="48" height="48" alt=""><span class="wm">World Pulse</span></div>
+
+    <a class="card" id="card" href="../#/stories" aria-label="World Pulse">
+      <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="rd" aria-hidden="true"><i style="width:30px;height:30px;border-color:rgba(253,186,116,.9)"></i><i style="width:76px;height:76px"></i><i style="width:130px;height:130px;opacity:.6"></i><i style="width:200px;height:200px;opacity:.35"></i><b></b></div>
+      <div class="k"><span class="chip" id="chip"><i class="dot"></i><span>World Pulse</span></span>
+        <h3 id="hl">The world in <em>six swipes</em></h3>
+        <p id="sum"></p></div>
+      <div class="ft"><img src="../icons/icon.svg" width="16" height="16" alt=""><span id="ft">AI · sourced</span></div>
+    </a>
+
+    <p class="from" id="from" data-i18n="get.shared">A story shared with you</p>
+    <button class="install" id="install" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span id="install-l" data-i18n="get.install">Install free · 1 tap</span></button>
+    <p class="note" id="note" hidden></p>
+    <div class="facts"><span data-i18n="get.fact_store">No app store</span><i></i><span data-i18n="get.fact_account">No account</span><i></i><span data-i18n="get.fact_size">~400 KB</span></div>
+    <div class="langs" id="langs"></div>
+    <button class="ios" id="ios-link" type="button"><u data-i18n="get.ios_link">On iPhone? 2 steps: Share → Add to Home Screen</u></button>
+  </main>
+
+  <div class="sheet" id="ios" hidden role="dialog" aria-modal="true" aria-labelledby="ios-h">
+    <div class="in"><div class="grab"></div>
+      <h2 id="ios-h" data-i18n="get.ios_title">Add to your Home Screen</h2>
+      <div class="step"><b>1</b><span><span data-i18n="get.ios_step1">Tap Share in Safari's toolbar</span> <svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span></div>
+      <div class="step"><b>2</b><span><span data-i18n="get.ios_step2">Choose “Add to Home Screen”, then Add</span> <svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></div>
+      <button class="close" type="button" data-close data-i18n="get.close">Close</button>
+    </div>
+    <span class="arrow down" aria-hidden="true">↓</span>
+  </div>
+
+  <div class="sheet top" id="inapp" hidden role="dialog" aria-modal="true" aria-labelledby="inapp-h">
+    <span class="arrow" aria-hidden="true">↑</span>
+    <div class="in">
+      <h2 id="inapp-h" data-i18n="get.inapp_title">Open in Safari</h2>
+      <p class="note" style="text-align:left;font-size:16px;color:var(--paper)" data-i18n="get.inapp_text">Tap ••• at the top right, then “Open in Safari”.</p>
+      <a class="install" id="chrome" href="#" hidden style="margin-top:14px" data-i18n="get.open_chrome">Open in Chrome</a>
+      <button class="close" type="button" data-close data-i18n="get.close">Close</button>
+    </div>
+  </div>
+
+  <script src="../i18n.js"></script>
+  <script src="../i18n-de.js"></script>
+  <script src="../i18n-sr.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var I = window.WP_I18N, t = I.t, G = window.WP_GET, $ = function (id) { return document.getElementById(id); };
+    var q = new URLSearchParams(location.search), story = null, deferred = null;
+    var standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    var appLink = function () { return "../" + (story ? "#/story/" + encodeURIComponent(story.id) : "#/stories") + (I.param ? "?" + I.param : ""); };
+
+    function draw() {
+      I.apply();
+      document.documentElement.lang = I.lang;
+      document.title = t("get.title");
+      if (q.get("by")) $("from").textContent = t("get.shared_by", { by: q.get("by").replace(/^@/, "").slice(0, 40) });
+      if (q.get("via") === "intent") $("ok").hidden = false;
+      var langs = $("langs"); langs.textContent = "";
+      Object.keys(I.LANGS).forEach(function (code) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = I.LANGS[code].name;
+        b.setAttribute("aria-pressed", String(code === I.lang));
+        b.onclick = function () { I.set(code); draw(); };
+        langs.append(b);
+      });
+      if (story) card(story);
+      $("card").href = appLink();
+      if (standalone) { $("install-l").textContent = t("get.open"); }
+    }
+    function card(a) {
+      var L = I.lang.indexOf("sr") === 0 ? "sr" : I.lang, own = (a.lang || "en") === L;
+      var title = I.tx((!own && (a.title_i18n || {})[L]) || a.title);
+      var sum = (!own && (a.summary_i18n || {})[L]) || a.summary || ((a.story_brief || {})[L] || (a.story_brief || {}).en || []).slice(0, 2).join(" ");
+      var hl = $("hl"), w = title.split(" "), n = w.length > 4 ? 2 : 0;
+      hl.textContent = w.slice(0, w.length - n).join(" ") + (n ? " " : "");
+      if (n) { var em = document.createElement("em"); em.textContent = w.slice(-n).join(" "); hl.append(em); }
+      hl.className = title.length > 60 ? "long" : "";
+      $("sum").textContent = I.tx(sum || "");
+      $("chip").lastChild.textContent = (a.theaters || []).length ? t("cat.conflict") : (a.categories || [])[0] ? t("cat." + a.categories[0]) : "World Pulse";
+      $("ft").textContent = t("stories.reports", { n: a.coverage || 1 }) + " · " + t("stories.ai_badge");
+    }
+
+    // A shared story (?s=<id>) or today's most-covered one.
+    fetch("../api/v1/news.json").then(function (r) { return r.json(); }).then(function (d) {
+      var list = d.data || [];
+      story = list.find(function (a) { return a.id === q.get("s") || (a.members || []).indexOf(q.get("s")) >= 0; }) || list[0] || null;
+      if (story) { card(story); $("card").href = appLink(); }
+    }).catch(function () {});
+
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; });
+    window.addEventListener("appinstalled", function () { deferred = null; note(t("get.installed")); $("install-l").textContent = t("get.open"); standalone = true; });
+    function note(msg) { var n = $("note"); n.textContent = msg; n.hidden = false; }
+    function open(id) { $(id).hidden = false; var c = $(id).querySelector("[data-close]"); if (c) c.focus(); }
+    document.querySelectorAll("[data-close]").forEach(function (b) { b.onclick = function () { b.closest(".sheet").hidden = true; }; });
+    document.querySelectorAll(".sheet").forEach(function (s) { s.addEventListener("click", function (e) { if (e.target === s) s.hidden = true; }); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") document.querySelectorAll(".sheet").forEach(function (s) { s.hidden = true; }); });
+
+    $("install").onclick = function () {
+      if (standalone || $("install-l").textContent === t("get.open")) { location.href = appLink(); return; }
+      if (G.inApp) { inApp(); return; }
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (c) { if (c.outcome === "accepted") note(t("get.installed")); deferred = null; });
+        return;
+      }
+      if (G.ios) { open("ios"); return; }
+      note(t("get.manual"));
+    };
+    $("ios-link").onclick = function () { if (G.inApp && G.ios) inApp(); else open("ios"); };
+    function inApp() {
+      if (G.android) { var c = $("chrome"); c.hidden = false; c.href = "intent://ilicvix02.github.io/Claude/get/" + (location.search ? location.search + "&" : "?") + "via=intent#Intent;scheme=https;package=com.android.chrome;end"; }
+      open("inapp");
+    }
+    if (G.inApp) inApp();
+
+    if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("../sw.js", { scope: "../" }).catch(function () {});
+    draw();
+  })();
+  </script>
+</body>
+</html>
