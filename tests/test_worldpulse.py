@@ -147,7 +147,7 @@ class Build(unittest.TestCase):
 
 
 class TestRevenue(unittest.TestCase):
-    CONFIG = json.loads((build.ROOT / "config" / "site.json").read_text())["revenue"]
+    CONFIG = {**json.loads((build.ROOT / "config" / "site.json").read_text())["revenue"], "kofi": "", "advertise_email": ""}
 
     def test_hidden_until_configured(self):
         r = build.resolve_revenue(self.CONFIG, env={})
