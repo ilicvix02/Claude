@@ -18,7 +18,7 @@
   },
   "revenue": {
     "_comment": "Every revenue field is optional; empty values are not shown. The repository Variables KOFI_PAGE, NEWSLETTER_URL, CONTACT_EMAIL, SPONSOR_TEXT, SPONSOR_URL and TIKTOK_HANDLE override these without editing this file (README → Revenue).",
-    "kofi": "",
+    "kofi": "ilicv",
     "plans": [
       {
         "id": "supporter",
