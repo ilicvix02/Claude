@@ -1,0 +1,36 @@
+/* Promo additions on top of story.css. Same TikTok safe area: text sits between 8% from the top and
+   23% from the bottom, clear of the right-hand 15%. */
+.flash { position: absolute; inset: 0; background: #fff6ec; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
+.scrim { inset: 30cqh 0 0; background: linear-gradient(180deg, rgba(8, 6, 5, 0), rgba(8, 6, 5, .62) 40%, rgba(8, 6, 5, .85)); }
+.block { gap: 1.6cqh; }
+.cap { font: 700 11.5cqw/.98 var(--cond); text-transform: uppercase; letter-spacing: .01em; margin: 0; text-shadow: 0 .8cqw 3cqw rgba(0, 0, 0, .65); }
+.cap.alt { color: var(--accent); }
+.cap.big { font-size: 14cqw; }
+.mega { font: 700 40cqw/.8 var(--cond); letter-spacing: -.01em; transform-origin: 0 80%; text-shadow: 0 0 8cqw rgba(239, 68, 68, .45), 0 1cqw 3cqw rgba(0, 0, 0, .6); }
+.mega.red { color: var(--red); }
+.mega.accent { color: var(--accent); font-size: 32cqw; text-shadow: 0 0 8cqw rgba(249, 115, 22, .5); }
+.chip.alert { background: var(--red); color: #fff; }
+.chip.kofi { background: #29abe0; color: #fff; }
+.row.guess .nm { font-size: 7cqw; }
+.stats { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqw; }
+.stat { padding: 1.6cqh 2.4cqw; border-radius: 1.6cqw; background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 .25cqw var(--line); transform-origin: 50% 100%; }
+.stat .n { font: 700 13cqw/.9 var(--cond); font-variant-numeric: tabular-nums; color: var(--accent); }
+.stat .l { font: 700 3cqw/1.1 var(--cond); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: .6cqh; }
+.lts { width: 100%; position: relative; min-height: 17cqh; }
+.lt { position: absolute; left: 0; right: 0; top: 0; padding: 1.8cqh 3.4cqw; border-left: 1.2cqw solid var(--accent); background: rgba(20, 15, 12, .9); box-shadow: 0 1cqh 5cqw rgba(0, 0, 0, .5); }
+.lt-src { font: 700 3.3cqw/1 var(--cond); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 1cqh; }
+.lt-ttl { font: 650 6cqw/1.12 var(--display); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.lang { display: flex; align-items: center; gap: 4cqw; transform-origin: 0 50%; }
+.lang .code { font: 700 6cqw/1 var(--cond); padding: 1cqh 2.4cqw; border-radius: 1cqw; background: var(--accent); color: var(--chip-ink); letter-spacing: .08em; }
+.lang .nm { font: 700 15cqw/.95 var(--cond); text-transform: uppercase; text-shadow: 0 .8cqw 3cqw rgba(0, 0, 0, .6); }
+.plan { width: 100%; padding: 3cqh 6cqw; border-radius: 4cqw; background: linear-gradient(160deg, rgba(40, 28, 20, .96), rgba(16, 12, 10, .96)); box-shadow: inset 0 0 0 .35cqw rgba(249, 115, 22, .7), 0 2cqh 10cqw rgba(249, 115, 22, .28); display: flex; flex-direction: column; gap: 1.5cqh; transform-origin: 50% 100%; }
+.plan-h { display: flex; justify-content: space-between; align-items: center; gap: 3cqw; }
+.plan-nm { font: 700 6.4cqw/1 var(--cond); letter-spacing: .06em; text-transform: uppercase; }
+.price { display: flex; align-items: flex-start; transform-origin: 0 70%; }
+.price .cur { font: 700 10cqw/1 var(--cond); color: var(--accent); margin-top: 2cqh; }
+.price .amt { font: 700 34cqw/.82 var(--cond); color: var(--accent); text-shadow: 0 0 7cqw rgba(249, 115, 22, .5); }
+.price .per { font: 700 7cqw/1 var(--cond); color: var(--muted); align-self: flex-end; margin-bottom: 1.2cqh; }
+.feat { display: flex; align-items: center; gap: 3cqw; font: 600 5.6cqw/1.15 var(--body); }
+.feat i { flex: none; width: 6.4cqw; height: 6.4cqw; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--chip-ink); font: 800 3.8cqw/1 var(--body); font-style: normal; }
+.biz { font: 700 3.6cqw/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding-top: 1cqh; border-top: .25cqw solid var(--line); }
+.end-tag { font-size: 4.6cqw; }

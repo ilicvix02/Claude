@@ -29,6 +29,7 @@ from .ai import Analyst
 
 ROOT = Path(__file__).resolve().parent.parent
 API_VERSION = "v1"
+I18N_FIELDS = ("title_i18n", "summary_i18n", "insight_i18n", "story_brief")
 AI_FIELDS = ("theaters", "severity", "signal", "insight", "analysis", "ai_model")
 REPO_URL = f'{os.environ.get("GITHUB_SERVER_URL", "https://github.com")}/{os.environ.get("GITHUB_REPOSITORY", "ilicvix02/Claude")}'
 
@@ -97,18 +98,20 @@ def normalize(raw: dict, source: dict, fetched_at: datetime) -> dict:
     published = raw.get("published") or fetched_at
     if published > fetched_at:  # clamp clock skew / bogus future dates
         published = fetched_at
-    cats = classify.categorize(raw["title"], raw["summary"], source.get("categories"))
+    lang = source.get("lang", "en")
+    cats = classify.categorize(raw["title"], raw["summary"], source.get("categories"), lang)
     return {
         "id": article_id(raw["link"]),
         "title": raw["title"],
         "url": canonical_url(raw["link"]),
         "summary": raw["summary"],
         "image": raw.get("image") or None,
+        "lang": lang,
         "source": {"id": source["id"], "name": source["name"]},
         "published_at": iso(published),
         "fetched_at": iso(fetched_at),
         "categories": cats,
-        "regions": classify.regions(raw["title"], raw["summary"]),
+        "regions": classify.regions(raw["title"], raw["summary"], lang),
         "tone": classify.sentiment(cats),
     }
 
@@ -118,13 +121,13 @@ def collect(sources: list[dict], fetched_at: datetime, fetcher=feeds.fetch) -> t
         try:
             entries = feeds.parse(fetcher(source["url"]))
             entries = entries[: source.get("max_items", 60)]
-            entries = [e for e in entries if not classify.is_off_topic(e["title"], e["summary"])]
+            entries = [e for e in entries if not classify.is_off_topic(e["title"], e["summary"], source.get("lang", "en"))]
             return source, [normalize(e, source, fetched_at) for e in entries], None
         except Exception as exc:  # one broken feed must never break the build
             return source, [], f"{type(exc).__name__}: {exc}"
 
     articles, status = [], []
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=24) as pool:
         for source, items, error in pool.map(run, sources):
             articles.extend(items)
             status.append(
@@ -197,6 +200,7 @@ def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days
             a = {**a, "fetched_at": old.get("fetched_at", a["fetched_at"]), "published_at": old["published_at"]}
             if old.get("analysis") == "ai":  # keep paid-for AI judgements across builds
                 a.update({k: old[k] for k in AI_FIELDS if k in old})
+            a.update({k: old[k] for k in I18N_FIELDS if old.get(k)})  # and paid-for translations
         by_id[a["id"]] = a
     cutoff = now - timedelta(days=retention_days)
     items = sorted(
@@ -304,7 +308,7 @@ def state_of_world(articles: list[dict], now: datetime) -> dict:
     }
 
 
-SLIM_FIELDS = ("id", "title", "url", "source", "published_at", "categories", "regions", "theaters", "severity", "coverage")
+SLIM_FIELDS = ("id", "title", "url", "source", "published_at", "lang", "title_i18n", "categories", "regions", "theaters", "severity", "coverage")
 
 
 def slim(a: dict) -> dict:
@@ -496,6 +500,61 @@ def ai_candidates(articles: list[dict], limit: int) -> list[dict]:
     return pending[:limit]
 
 
+def translate_stories(analyst, articles: list[dict], langs: list[str], limit: int) -> None:
+    """Translate the newest stories not yet in each reader language (one call per language),
+    caching results on the story (title_i18n, summary_i18n, insight_i18n) so each is paid for once.
+    English is a target for German and Serbian stories; a story is never translated into its own language."""
+    for lang in langs:
+        if not analyst.available or limit <= 0:
+            return
+        todo = [a for a in articles if a.get("lang", "en") != lang and lang not in (a.get("title_i18n") or {})][:limit]
+        if not todo:
+            continue
+        result = analyst.translate_stories(lang, todo)
+        for a in todo:
+            tr = result.get(a["id"])
+            if not tr:
+                continue
+            a.setdefault("title_i18n", {})[lang] = tr["title"]
+            if tr.get("summary"):
+                a.setdefault("summary_i18n", {})[lang] = tr["summary"]
+            if tr.get("insight"):
+                a.setdefault("insight_i18n", {})[lang] = tr["insight"]
+        print(f"  AI translated {len(result)}/{len(todo)} stories into {lang}", file=sys.stderr)
+
+
+def story_brief_candidates(articles: list[dict], now: datetime, lang: str, limit: int) -> list[dict]:
+    """Lead stories worth an in-app detailed brief: conflict-related or covered by several outlets, last 48h."""
+    pool = [a for a in articles
+            if (a.get("cluster") or a["id"]) == a["id"] and (a.get("theaters") or (a.get("coverage") or 1) > 1)
+            and hours_since(a["published_at"], now) <= 48 and lang not in (a.get("story_brief") or {})]
+    pool.sort(key=lambda a: ((a.get("coverage") or 1) + (a.get("severity") or 0), a["published_at"]), reverse=True)
+    return pool[:limit]
+
+
+def write_story_briefs(analyst, articles: list[dict], theaters, now: datetime, langs: list[str], limit: int) -> None:
+    """AI-written detailed briefs for story pages, one call per language, cached per story (story_brief)."""
+    if limit <= 0:
+        return
+    for lang in langs:
+        if not analyst.available:
+            return
+        todo = story_brief_candidates(articles, now, lang, limit)
+        if not todo:
+            continue
+        items = []
+        for a in todo:
+            related = [x["title"] for x in articles if x.get("cluster") == a["id"] and x["id"] != a["id"]]
+            t = theaters.by_id.get((a.get("theaters") or [None])[0]) if a.get("theaters") else None
+            items.append({"id": a["id"], "title": a["title"], "summary": a.get("summary"), "related": related,
+                          "context": t["description"] if t else ""})
+        result = analyst.story_briefs(lang, items)
+        for a in todo:
+            if a["id"] in result:
+                a.setdefault("story_brief", {})[lang] = result[a["id"]]
+        print(f"  AI wrote {len(result)}/{len(todo)} story briefs in {lang}", file=sys.stderr)
+
+
 def translate_briefing(analyst, langs, brief, summaries, stats) -> None:
     """Add AI translations to an AI brief and its theater summaries, in place, under "i18n": one call
     per language that isn't translated yet, so a reused brief keeps its translations for free. A
@@ -617,6 +676,12 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         print(f"  AI off: {analyst.reason}", file=sys.stderr)
     # 3. group coverage of the same event
     cluster.assign(articles)
+    # 4. translate the newest stories into every reader language (cached per story)
+    story_langs = [x for x in ai_cfg.get("translate_stories", ["en", "de", "sr"]) or [] if isinstance(x, str)]
+    if analyst.available:
+        translate_stories(analyst, articles, story_langs, int(ai_cfg.get("translate_stories_per_run", 40)))
+        brief_langs = [x for x in ai_cfg.get("story_briefs", ["en", "de", "sr"]) or [] if isinstance(x, str)]
+        write_story_briefs(analyst, articles, theaters, now, brief_langs, int(ai_cfg.get("story_briefs_per_run", 8)))
 
     latest = articles[: int(site.get("latest_limit", 300))]
     by_id = {a["id"]: a for a in articles}

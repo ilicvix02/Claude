@@ -294,7 +294,14 @@ class EndToEnd(unittest.TestCase):
     def run_build(self, out, previous=None, analyst=None):
         sources = [{"id": "wire", "name": "Wire", "url": "https://wire.test/rss"}]
         orig = build.load_json
-        build.load_json = lambda p: {"sources": sources} if p.name == "sources.json" else orig(p)
+        def load(p):
+            if p.name == "sources.json":
+                return {"sources": sources}
+            d = orig(p)
+            if p.name == "site.json":  # these tests count brief/analysis calls; story extras are tested separately
+                d["ai"] = {**d.get("ai", {}), "translate_stories": [], "story_briefs": []}
+            return d
+        build.load_json = load
         try:
             return build.build(out, previous, fetcher=lambda u: RSS, now=NOW, analyst=analyst or Analyst({"enabled": False}))
         finally:

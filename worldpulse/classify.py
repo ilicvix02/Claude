@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 
+from . import lang as L
+
 CATEGORIES: dict[str, dict] = {
     "deals": {
         "label": "Deals",
@@ -209,12 +211,16 @@ _REGION_RE = {slug: _compile_names(r["names"]) for slug, r in REGIONS.items()}
 _EXCLUDE_RE = _compile_keywords(EXCLUDE)
 
 
-def is_off_topic(title: str, summary: str) -> bool:
+def is_off_topic(title: str, summary: str, lang: str = "en") -> bool:
+    if lang != "en":
+        text = L.normalize(f"{title} {summary}")
+        local = L.pattern("exclude", lang)
+        return bool(_EXCLUDE_RE.search(text)) or bool(local and local.search(text)) or not title.strip()
     return bool(_EXCLUDE_RE.search(f"{title} {summary}")) or not is_latin_script(title)
 
 
 def is_latin_script(text: str) -> bool:
-    """The rules and the app are English-language; skip headlines in other scripts (e.g. Arabic editions)."""
+    """English rules expect Latin script; skip headlines in other scripts (e.g. Arabic editions)."""
     letters = [c for c in text if c.isalpha()]
     if not letters:
         return False
@@ -222,17 +228,23 @@ def is_latin_script(text: str) -> bool:
     return latin / len(letters) >= 0.6
 
 
-def score_categories(title: str, summary: str) -> dict[str, int]:
+def score_categories(title: str, summary: str, lang: str = "en") -> dict[str, int]:
     scores = {}
+    if lang != "en":
+        title, summary = L.normalize(title), L.normalize(summary)
     for slug, pattern in _CAT_RE.items():
+        if lang != "en":
+            pattern = L.pattern("categories", lang, slug)
+            if pattern is None:
+                continue
         s = 2 * len(pattern.findall(title)) + len(pattern.findall(summary))
         if s:
             scores[slug] = s
     return scores
 
 
-def categorize(title: str, summary: str, forced: list[str] | None = None) -> list[str]:
-    scores = score_categories(title, summary)
+def categorize(title: str, summary: str, forced: list[str] | None = None, lang: str = "en") -> list[str]:
+    scores = score_categories(title, summary, lang)
     cats = {slug for slug, s in scores.items() if s >= 2}
     # Topic-level crisis/deal signals imply the pillar even when the pillar words are absent.
     if cats & {"conflict", "disasters", "humanitarian"} and scores.get("crises", 0) >= 1:
@@ -242,9 +254,17 @@ def categorize(title: str, summary: str, forced: list[str] | None = None) -> lis
     return sorted(cats, key=order.index)
 
 
-def regions(title: str, summary: str) -> list[str]:
+def regions(title: str, summary: str, lang: str = "en") -> list[str]:
     text = f"{title} {summary}"
-    return [slug for slug, pattern in _REGION_RE.items() if pattern.search(text)]
+    if lang == "en":
+        return [slug for slug, pattern in _REGION_RE.items() if pattern.search(text)]
+    text = L.normalize(text)
+    out = []
+    for slug, pattern in _REGION_RE.items():
+        local = L.pattern("regions", lang, slug)
+        if pattern.search(text) or (local and local.search(text)):
+            out.append(slug)
+    return out
 
 
 def sentiment(categories: list[str]) -> str:
