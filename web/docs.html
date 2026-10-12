@@ -5,27 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>World Pulse API</title>
   <meta name="description" content="Free, keyless, CORS-enabled JSON API: conflict tracker, AI world brief, global deals and crises.">
-  <meta name="theme-color" content="#14110f">
+  <meta name="theme-color" content="#f6f2ea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151412" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <link rel="canonical" href="%BASE_URL%/docs.html">
   <meta property="og:title" content="World Pulse API — free conflict & world news data">
-  <meta property="og:description" content="Keyless, CORS-enabled JSON: conflict tracker, AI world brief, global deals and crises. Updated hourly.">
+  <meta property="og:description" content="Keyless, CORS-enabled JSON: conflict tracker, AI world brief, global deals and crises. Updated several times a day.">
   <meta property="og:image" content="%BASE_URL%/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="styles.css">
-  <script>try { const t = localStorage.getItem("wp.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
+  <script>try { const t = JSON.parse(localStorage.getItem("wp.theme")); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body class="docs">
-  <header class="appbar doc-header">
-    <a class="brand" href="./" aria-label="World Pulse app">
+  <header class="masthead doc-mast">
+    <a class="brand" href="./" tabindex="-1" aria-hidden="true">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11"/><path d="M3 17h6l3-7 5 13 3-6h9"/></svg>
     </a>
-    <div class="appbar-title"><h1>World Pulse API</h1></div>
-    <a class="btn ghost" href="./">Open app</a>
+    <a class="nameplate" href="./">World Pulse</a>
+    <a class="btn ghost open-app" href="./">Open app</a>
   </header>
   <main class="doc">
     <h1>Free public API</h1>
-    <p>Static JSON files, regenerated every hour. No key, no sign-up, and CORS is open, so you can call it straight from a browser or mobile app. Base path: <code>/api/v1/</code>. Machine-readable spec: <a href="api/v1/openapi.json">openapi.json</a>.</p>
+    <p>Static JSON files, regenerated every one to four hours. No key, no sign-up, and CORS is open, so you can call it straight from a browser or mobile app. Base path: <code>/api/v1/</code>. Machine-readable spec: <a href="api/v1/openapi.json">openapi.json</a>.</p>
     <pre>curl -s https://YOUR-SITE/api/v1/conflicts.json | jq '.data.theaters[] | {name, status, trend, intensity}'
 curl -s https://YOUR-SITE/api/v1/brief.json | jq '.data | {headline, source}'</pre>
 
@@ -62,17 +65,29 @@ curl -s https://YOUR-SITE/api/v1/brief.json | jq '.data | {headline, source}'</p
   "coverage": 4                        // outlets that covered the event
 }</pre>
 
+    <h2 id="languages">Languages</h2>
+    <p>Every field above stays in English. Translations sit next to it in <code>i18n</code> objects keyed by language: <code>de</code> (German) and <code>sr</code> (Serbian, Cyrillic; the app makes Serbian Latin from it by transliteration). A missing language, or an empty <code>i18n</code>, means use the English. Publishers' headlines are never translated.</p>
+    <table>
+      <tr><th>Field</th><th>Contains</th></tr>
+      <tr><td><code>conflicts.json</code> <code>theaters[].i18n</code></td><td><code>{"de": {"name", "description"}, "sr": {…}}</code>; in <code>index.json</code> just the name, <code>{"de": "Russland–Ukraine"}</code>.</td></tr>
+      <tr><td><code>brief.json</code> <code>i18n</code></td><td>AI briefs only: <code>{"de": {"headline", "bullets": […], "watch"}}</code>, where <code>bullets[i]</code> translates <code>bullets[i].text</code>. <code>index.json</code> <code>ai.brief_translations</code> lists the languages present.</td></tr>
+      <tr><td><code>theaters[].analysis.i18n</code></td><td>AI summaries only: <code>{"de": {"summary", "outlook", "developments": […]}}</code>; a <code>null</code> part means show the English.</td></tr>
+      <tr><td><code>rule</code>, <code>mood_key</code>, <code>disclaimer_key</code>, <code>explanation_key</code></td><td>Automated texts come with the counts and keys they were written from, so an app can write them in its own language: <code>brief.json</code> <code>rule</code> (<code>active_conflicts</code>, <code>escalating</code>, <code>mood_key</code>, <code>watch</code>) and <code>analysis.rule</code> (<code>key</code>, <code>stories_24h</code>, <code>stories_7d</code>, <code>trend</code>).</td></tr>
+      <tr><td><code>index.json</code> <code>revenue.plans[].i18n</code></td><td><code>{"de": {"name", "blurb", "features": […], "cta"}}</code>. Prices stay in USD.</td></tr>
+    </table>
+    <p>The web app follows the browser language and can be switched in the header; add <code>?lang=en</code>, <code>de</code>, <code>sr</code> or <code>sr-Latn</code> to a link to open it in that language.</p>
+
     <h2 id="method">Method</h2>
     <p><b>Collection.</b> Public RSS/Atom feeds listed in <code>config/sources.json</code>. Only headlines, short excerpts and links are republished.</p>
     <p><b>Rules.</b> Topics, regions and conflict theaters are first tagged with transparent keyword rules (<code>worldpulse/classify.py</code>, <code>config/conflicts.json</code>), with severity and signal from word lists (<code>worldpulse/conflicts.py</code>).</p>
-    <p><b>AI.</b> When enabled, Claude reviews new conflict-related stories once per hourly build and replaces the rule values with its own judgement. It also writes the world brief and the situation summaries. Its output is constrained to a schema, validated, and labelled everywhere it appears. It can still make mistakes, so every claim links to its sources.</p>
+    <p><b>AI.</b> When enabled, Claude reviews new conflict-related stories once per build (every one to four hours) and replaces the rule values with its own judgement. It also writes the world brief and the situation summaries. Its output is constrained to a schema, validated, and labelled everywhere it appears. It can still make mistakes, so every claim links to its sources.</p>
     <p><b>Intensity</b> is the summed severity of a theater's reports over 24h, mapped to 0–100. The <b>trend</b> compares the last 24h with the theater's own baseline over the days the archive has observed. Both measure <em>news coverage</em>, not verified events or casualties.</p>
 
-    <h2 id="business">Business use and sponsorship</h2>
-    <p>The API stays free and keyless for everyone, including commercial projects. If your organisation relies on it, the <a href="./#/support">Business plan</a> adds priority support, integration help and receipts, and lets you request new sources and conflict theaters. Sponsors can book the &ldquo;Presented by&rdquo; slot, which appears in the app, on the end card of the daily video and in the <code>meta.sponsor</code> field of every API response.</p>
+    <h2 id="business">Business use</h2>
+    <p>The API stays free and keyless for everyone, including commercial projects. If your organisation relies on it, the <a href="./#/support">Business plan</a> ($49 a month on Ko-fi) includes everything in World Pulse Pro and adds priority support, receipts, and requests for new sources and conflict theaters.</p>
 
     <h2>Fair use</h2>
-    <p>Always link to <code>url</code> and credit <code>source.name</code>. Please cache responses, because the data only changes hourly.</p>
+    <p>Always link to <code>url</code> and credit <code>source.name</code>. Please cache responses, because the data only changes with each build, every one to four hours.</p>
   </main>
 </body>
 </html>

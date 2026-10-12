@@ -148,40 +148,77 @@ class Build(unittest.TestCase):
 
 class TestRevenue(unittest.TestCase):
     CONFIG = {**json.loads((build.ROOT / "config" / "site.json").read_text())["revenue"], "kofi": "", "advertise_email": ""}
+    IDS = [p["id"] for p in CONFIG["plans"]]
 
     def test_hidden_until_configured(self):
         r = build.resolve_revenue(self.CONFIG, env={})
-        self.assertEqual((r["plans"], r["donate"], r["sponsor"], r["kofi_url"]), ([], [], None, None))
+        self.assertEqual((r["plans"], r["donate"], r["kofi_url"]), ([], [], None))
         self.assertIsNone(r["social"]["tiktok"])
+
+    def test_pricing_lists_every_plan_without_a_checkout(self):
+        r = build.resolve_revenue(self.CONFIG, env={})
+        self.assertEqual([p["id"] for p in r["pricing"]], self.IDS)
+        first = r["pricing"][0]
+        self.assertEqual(set(first), {"id", "name", "price", "period", "i18n"})
+        self.assertEqual((first["name"], first["price"]), (self.CONFIG["plans"][0]["name"], self.CONFIG["plans"][0]["price"]))
+
+    def test_plan_translations_pass_through_cleaned(self):
+        plans = [{**self.CONFIG["plans"][0], "i18n": {
+            "de": {"name": " Pro ", "blurb": "Unabhängig bleiben.", "features": ["Werbefrei", 3, ""], "cta": "Pro holen", "url": "javascript:x"},
+            "sr": {"name": "Про", "features": "not a list"},
+            "<b>": {"name": "x"}, "fr": "not an object",
+        }}]
+        r = build.resolve_revenue({**self.CONFIG, "plans": plans}, env={"WORLDPULSE_KOFI": "worldpulse"})
+        want = {"de": {"name": "Pro", "blurb": "Unabhängig bleiben.", "cta": "Pro holen", "features": ["Werbefrei"]}, "sr": {"name": "Про"}}
+        self.assertEqual(r["plans"][0]["i18n"], want)
+        self.assertEqual(r["pricing"][0]["i18n"], want)
 
     def test_kofi_page_turns_on_plans_and_tips(self):
         r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_KOFI": " https://ko-fi.com/worldpulse/ "})
-        self.assertEqual({p["id"]: p["url"] for p in r["plans"]},
-                         {"supporter": "https://ko-fi.com/worldpulse/tiers", "business": "https://ko-fi.com/worldpulse/tiers"})
+        self.assertEqual({p["id"]: p["url"] for p in r["plans"]}, {i: "https://ko-fi.com/worldpulse/tiers" for i in self.IDS})
         self.assertIn({"label": "Ko-fi", "url": "https://ko-fi.com/worldpulse"}, r["donate"])
         self.assertNotIn("kofi", r["plans"][0])  # config-only keys stay out of the API
+        self.assertEqual(r["plans"][0]["i18n"], {})
 
-    def test_email_books_sponsors_and_kofi_wins_for_business(self):
-        r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_KOFI": "@worldpulse", "WORLDPULSE_CONTACT_EMAIL": "ads@example.org"})
-        urls = {p["id"]: p["url"] for p in r["plans"]}
-        self.assertEqual(urls["sponsor"], "mailto:ads@example.org?subject=Sponsoring%20World%20Pulse")
-        self.assertEqual(urls["business"], "https://ko-fi.com/worldpulse/tiers")
-        self.assertEqual(build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_CONTACT_EMAIL": "x@y"})["plans"], [])
+    def test_email_is_a_checkout_fallback(self):
+        plans = [{"id": "x", "name": "X", "price": "$1", "period": "month", "email_subject": "World Pulse X"}]
+        r = build.resolve_revenue({**self.CONFIG, "plans": plans}, env={"WORLDPULSE_CONTACT_EMAIL": "ads@example.org"})
+        self.assertEqual(r["plans"][0]["url"], "mailto:ads@example.org?subject=World%20Pulse%20X")
+        self.assertEqual(r["advertise_email"], "ads@example.org")
+        self.assertEqual(build.resolve_revenue({**self.CONFIG, "plans": plans}, env={"WORLDPULSE_CONTACT_EMAIL": "x@y"})["plans"], [])
 
     def test_rejects_unsafe_values(self):
         r = build.resolve_revenue(self.CONFIG, env={
-            "WORLDPULSE_SPONSOR_TEXT": "Acme", "WORLDPULSE_SPONSOR_URL": "javascript:alert(1)",
             "WORLDPULSE_KOFI": "a b/../c", "WORLDPULSE_NEWSLETTER_URL": "ftp://x.org", "WORLDPULSE_CONTACT_EMAIL": 'a@b.co"><x',
         })
-        self.assertEqual((r["sponsor"], r["kofi_url"], r["newsletter_url"], r["advertise_email"]), (None, None, None, None))
+        self.assertEqual((r["kofi_url"], r["newsletter_url"], r["advertise_email"]), (None, None, None))
 
-    def test_sponsor_reaches_api_meta(self):
+    def test_no_sponsor_anywhere(self):
         r = build.resolve_revenue(self.CONFIG, env={"WORLDPULSE_SPONSOR_TEXT": "Acme VPN", "WORLDPULSE_SPONSOR_URL": "https://acme.example",
                                                     "WORLDPULSE_TIKTOK": "https://www.tiktok.com/@world.pulse?lang=en"})
         self.assertEqual(r["social"]["tiktok"], "https://www.tiktok.com/@world.pulse")
-        m = build.meta({"revenue": r}, NOW, "")
-        self.assertEqual(m["sponsor"], {"text": "Acme VPN", "url": "https://acme.example"})
-        self.assertNotIn("sponsor", build.meta({"revenue": self.CONFIG}, NOW, ""))
+        self.assertNotIn("sponsor", r)
+        self.assertNotIn("sponsor", build.meta({"revenue": r}, NOW, ""))
+        self.assertNotIn("sponsor", self.IDS)
+        self.assertNotIn("sponsor", self.CONFIG)
+
+
+class Localization(unittest.TestCase):
+    THEATERS = json.loads((build.ROOT / "config" / "conflicts.json").read_text())["theaters"]
+
+    def test_every_theater_has_german_and_serbian(self):
+        for t in self.THEATERS:
+            for lang in ("de", "sr"):
+                entry = t["i18n"][lang]
+                self.assertTrue(entry["name"] and entry["description"], (t["id"], lang))
+                self.assertEqual("–" in t["name"], "–" in entry["name"], (t["id"], lang))  # en dashes kept
+            sr = t["i18n"]["sr"]["name"] + t["i18n"]["sr"]["description"]
+            self.assertNotRegex(sr, r"[A-Za-z]", t["id"])  # Cyrillic; the app makes the Latin script itself
+
+    def test_mood_keys(self):
+        self.assertEqual([build.mood_key(i) for i in (80, 60, 50, 30, 10)],
+                         ["crisis_dominated", "tense", "balanced", "constructive", "dealmaking_dominated"])
+        self.assertEqual(build.mood(60), "Tense")
 
 
 if __name__ == "__main__":

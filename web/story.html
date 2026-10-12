@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Video brief · World Pulse</title>
+  <title data-i18n="story.title">Video brief · World Pulse</title>
   <meta name="description" content="Today's world brief as a motion-graphics video for TikTok, Reels and Shorts.">
   <meta name="theme-color" content="#0b0908">
   <meta name="robots" content="noindex">
@@ -24,20 +24,38 @@
 
   <div class="intro" id="intro" role="dialog" aria-labelledby="intro-h" hidden>
     <div class="intro-card">
-      <p class="intro-kicker">Video brief</p>
-      <h1 id="intro-h">Today's video</h1>
+      <p class="intro-kicker" data-i18n="story.kicker">Video brief</p>
+      <h1 id="intro-h" data-i18n="story.heading">Today's video</h1>
       <ol>
-        <li>Start your phone's screen recording.</li>
-        <li>Tap <b>Play</b>. It runs by itself for about 45 seconds.</li>
-        <li>Stop recording on the last frame, trim the start in TikTok, and add a sound or your own voice.</li>
+        <li data-i18n="story.step1">Start your phone's screen recording.</li>
+        <li data-i18n-html="story.step2">Tap <b>Play</b>. It runs by itself for about 45 seconds.</li>
+        <li data-i18n="story.step3">Stop recording on the last frame, trim the start in TikTok, and add a sound or your own voice.</li>
       </ol>
-      <button class="play" id="play" type="button" disabled>Loading…</button>
-      <a class="alt" id="download" href="#" hidden>Or download today's finished video with voiceover</a>
-      <a class="back" href="./#/brief">Back to the app</a>
+      <button class="play" id="play" type="button" disabled data-i18n="story.loading">Loading…</button>
+      <a class="alt" id="download" href="#" hidden data-i18n="story.download">Or download today's finished video with voiceover</a>
+      <a class="back" href="./#/brief" data-i18n="story.back">Back to the app</a>
     </div>
   </div>
 
   <script src="config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="i18n-de.js"></script>
+  <script src="i18n-sr.js"></script>
+  <script>
+    // The intro card in the reader's language (the video itself stays in English). story.js writes the play
+    // button's text in English once the brief is loaded; translate it as it changes.
+    (() => {
+      const I = window.WP_I18N;
+      I.apply();
+      if (I.param) document.querySelector(".intro .back").href = `./?${I.param}#/brief`;
+      const play = document.getElementById("play");
+      new MutationObserver(() => {
+        const m = /^Play · about (\d+) seconds$/.exec(play.textContent);
+        const text = m ? I.t("story.play", { n: Number(m[1]) }) : play.textContent === "Couldn't load today's brief" ? I.t("story.failed") : null;
+        if (text && text !== play.textContent) play.textContent = text;
+      }).observe(play, { childList: true, characterData: true, subtree: true });
+    })();
+  </script>
   <script src="land.js"></script>
   <script src="story.js"></script>
 </body>

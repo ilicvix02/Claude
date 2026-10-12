@@ -1,5 +1,6 @@
 # Voiceover for the daily video (scripts/voiceover.py): Kokoro text-to-speech, run on CPU.
 # Kokoro model: Apache-2.0. kokoro-onnx: MIT.
+# Music bed (scripts/music.py): synthesized from scratch with numpy and soundfile only, no samples or licensed tracks.
 kokoro-onnx==0.6.1
 onnxruntime==1.30.0
 numpy==2.5.3

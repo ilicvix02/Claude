@@ -13,25 +13,36 @@
     "brief_effort": "medium",
     "max_articles_per_run": 40,
     "brief_every_hours": 3,
+    "_translate_comment": "Languages the AI brief and conflict summaries are translated into after each new brief (one short call per language, counted against budget_usd): de German, sr Serbian Cyrillic. [] turns translations off.",
+    "translate": ["de", "sr"],
+    "translate_effort": "low",
     "_budget_comment": "Hard cap on total AI spend in US dollars, counted across all builds (see api/v1/ai-usage.json). When it is reached the build switches to rule-based analysis until you raise it. Set to null for no cap.",
     "budget_usd": 18
   },
+  "pro": {
+    "_comment": "World Pulse Pro (docs/PRO.md). api_url is the license server; the Deploy Pro workflow writes it. Empty keeps Pro dormant: no bundle, and the app shows 'Pro is launching soon' instead of buy buttons. sender_email is the verified Brevo sender of the license emails.",
+    "api_url": "",
+    "sender_email": "ilicvix@gmail.com",
+    "sender_name": "World Pulse"
+  },
   "revenue": {
-    "_comment": "Every revenue field is optional; empty values are not shown. The repository Variables KOFI_PAGE, NEWSLETTER_URL, CONTACT_EMAIL, SPONSOR_TEXT, SPONSOR_URL and TIKTOK_HANDLE override these without editing this file (README → Revenue).",
+    "_comment": "Every revenue field is optional; empty values are not shown. The repository Variables KOFI_PAGE, NEWSLETTER_URL, CONTACT_EMAIL and TIKTOK_HANDLE override these without editing this file (README → Revenue).",
     "kofi": "ilicv",
     "plans": [
       {
-        "id": "supporter",
-        "name": "Supporter",
+        "id": "pro",
+        "name": "World Pulse Pro",
         "price": "$3",
         "period": "month",
-        "blurb": "Keep World Pulse free, independent and ad-light for everyone.",
+        "blurb": "The analyst's view of every conflict, every morning: what changed, why it matters and what to watch next.",
         "features": [
-          "Pays for the hourly AI analysis and hosting",
-          "Your name on our Ko-fi supporter wall",
-          "Vote on the conflicts and regions we add next"
+          "Daily Pro Intelligence Briefing: top 5 hotspots with key actors, risk outlook and a 72-hour watch list",
+          "90-day trends for every theater: peaks, 30-day series and changes",
+          "Instant breaking alerts when a conflict turns critical or escalates",
+          "Personal watchlist, CSV/JSON export and no support prompts",
+          "Your own license key by email, works on web, Android and iPhone"
         ],
-        "cta": "Become a supporter",
+        "cta": "Go Pro",
         "kofi": "tiers",
         "url": ""
       },
@@ -40,8 +51,9 @@
         "name": "Business",
         "price": "$49",
         "period": "month",
-        "blurb": "For newsrooms, NGOs, researchers and apps that build on the API.",
+        "blurb": "World Pulse Pro for your team: for newsrooms, NGOs, researchers and apps that build on the API.",
         "features": [
+          "Everything in Pro, for your team",
           "Priority email support and integration help",
           "Request new sources and conflict theaters",
           "Receipts for your accounts team"
@@ -50,28 +62,8 @@
         "kofi": "tiers",
         "email_subject": "World Pulse Business plan",
         "url": ""
-      },
-      {
-        "id": "sponsor",
-        "name": "Sponsor a week",
-        "price": "$99",
-        "period": "week",
-        "blurb": "Put your brand in front of people who follow world news closely.",
-        "features": [
-          "“Presented by” banner in the app",
-          "Your link in every API response",
-          "Credit on the end card of each daily video"
-        ],
-        "cta": "Book a week",
-        "email_subject": "Sponsoring World Pulse",
-        "url": ""
       }
     ],
-    "sponsor": {
-      "_comment": "A paid 'Presented by' slot shown in the app, on the daily video's end card and in every API response. Sell it weekly (the 'sponsor' plan).",
-      "text": "",
-      "url": ""
-    },
     "ethicalads_publisher": "",
     "donate": [
       {

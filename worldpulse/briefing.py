@@ -59,12 +59,24 @@ def rule_brief(stories: list[dict], theaters: list[dict], mood: str) -> dict:
         bullets.append({"text": s["title"], "story_ids": [s["id"]]})
     hottest = max(active, key=lambda t: t["intensity"], default=None)
     watch = f"{hottest['name']}: {hottest['stories_24h']} reports in the last 24 hours, trend {hottest['trend']}." if hottest else None
-    return {"headline": headline, "bullets": bullets, "watch": watch}
+    # The numbers behind the English sentences, so apps can compose them in any language.
+    rule = {
+        "active_conflicts": len(active),
+        "escalating": len(escalating),
+        "watch": {"theater": hottest["id"], "stories_24h": hottest["stories_24h"], "trend": hottest["trend"]} if hottest else None,
+    }
+    return {"headline": headline, "bullets": bullets, "watch": watch, "rule": rule}
 
 
 def rule_theater_summary(stats: dict, latest: list[dict]) -> dict:
     if not stats["stories_24h"]:
+        key = "no_recent_reports"
         text = f"No new reports in the last 24 hours. {stats['stories_7d']} reports over the past week."
     else:
+        key = "recent_reports"
         text = f"{stats['stories_24h']} reports in the last 24 hours and {stats['stories_7d']} this week. Trend: {stats['trend']}."
-    return {"summary": text, "outlook": None, "developments": [{"text": a["title"], "story_id": a["id"]} for a in latest[:3]]}
+    return {
+        "summary": text, "outlook": None,
+        "developments": [{"text": a["title"], "story_id": a["id"]} for a in latest[:3]],
+        "rule": {"key": key, "stories_24h": stats["stories_24h"], "stories_7d": stats["stories_7d"], "trend": stats["trend"]},
+    }

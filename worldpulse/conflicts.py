@@ -203,6 +203,7 @@ def theater_metrics(theater: dict, articles: list[dict], now: datetime, since: d
         "lat": theater["lat"],
         "lon": theater["lon"],
         "description": theater["description"],
+        "i18n": theater.get("i18n") or {},
         "intensity": level,
         "status": status(level),
         "trend": trend(sev_24h, prior_daily, len(recent), signals["escalation"], signals["de-escalation"]),

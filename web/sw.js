@@ -3,8 +3,18 @@ const BUILD = "__BUILD__";
 const SHELL = `wp-shell-${BUILD}`;
 const DATA = "wp-data";
 const SHELL_FILES = [
-  "./", "index.html", "styles.css", "app.js", "config.js", "land.js", "manifest.webmanifest",
+  "./", "index.html", "styles.css", "app.js", "i18n.js", "i18n-de.js", "i18n-sr.js", "config.js", "land.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "story.html", "story.css", "story.js",
+  "fonts/fonts.css", "fonts/newsreader-500-700-latin.woff2", "fonts/newsreader-500-700-latin-ext.woff2",
+  "fonts/newsreader-400-latin.woff2", "fonts/newsreader-400-latin-ext.woff2",
+  "fonts/barlow-500-latin.woff2", "fonts/barlow-500-latin-ext.woff2", "fonts/barlow-600-latin.woff2",
+  "fonts/barlow-600-latin-ext.woff2", "fonts/barlow-700-latin.woff2", "fonts/barlow-700-latin-ext.woff2",
+  "fonts/source-serif-4-400-cyrillic.woff2", "fonts/source-serif-4-400-cyrillic-ext.woff2",
+  "fonts/source-serif-4-500-cyrillic.woff2", "fonts/source-serif-4-500-cyrillic-ext.woff2",
+  "fonts/source-serif-4-600-cyrillic.woff2", "fonts/source-serif-4-600-cyrillic-ext.woff2",
+  "fonts/source-serif-4-700-cyrillic.woff2", "fonts/source-serif-4-700-cyrillic-ext.woff2",
+  "fonts/roboto-500-cyrillic.woff2", "fonts/roboto-500-cyrillic-ext.woff2", "fonts/roboto-600-cyrillic.woff2",
+  "fonts/roboto-600-cyrillic-ext.woff2", "fonts/roboto-700-cyrillic.woff2", "fonts/roboto-700-cyrillic-ext.woff2",
 ];
 
 self.addEventListener("install", (event) => {
