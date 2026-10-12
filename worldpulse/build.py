@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -24,13 +25,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import briefing, classify, cluster, conflicts, feeds, pro
+from . import briefing, classify, cluster, conflicts, curate, feeds, pro
 from .ai import Analyst
 
 ROOT = Path(__file__).resolve().parent.parent
 API_VERSION = "v1"
 I18N_FIELDS = ("title_i18n", "summary_i18n", "insight_i18n", "story_brief")
 AI_FIELDS = ("theaters", "severity", "signal", "insight", "analysis", "ai_model")
+MAX_ITEMS = 30  # newest items read per feed per run
+_HOST_LOCK = threading.Lock()
 REPO_URL = f'{os.environ.get("GITHUB_SERVER_URL", "https://github.com")}/{os.environ.get("GITHUB_REPOSITORY", "ilicvix02/Claude")}'
 
 STOPWORDS = set(
@@ -116,18 +119,42 @@ def normalize(raw: dict, source: dict, fetched_at: datetime) -> dict:
     }
 
 
-def collect(sources: list[dict], fetched_at: datetime, fetcher=feeds.fetch) -> tuple[list[dict], list[dict]]:
+HOST_LIMIT = 4  # concurrent requests per host, so 200 ReliefWeb or Google News feeds don't hammer one server
+
+
+def collect(sources: list[dict], fetched_at: datetime, fetcher=feeds.fetch, workers: int = 96,
+            timeout: float = 12.0, deadline_s: float = 150.0, skip: set[str] | None = None) -> tuple[list[dict], list[dict]]:
+    """Fetch every source concurrently (``workers`` threads, HOST_LIMIT per host, ``timeout`` per request).
+
+    Feeds still waiting when ``deadline_s`` has passed are skipped for this run, as are ids in ``skip``
+    (feeds that failed on several consecutive runs; they are retried every few hours)."""
+    hosts: dict[str, threading.Semaphore] = {}
+    started = time.monotonic()
+    skip = skip or set()
+
     def run(source):
-        try:
-            entries = feeds.parse(fetcher(source["url"]))
-            entries = entries[: source.get("max_items", 60)]
-            entries = [e for e in entries if not classify.is_off_topic(e["title"], e["summary"], source.get("lang", "en"))]
-            return source, [normalize(e, source, fetched_at) for e in entries], None
-        except Exception as exc:  # one broken feed must never break the build
-            return source, [], f"{type(exc).__name__}: {exc}"
+        if source["id"] in skip:
+            return source, [], "skipped: failing feed (retried later)"
+        host = urllib.parse.urlsplit(source["url"]).hostname or ""
+        with _HOST_LOCK:
+            sem = hosts.setdefault(host, threading.Semaphore(HOST_LIMIT))
+        with sem:
+            if time.monotonic() - started > deadline_s:
+                return source, [], "skipped: fetch deadline reached"
+            try:
+                try:
+                    data = fetcher(source["url"], timeout=timeout)
+                except TypeError:  # test fetchers take only the url
+                    data = fetcher(source["url"])
+                entries = feeds.parse(data)
+                entries = entries[: source.get("max_items", MAX_ITEMS)]
+                entries = [e for e in entries if not classify.is_off_topic(e["title"], e["summary"], source.get("lang", "en"))]
+                return source, [normalize(e, source, fetched_at) for e in entries], None
+            except Exception as exc:  # one broken feed must never break the build
+                return source, [], f"{type(exc).__name__}: {exc}"[:200]
 
     articles, status = [], []
-    with ThreadPoolExecutor(max_workers=24) as pool:
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         for source, items, error in pool.map(run, sources):
             articles.extend(items)
             status.append(
@@ -136,14 +163,26 @@ def collect(sources: list[dict], fetched_at: datetime, fetcher=feeds.fetch) -> t
                     "name": source["name"],
                     "homepage": source.get("homepage"),
                     "feed": source["url"],
+                    "lang": source.get("lang", "en"),
+                    "country": source.get("country"),
+                    "type": source.get("type", "news"),
                     "ok": error is None,
                     "items": len(items),
                     "error": error,
                     "checked_at": iso(fetched_at),
                 }
             )
-            print(f"  {'ok ' if error is None else 'ERR'} {source['id']:<20} {len(items):>3} {error or ''}", file=sys.stderr)
+    bad = sum(1 for s in status if not s["ok"])
+    print(f"  fetched {len(sources)} sources in {time.monotonic() - started:.0f}s: {len(articles)} items, {bad} failed/skipped", file=sys.stderr)
     return articles, status
+
+
+def failing_sources(previous_status: list[dict], now: datetime) -> set[str]:
+    """Sources to skip this run: those that failed last time *and* have failed for 3+ runs, except
+    on every 6th hour, when everything is retried (so a feed that comes back is picked up again)."""
+    if now.hour % 6 == 0:
+        return set()
+    return {s["id"] for s in previous_status if not s.get("ok") and int(s.get("fails") or 0) >= 3}
 
 
 def _sibling(location: str, name: str) -> str:
@@ -191,8 +230,10 @@ def load_previous(location: str | None, name: str = "all.json"):
     raise PreviousUnavailable(f"{where}: {type(error).__name__}: {error}")
 
 
-def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days: int) -> list[dict]:
-    """Merge by id (fresh wins, original fetch time kept), drop expired, dedupe by title."""
+def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days: int,
+          per_source: int = 120, total: int = 20000) -> list[dict]:
+    """Merge by id (fresh wins, original fetch time kept), drop expired, dedupe by title, and keep the
+    archive bounded: at most ``per_source`` stories per source and ``total`` overall, newest first."""
     by_id: dict[str, dict] = {a["id"]: a for a in previous if "id" in a and "published_at" in a}
     for a in fresh:
         old = by_id.get(a["id"])
@@ -208,13 +249,17 @@ def merge(previous: list[dict], fresh: list[dict], now: datetime, retention_days
         key=lambda a: (a["published_at"], a["id"]),
         reverse=True,
     )
-    seen, out = set(), []
+    seen, out, per = set(), [], Counter()
     for a in items:
         key = title_key(a["title"])
-        if key in seen:
+        sid = a.get("source", {}).get("id")
+        if key in seen or per[sid] >= per_source:
             continue
         seen.add(key)
+        per[sid] += 1
         out.append(a)
+        if len(out) >= total:
+            break
     return out
 
 
@@ -523,6 +568,35 @@ def translate_stories(analyst, articles: list[dict], langs: list[str], limit: in
         print(f"  AI translated {len(result)}/{len(todo)} stories into {lang}", file=sys.stderr)
 
 
+def curate_news(articles, sources, now, analyst, ai_cfg, site, theaters, previous_news) -> list[dict]:
+    meta = {s["id"]: s for s in sources}
+    ncfg = site.get("news", {})
+    items = curate.select(articles, now, meta, int(ncfg.get("items", 40)), int(ncfg.get("per_theater", 4)),
+                          int(ncfg.get("window_hours", 36)))
+    curate.reuse(items, previous_news)
+    langs = [x for x in ai_cfg.get("translate_stories", ["en", "de", "sr"]) or [] if isinstance(x, str)]
+    if analyst.available and langs:
+        todo = curate.needs_writing(items, int(ai_cfg.get("news_per_run", 40)))
+        written = analyst.write_news(todo, langs)
+        for it in todo:
+            got = written.get(it["id"])
+            if not got:
+                continue
+            if "en" in got or it["lang"] in got:
+                base = "en" if "en" in got else it["lang"]
+                it.update(title=got[base]["title"], summary=got[base]["summary"], lang=base)
+            it["title_i18n"] = {k: v["title"] for k, v in got.items() if k != it["lang"]}
+            it["summary_i18n"] = {k: v["summary"] for k, v in got.items() if k != it["lang"] and v["summary"]}
+            it.update(written_by="ai", ai_model=analyst.model, written_coverage=it["coverage"])
+        print(f"  AI wrote {len(written)}/{len(todo)} news items", file=sys.stderr)
+        # items the writer skipped still get translated headlines (cheaper, same cache)
+        translate_stories(analyst, items, langs, int(ai_cfg.get("translate_stories_per_run", 40)))
+        brief_langs = [x for x in ai_cfg.get("story_briefs", langs) or [] if isinstance(x, str)]
+        write_story_briefs(analyst, items, theaters, now, brief_langs, int(ai_cfg.get("story_briefs_per_run", 4)))
+    print(f"  curated {len(items)} news items ({sum(1 for i in items if i.get('written_by') == 'ai')} AI-written)", file=sys.stderr)
+    return items
+
+
 def story_brief_candidates(articles: list[dict], now: datetime, lang: str, limit: int) -> list[dict]:
     """Lead stories worth an in-app detailed brief: conflict-related or covered by several outlets, last 48h."""
     pool = [a for a in articles
@@ -544,7 +618,8 @@ def write_story_briefs(analyst, articles: list[dict], theaters, now: datetime, l
             continue
         items = []
         for a in todo:
-            related = [x["title"] for x in articles if x.get("cluster") == a["id"] and x["id"] != a["id"]]
+            related = ([x["title"] for x in a["sources"][1:]] if a.get("sources")
+                       else [x["title"] for x in articles if x.get("cluster") == a["id"] and x["id"] != a["id"]])
             t = theaters.by_id.get((a.get("theaters") or [None])[0]) if a.get("theaters") else None
             items.append({"id": a["id"], "title": a["title"], "summary": a.get("summary"), "related": related,
                           "context": t["description"] if t else ""})
@@ -648,9 +723,20 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     base_url = (os.environ.get("WORLDPULSE_BASE_URL") or site.get("base_url") or "").rstrip("/")
 
     print(f"Fetching {len(sources)} sources…", file=sys.stderr)
-    fresh, status = collect(sources, now, fetcher)
+    try:  # only used to skip feeds that keep failing; never worth blocking a build on
+        prev_status = (load_previous(previous, "sources.json") or {}).get("data") or [] if previous else []
+    except PreviousUnavailable:
+        prev_status = []
+    fetch_cfg = site.get("fetch", {})
+    fresh, status = collect(sources, now, fetcher, workers=int(fetch_cfg.get("workers", 96)),
+                            timeout=float(fetch_cfg.get("timeout_s", 12)), deadline_s=float(fetch_cfg.get("deadline_s", 150)),
+                            skip=failing_sources(prev_status, now))
+    prev_fails = {s.get("id"): int(s.get("fails") or 0) for s in prev_status}
+    for s in status:
+        s["fails"] = 0 if s["ok"] else prev_fails.get(s["id"], 0) + (0 if (s["error"] or "").startswith("skipped") else 1)
     prev_all = load_previous(previous) or {}
-    articles = merge(prev_all.get("data", []), fresh, now, int(site.get("retention_days", 7)))
+    articles = merge(prev_all.get("data", []), fresh, now, int(site.get("retention_days", 7)),
+                     int(fetch_cfg.get("archive_per_source", 120)), int(fetch_cfg.get("archive_max", 20000)))
     if not articles:
         raise SystemExit("No articles collected — refusing to publish an empty site.")
 
@@ -676,12 +762,10 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         print(f"  AI off: {analyst.reason}", file=sys.stderr)
     # 3. group coverage of the same event
     cluster.assign(articles)
-    # 4. translate the newest stories into every reader language (cached per story)
-    story_langs = [x for x in ai_cfg.get("translate_stories", ["en", "de", "sr"]) or [] if isinstance(x, str)]
-    if analyst.available:
-        translate_stories(analyst, articles, story_langs, int(ai_cfg.get("translate_stories_per_run", 40)))
-        brief_langs = [x for x in ai_cfg.get("story_briefs", ["en", "de", "sr"]) or [] if isinstance(x, str)]
-        write_story_briefs(analyst, articles, theaters, now, brief_langs, int(ai_cfg.get("story_briefs_per_run", 8)))
+    # 4. curate: rank the events and publish only the top ones as news items, AI-written in every
+    #    app language (cached per item id, so each item is paid for once)
+    news = curate_news(articles, sources, now, analyst, ai_cfg, site, theaters,
+                       (load_previous(previous, "news.json") or {}).get("data") or [] if previous else [])
 
     latest = articles[: int(site.get("latest_limit", 300))]
     by_id = {a["id"]: a for a in articles}
@@ -761,6 +845,7 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
     api = out / "api" / API_VERSION
     M = lambda count=None, **kw: meta(site, now, base_url, count, **kw)  # noqa: E731
 
+    write_json(api / "news.json", {"meta": M(len(news)), "data": news})
     write_json(api / "latest.json", {"meta": M(len(latest)), "data": latest})
     write_json(api / "all.json", {"meta": M(len(articles), retention_days=site.get("retention_days", 7)), "data": articles})
     write_json(api / "state.json", {"meta": M(), "data": state})
@@ -810,7 +895,7 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
             "data": {
                 "site": {"title": site["title"], "tagline": site["tagline"], "base_url": base_url},
                 "endpoints": {
-                    "latest": "latest.json", "all": "all.json", "state": "state.json", "brief": "brief.json",
+                    "news": "news.json", "latest": "latest.json", "all": "all.json", "state": "state.json", "brief": "brief.json",
                     "conflicts": "conflicts.json", "sources": "sources.json", "openapi": "openapi.json",
                     "rss": "../../feed.xml", "conflicts_rss": "conflicts.xml",
                 },
@@ -871,6 +956,9 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         "since": prev_ledger.get("since") or (iso(now) if u["calls"] else None),
         "updated_at": iso(now),
     }
+    # Monthly cost at the rate measured so far (730 hours a month), once a few hours of data exist.
+    hrs = hours_since(ledger["since"], now)
+    ledger["projected_monthly_usd"] = round(ledger["spent_usd"] / hrs * 730, 2) if ledger["since"] and 3 <= hrs < float("inf") else None
     write_json(api / "ai-usage.json", {"meta": M(), "data": ledger})
     if u["calls"]:
         budget = f" of ${analyst.budget:.2f}" if analyst.budget is not None else ""

@@ -40,6 +40,7 @@ curl -s https://YOUR-SITE/api/v1/brief.json | jq '.data | {headline, source}'</p
       <tr><td><code>conflicts/{id}.json</code></td><td>One theater plus all its stories from the last 7 days. Ids are listed in <code>index.json</code>.</td></tr>
       <tr><td><code>conflicts.xml</code></td><td>RSS feed of conflict reports.</td></tr>
       <tr><td><code>latest.json</code></td><td>Most recent 300 stories.</td></tr>
+      <tr><td><code>news.json</code></td><td>Curated news items: the top events ranked by importance, each with its sources and translations (what the app shows).</td></tr>
       <tr><td><code>all.json</code></td><td>Rolling archive of the last 7 days.</td></tr>
       <tr><td><code>state.json</code></td><td>Tension index, mood, category and region breakdown, 7-day history, trending terms, conflict overview.</td></tr>
       <tr><td><code>categories/{id}.json</code> / <code>.xml</code></td><td><code>deals</code>, <code>crises</code>, <code>conflict</code>, <code>disasters</code>, <code>humanitarian</code>, <code>economy</code>, <code>diplomacy</code>, <code>climate</code>, <code>health</code>, <code>tech</code>.</td></tr>

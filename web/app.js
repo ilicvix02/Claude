@@ -104,7 +104,7 @@
   }
 
   async function loadFrom(base) {
-    const files = ["index.json", "all.json", "state.json", "conflicts.json", "brief.json"];
+    const files = ["index.json", "news.json", "state.json", "conflicts.json", "brief.json"];
     const res = await Promise.allSettled(files.map((f) => getJSON(base, f)));
     if (res[0].status === "rejected" || res[1].status === "rejected") throw res[0].reason || res[1].reason;
     return res.map((r) => (r.status === "fulfilled" ? r.value : null));
@@ -121,8 +121,10 @@
     }
     const [index, all, state, conflicts, brief] = data;
     S.index = index.data;
-    S.all = all.data;
-    S.byId = new Map(S.all.map((a) => [a.id, a]));
+    S.news = all.data;
+    S.member = new Map();
+    for (const a of S.news) for (const m of a.members || []) S.member.set(m, a);
+    pickVisible();
     S.state = state && state.data;
     S.conflicts = conflicts && conflicts.data;
     S.brief = brief && brief.data;
@@ -131,6 +133,16 @@
     S.sources = null;
     updateChrome();
   }
+
+  // The app lists only curated news items (news.json), and only those readable in the reader's
+  // language: written or translated into it, or originally in it. Nothing in another language is shown.
+  function pickVisible() {
+    const L = readLang();
+    S.all = (S.news || []).filter((a) => (a.lang || "en") === L || !!(a.title_i18n || {})[L]);
+    S.byId = new Map(S.all.map((a) => [a.id, a]));
+  }
+  // The curated item (in the reader's language) that covers a raw story id, or null.
+  const itemFor = (id) => { const a = S.byId.get(id) || (S.member && S.member.get(id)); return a && S.byId.has(a.id) ? a : null; };
 
   function updateChrome() {
     updateDateline();
@@ -314,12 +326,12 @@
       others.length
         ? el("details", { class: "also" },
             el("summary", { text: tr("story.more_reports", { n: others.length }) }),
-            el("ul", {}, ...others.map((o) => el("li", {}, el("a", { href: `#/story/${encodeURIComponent(o.id)}` }, el("b", { text: o.source.name }), ` ${storyText(o).title}`)))))
+            el("ul", {}, ...others.map((o) => el("li", {}, el("a", { href: `#/story/${encodeURIComponent(o.id)}` }, el("b", { text: tx(o.source.name) }), ` ${storyText(o).title}`)))))
         : null,
       el("div", { class: "story-foot" },
         el("p", { class: "meta" }, ...spaced(
           a.severity >= 2 ? sevBars(a.severity) : (tone ? el("span", { class: `tone ${a.tone}`, text: tone }) : null),
-          el("b", { text: a.source.name }),
+          el("b", { text: tx(a.source.name) }),
           kind === "wire" ? null : timeEl(a.published_at, ago(a.published_at)),
           a.coverage > 1 ? el("span", { text: tr("story.outlets", { n: a.coverage }) }) : null,
           st.translated ? el("span", { class: "tr-mark", title: a.title }, tr("story.translated"), " · ", el("a", { href: url, target: "_blank", rel: "noopener", lang: a.lang || "en", text: tr("story.original") })) : null)),
@@ -434,20 +446,24 @@
   function briefText(b) {
     const out = { headline: b.headline, bullets: b.bullets.map((x) => x.text), watch: b.watch, translated: true };
     if (I18N.lang === "en") return out;
+    // Publisher headlines (rules mode, or an AI brief not yet translated) are replaced by the matching
+    // curated item in the reader's language; a bullet with none is left out.
+    const local = () => b.bullets.map((x) => { const a = (x.stories || []).map((s) => itemFor(s.id)).find(Boolean); return a ? storyText(a).title : null; });
     const r = b.rule;
     if (b.source !== "ai" && r) {
       const mood = MOODS.includes(r.mood_key) ? tr(`mood.${r.mood_key}`) : "";
       if (mood) out.headline = tr("brief.rule_headline", { mood, n: r.active_conflicts }) + (r.escalating > 0 ? tr("brief.rule_escalating", { n: r.escalating }) : "");
       const w = r.watch;
-      out.watch = w ? tr("brief.rule_watch", { theater: theaterName(w.theater), n: w.stories_24h, trend: trendWord(w.trend) }) : b.watch;
+      out.watch = w ? tr("brief.rule_watch", { theater: theaterName(w.theater), n: w.stories_24h, trend: trendWord(w.trend) }) : null;
+      out.bullets = local();
       return out;
     }
     const v = I18N.field(b.i18n);
     if (v && v.headline && Array.isArray(v.bullets) && v.bullets.length === b.bullets.length) {
       return { headline: tx(v.headline), bullets: v.bullets.map(tx), watch: v.watch ? tx(v.watch) : null, translated: true };
     }
-    out.translated = b.source !== "ai";
-    return out;
+    const top = S.all[0];
+    return { headline: top ? storyText(top).title : tr("brief.name"), bullets: local(), watch: null, translated: true };
   }
   const MOODS = ["crisis_dominated", "tense", "balanced", "constructive", "dealmaking_dominated"];
 
@@ -464,9 +480,9 @@
         timeEl(b.generated_at, ago(b.generated_at)),
         aiLabel(isAI, tr("brief.automated"))),
       text.translated ? null : el("p", { class: "fine untranslated", text: tr("ai.untranslated") }),
-      el("ol", { class: "bullets" }, ...b.bullets.map((x, i) => el("li", {},
+      el("ol", { class: "bullets" }, ...b.bullets.map((x, i) => text.bullets[i] && el("li", {},
         el("p", { text: text.bullets[i] }),
-        x.stories.length ? el("p", { class: "cites" }, ...x.stories.map((s) => el("a", { class: "cite", href: safeUrl(s.url), target: "_blank", rel: "noopener", text: s.coverage > 1 ? `${s.source.name} +${s.coverage - 1}` : s.source.name }))) : null))),
+        x.stories.length ? el("p", { class: "cites" }, ...x.stories.map((s) => el("a", { class: "cite", href: safeUrl(s.url), target: "_blank", rel: "noopener", text: s.coverage > 1 ? `${tx(s.source.name)} +${s.coverage - 1}` : tx(s.source.name) }))) : null))),
       text.watch ? el("p", { class: "watch" }, el("b", { text: tr("brief.watch") }), " ", text.watch) : null,
       el("p", { class: "fine disclaimer", text: b.disclaimer_key === "rules" ? tr("rules.disclaimer") : b.disclaimer_key === "ai" ? tr("ai.disclaimer") : b.disclaimer }),
       el("div", { class: "brief-actions" },
@@ -504,7 +520,7 @@
       el("h2", { class: "box-h", text: tr("most.title") }),
       el("ol", { class: "ranked" }, ...list.map((a) => el("li", {},
         el("a", { href: safeUrl(a.url), target: "_blank", rel: "noopener", text: a.title }),
-        el("p", { class: "meta" }, ...spaced(el("span", { text: tr("story.outlets", { n: a.coverage }) }), el("b", { text: a.source.name }), timeEl(a.published_at, ago(a.published_at))))))),
+        el("p", { class: "meta" }, ...spaced(el("span", { text: tr("story.outlets", { n: a.coverage }) }), el("b", { text: tx(a.source.name) }), timeEl(a.published_at, ago(a.published_at))))))),
       el("p", { class: "fine", text: tr("most.fine") }));
   }
 
@@ -517,7 +533,7 @@
       el("ol", { class: "latest-list" }, ...items.map((a) => el("li", {},
         el("time", { datetime: a.published_at, title: longTime(a.published_at), text: clock(a.published_at) }),
         el("a", { href: safeUrl(a.url), target: "_blank", rel: "noopener", text: a.title }),
-        el("span", { class: "src", text: a.source.name })))));
+        el("span", { class: "src", text: tx(a.source.name) })))));
   }
 
   function tensionBox() {
@@ -569,7 +585,8 @@
   // conflict monitor
 
   function deskRow(t) {
-    const last = (t.latest || [])[0];
+    const item = S.all.find((a) => (a.theaters || []).includes(t.id));
+    const last = item && { published_at: item.published_at, title: storyText(item).title };
     return el("li", {}, el("a", { class: `desk-row st st-${t.status}`, href: `#/conflict/${t.id}` },
       el("span", { class: "c-status" }, statusPill(t)),
       el("span", { class: "c-main" },
@@ -635,6 +652,7 @@
     if (an.source !== "ai" && r) {
       if (r.key === "recent_reports") out.summary = tr("conflict.rule_recent", { n: r.stories_24h, week: I18N.num(r.stories_7d), trend: trendWord(r.trend) });
       else if (r.key === "no_recent_reports") out.summary = tr("conflict.rule_none", { n: r.stories_7d });
+      out.developments = an.developments.map((d) => { const a = itemFor(d.story.id); return a ? storyText(a).title : null; });
       return out;
     }
     const v = I18N.field(an.i18n);
@@ -642,9 +660,13 @@
       out.summary = tx(v.summary);
       if (v.outlook) out.outlook = tx(v.outlook);
       if (Array.isArray(v.developments) && v.developments.length === out.developments.length) out.developments = v.developments.map(tx);
+      else out.developments = an.developments.map((d) => { const a = itemFor(d.story.id); return a ? storyText(a).title : null; });
       return out;
     }
-    out.translated = an.source !== "ai";
+    // An AI analysis not translated yet: the rule-based summary in the reader's language instead.
+    out.summary = t.stories_24h ? tr("conflict.rule_recent", { n: t.stories_24h, week: I18N.num(t.stories_7d), trend: trendWord(t.trend) }) : tr("conflict.rule_none", { n: t.stories_7d });
+    out.outlook = null;
+    out.developments = an.developments.map((d) => { const a = itemFor(d.story.id); return a ? storyText(a).title : null; });
     return out;
   }
 
@@ -674,7 +696,7 @@
         kicker(a),
         el("h1", { text: st.title }),
         st.summary ? el("p", { class: "dek standfirst", text: st.summary }) : null,
-        el("p", { class: "meta" }, ...spaced(el("b", { text: a.source.name }), timeEl(a.published_at, ago(a.published_at)),
+        el("p", { class: "meta" }, ...spaced(el("b", { text: tx(a.source.name) }), timeEl(a.published_at, ago(a.published_at)),
           st.translated ? el("span", { class: "tr-mark", text: tr("story.translated") }) : null))),
       img ? el("img", { class: "article-img", src: img, alt: "", decoding: "async", referrerpolicy: "no-referrer", onerror: (e) => e.target.remove() }) : null,
       paras.length ? el("section", { class: "article-body" },
@@ -682,9 +704,12 @@
         ...paras.map((p) => el("p", { class: "body-text", text: p })),
         el("p", { class: "fine", text: ai.length ? tr("story.ai_fine") : tr("story.rules_fine") })) : null,
       box,
+      (a.sources || []).length ? el("section", { class: "article-sources" }, sectionHead(tr("story.sources", { n: a.sources.length })),
+        el("ul", { class: "cites" }, ...a.sources.map((x) => el("li", {}, el("a", { class: "cite", href: safeUrl(x.url), target: "_blank", rel: "noopener", lang: x.lang || "en" },
+          tx(x.name), x.type === "official" ? ` · ${tr("story.official")}` : "", " · ", timeEl(x.published_at, ago(x.published_at))))))) : null,
       related.length ? el("section", { class: "article-related" }, sectionHead(tr("story.related")),
         el("ul", { class: "stories" }, ...related.map((x) => storyItem(x, { noImage: true })))) : null,
-      el("p", { class: "article-original" }, el("a", { href: url, target: "_blank", rel: "noopener", lang: a.lang || "en", text: tr("story.read_original", { source: a.source.name }) })));
+      el("p", { class: "article-original" }, el("a", { href: url, target: "_blank", rel: "noopener", lang: a.lang || "en", text: tr("story.read_original", { source: tx(a.source.name) }) })));
   }
 
   function renderConflict(id) {
@@ -720,9 +745,9 @@
       text.translated ? null : el("p", { class: "fine untranslated", text: tr("ai.untranslated") }),
       el("p", { class: "body-text", text: text.summary }),
       text.outlook ? el("p", { class: "outlook" }, el("b", { text: tr("conflict.outlook") }), " ", text.outlook) : null,
-      an.developments.length ? el("ul", { class: "devs" }, ...an.developments.map((d, i) => el("li", {},
+      text.developments.some(Boolean) ? el("ul", { class: "devs" }, ...an.developments.map((d, i) => text.developments[i] && el("li", {},
         el("p", { text: text.developments[i] }),
-        el("a", { href: safeUrl(d.story.url), target: "_blank", rel: "noopener", text: `${d.story.source.name} · ${ago(d.story.published_at)}` })))) : null,
+        el("a", { href: safeUrl(d.story.url), target: "_blank", rel: "noopener", text: `${tx(d.story.source.name)} · ${ago(d.story.published_at)}` })))) : null,
       el("p", { class: "fine", text: isAI ? tr("conflict.ai_fine", { ago: ago(an.generated_at) }) : tr("conflict.rules_fine") })) : null;
     const week = el("section", { class: "week" },
       sectionHead(tr("conflict.week")),
@@ -1065,6 +1090,7 @@
   // Switching language re-renders the open view in place, without a reload.
   window.addEventListener("wp:lang", () => {
     drawLangBtn();
+    pickVisible();
     if (S.index) updateChrome(); else updateDateline();
     const y = window.scrollY;
     render();

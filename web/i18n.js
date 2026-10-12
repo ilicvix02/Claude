@@ -248,6 +248,8 @@
     "story.rules_fine": "Automated: the report's excerpt and background from the conflict tracker.",
     "story.related": "Related reports",
     "story.read_original": "Read the original at {source}",
+    "story.sources": { one: "Source", other: "Sources ({n})" },
+    "story.official": "official",
     "story.not_found": "This story is no longer in the archive.",
     "story.translated": "Translated",
     "story.original": "Original",

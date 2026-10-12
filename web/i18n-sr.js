@@ -227,6 +227,8 @@ WP_I18N.add("sr", {
   "story.rules_fine": "Аутоматски: одломак извештаја и позадина из праћења сукоба.",
   "story.related": "Сродни извештаји",
   "story.read_original": "Прочитајте оригинал на {source}",
+  "story.sources": { one: "Извор", few: "Извори ({n})", other: "Извора ({n})" },
+  "story.official": "званично",
   "story.not_found": "Ова вест више није у архиви.",
   "story.translated": "Преведено",
   "story.original": "Оригинал",
