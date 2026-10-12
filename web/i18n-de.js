@@ -221,6 +221,8 @@ WP_I18N.add("de", {
   "story.rules_fine": "Automatisch: Auszug des Berichts und Hintergrund aus dem Konflikt-Tracker.",
   "story.related": "Verwandte Berichte",
   "story.read_original": "Original bei {source} lesen",
+  "story.sources": { one: "Quelle", other: "Quellen ({n})" },
+  "story.official": "offiziell",
   "story.not_found": "Diese Meldung ist nicht mehr im Archiv.",
   "story.translated": "Übersetzt",
   "story.original": "Original",

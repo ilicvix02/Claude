@@ -201,7 +201,14 @@ class BuildIntegration(unittest.TestCase):
         rss = (ROOT / "tests" / "test_worldpulse.py").read_text()
         feed = re.search(r'RSS = b"""(.*?)"""', rss, re.S).group(1).encode()
         orig = build.load_json
-        build.load_json = lambda p: {"sources": sources} if p.name == "sources.json" else orig(p)
+        def load(p):
+            if p.name == "sources.json":
+                return {"sources": sources}
+            data = orig(p)
+            if p.name == "site.json":  # dormant: no license server configured
+                data["pro"] = {**data.get("pro", {}), "api_url": ""}
+            return data
+        build.load_json = load
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 out = Path(tmp) / "site"

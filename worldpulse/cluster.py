@@ -19,7 +19,7 @@ _STOP = set(
 
 
 def tokens(title: str) -> frozenset[str]:
-    words = re.findall(r"[a-z0-9]+", title.lower().replace("’", "'").replace("'s ", " "))
+    words = re.findall(r"\w+", title.lower().replace("’", "'").replace("'s ", " "))
     out = set()
     for w in words:
         if w in _STOP or len(w) < 3:
@@ -54,10 +54,25 @@ def assign(articles: list[dict], window_hours: int = 48) -> list[dict]:
     toks = [tokens(a["title"]) for a in articles]
     times = [datetime.fromisoformat(a["published_at"].replace("Z", "+00:00")).timestamp() for a in articles]
     window = window_hours * 3600
+    # Inverted index: only pairs that share a reasonably rare word are compared, so this stays
+    # near-linear for tens of thousands of headlines (a full pairwise pass would be quadratic).
+    index: dict[str, list[int]] = {}
+    for i, t in enumerate(toks):
+        for w in t:
+            index.setdefault(w, []).append(i)
+    common = max(50, len(articles) // 20)
     for i in range(len(articles)):
-        for j in range(i + 1, len(articles)):
-            if times[i] - times[j] > window:
-                break  # sorted newest first: everything further is older still
+        shared: dict[int, int] = {}
+        for w in toks[i]:
+            posting = index[w]
+            if len(posting) > common:
+                continue
+            for j in posting:
+                if j > i:
+                    shared[j] = shared.get(j, 0) + 1
+        for j, n in shared.items():
+            if n < 2 or times[i] - times[j] > window or abs(times[i] - times[j]) > window:
+                continue
             if articles[i]["source"]["id"] == articles[j]["source"]["id"]:
                 continue
             if similar(toks[i], toks[j]):

@@ -5,13 +5,29 @@
   "base_url": "",
   "retention_days": 7,
   "latest_limit": 300,
+  "fetch": {
+    "_comment": "Collection limits: worker threads, per-request timeout, overall fetch deadline (feeds still waiting are skipped this run), and archive bounds (stories kept per source and in total in api/v1/all.json).",
+    "workers": 96,
+    "timeout_s": 12,
+    "deadline_s": 150,
+    "archive_per_source": 120,
+    "archive_max": 12000
+  },
+  "news": {
+    "_comment": "Curated news items (api/v1/news.json, what the app shows): the top events of the last window_hours by importance, plus up to per_theater more per tracked conflict.",
+    "items": 40,
+    "per_theater": 4,
+    "window_hours": 36
+  },
   "ai": {
     "_comment": "Claude-powered analysis, run once per build in CI (never per reader). Needs the ANTHROPIC_API_KEY repository secret; without it the build uses rule-based analysis and costs nothing. Cost scales with model choice: see README → AI.",
     "enabled": true,
     "model": "claude-haiku-5-5",
     "analysis_effort": "low",
     "brief_effort": "medium",
-    "max_articles_per_run": 40,
+    "max_articles_per_run": 25,
+    "_news_comment": "New curated items written by AI per build (headline + summary in every translate_stories language, one call per 20 items, cached per item).",
+    "news_per_run": 40,
     "brief_every_hours": 3,
     "_translate_comment": "Languages the AI brief and conflict summaries are translated into after each new brief (one short call per language, counted against budget_usd): de German, sr Serbian Cyrillic. [] turns translations off.",
     "translate": ["de", "sr"],
@@ -21,7 +37,7 @@
     "translate_stories_per_run": 40,
     "_story_briefs_comment": "Languages of the AI-written detailed briefs on in-app story pages (3-5 paragraphs, for the most-covered and conflict stories of the last 48h; one call per language per build, cached per story). [] turns them off; the app then shows the excerpt plus the conflict's background.",
     "story_briefs": ["en", "de", "sr"],
-    "story_briefs_per_run": 8,
+    "story_briefs_per_run": 4,
     "_budget_comment": "Hard cap on total AI spend in US dollars, counted across all builds (see api/v1/ai-usage.json). When it is reached the build switches to rule-based analysis until you raise it. Set to null for no cap.",
     "budget_usd": 18
   },
