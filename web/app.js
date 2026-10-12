@@ -823,7 +823,7 @@
       plans.length || links.length ? el("div", { class: "prose" },
         el("p", { text: tr("more.free_text") }),
         el("div", { class: "support-links" },
-          plans.length ? el("a", { class: "btn", href: "#/support", text: tr("more.plans") }) : null,
+          plans.length ? el("a", { class: "btn", href: "#/pro", text: tr("more.plans") }) : null,
           ...links.map(([l, u]) => el("a", { class: "btn ghost", href: u, target: "_blank", rel: "noopener", text: l })))) : null,
       adSlot(),
       el("p", { class: "fine colophon", text: tr("more.colophon", { build: CFG.build }) }));
@@ -850,7 +850,7 @@
     return el("aside", { class: "box nudge", "aria-label": tr("support.title") },
       el("h2", { text: tr("support.headline") }),
       el("p", { text: tr("support.nudge") }),
-      el("a", { class: "btn", href: "#/support", text: tr("support.button") }),
+      el("a", { class: "btn", href: "#/pro", text: tr("support.button") }),
       cheapest ? el("p", { class: "fine", text: cheapest.period ? tr("support.from_period", { price: cheapest.price, period: periodLabel(cheapest.period) }) : tr("support.from", { price: cheapest.price }) }) : null);
   }
 
@@ -887,6 +887,72 @@
       links.length ? el("div", { class: "support-links" },
         ...links.map(([l, u]) => el("a", { class: "btn ghost", href: payUrl(u), target: "_blank", rel: "noopener", text: l }))) : null,
       el("p", { class: "fine pay-note", text: tr("support.pay_note") }));
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // World Pulse Pro: personal, expiring license keys checked by the Pro server.
+
+  const PRO_KEY = "wp.pro.key";
+  const b64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+  async function proUnlock(key) {
+    const pro = S.index.pro || {};
+    if (!pro.enabled || !pro.api_url || !pro.bundle) throw new Error(tr("pro.soon"));
+    const bundle = await getJSON(CFG.apiBase, pro.bundle.replace(/^api\/v1\//, ""));
+    const r = await fetch(pro.api_url.replace(/\/$/, "") + "/unlock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, wrapped_key: bundle.wrapped_key }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok || !res.ok) throw new Error(res.reason === "expired" ? tr("pro.expired") : tr("pro.invalid"));
+    const k = await crypto.subtle.importKey("raw", b64u(res.content_key), "AES-GCM", false, ["decrypt"]);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u(bundle.iv), additionalData: new TextEncoder().encode(bundle.id) }, k, b64u(bundle.ct));
+    return { content: JSON.parse(new TextDecoder().decode(plain)), alerts: res.alerts, expires: res.expires_at };
+  }
+
+  function renderPro(_, params) {
+    const pro = S.index.pro || {};
+    const wrap = el("div", { class: "page wide support pro" });
+    const keyIn = params.get("key");
+    if (keyIn) { store.set(PRO_KEY, keyIn.trim()); history.replaceState(null, "", "#/pro"); }
+    const status = el("div", { class: "pro-status", "aria-live": "polite" });
+    const body = el("div");
+    const plans = (S.index.revenue.plans || []).filter((p) => payUrl(p.url));
+    const feats = ["briefing", "trends", "alerts", "watchlist", "no_nudges", "export"];
+    const offer = el("div", {},
+      el("ul", { class: "ticks pro-feats" }, ...feats.map((f) => el("li", {}, el("b", { text: tr(`pro.f.${f}`) }), " ", tr(`pro.f.${f}.d`)))),
+      pro.enabled
+        ? el("div", { class: "plans" }, ...plans.map((p) => { const c = planText(p); return el("article", { class: `plan plan-${p.id}` },
+            el("h2", { text: c.name }), el("p", { class: "price" }, el("b", { text: p.price }), el("span", { text: ` / ${periodLabel(p.period)}` })),
+            c.blurb ? el("p", { class: "blurb", text: c.blurb }) : null,
+            el("a", { class: "btn", href: payUrl(p.url), target: "_blank", rel: "noopener", text: c.cta || tr("pro.go") })); }))
+        : el("p", { class: "pro-soon", text: tr("pro.soon") }),
+      el("p", { class: "fine", text: tr("pro.how") }));
+    const input = el("input", { type: "text", class: "pro-key", placeholder: tr("pro.key_ph"), "aria-label": tr("pro.key_ph"), autocomplete: "off" });
+    const go = async (key) => {
+      status.textContent = tr("pro.checking");
+      try {
+        const u = await proUnlock(key);
+        store.set(PRO_KEY, key); S.pro = u; status.textContent = tr("pro.welcome");
+        body.replaceChildren(proContent(u));
+      } catch (e) { S.pro = null; status.textContent = e.message; }
+    };
+    const form = el("form", { class: "pro-form", onsubmit: (e) => { e.preventDefault(); if (input.value.trim()) go(input.value.trim()); } },
+      input, el("button", { class: "btn", type: "submit", text: tr("pro.unlock") }));
+    const saved = store.get(PRO_KEY, "");
+    wrap.append(pageHead(tr("pro.headline"), { kicker: "World Pulse Pro", dek: tr("pro.dek") }), offer, sectionHead(tr("pro.have_key")), form, status, body);
+    if (saved && pro.enabled) go(saved);
+    if (saved) wrap.append(el("button", { class: "btn ghost", text: tr("pro.signout"), onclick: () => { store.set(PRO_KEY, ""); S.pro = null; render(); } }));
+    return wrap;
+  }
+
+  function proContent(u) {
+    const b = (u.content && u.content.briefing) || {};
+    const hs = b.hotspots || [];
+    return el("div", { class: "pro-briefing" }, sectionHead(tr("pro.briefing")),
+      ...hs.map((h) => el("article", { class: "card" },
+        el("h3", { text: theaterName(h.id) }),
+        el("p", { text: h.changed }), h.why ? el("p", { class: "muted", text: h.why }) : null,
+        h.risk ? el("p", {}, el("b", { text: `${tr("pro.risk")}: ${h.risk.level}` }), ` · ${h.risk.reason}`) : null,
+        h.watch ? el("p", { class: "fine", text: `${tr("pro.watch")}: ${h.watch}` }) : null)),
+      u.alerts && u.alerts.topic ? el("a", { class: "btn", href: `${u.alerts.server}/${u.alerts.topic}`, target: "_blank", rel: "noopener", text: tr("pro.alerts_btn") }) : null);
   }
 
   let adLoaded = false;
@@ -977,8 +1043,9 @@
     saved: renderSaved,
     more: renderMore,
     support: renderSupport,
+    pro: renderPro,
   };
-  const PARENT = { conflict: "conflicts", support: "more" }; // detail views: highlighted tab and back target
+  const PARENT = { conflict: "conflicts", support: "more", pro: "more" }; // detail views: highlighted tab and back target
 
   function parseHash() {
     const raw = location.hash.replace(/^#\/?/, "");
