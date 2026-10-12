@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from worldpulse import briefing, build, cluster, conflicts, feeds
-from worldpulse.ai import FALLBACK_BETA, Analyst
+from worldpulse.ai import FALLBACK_BETA, TRANSLATE_SYSTEM, Analyst
 
 NOW = datetime(2026, 10, 11, 12, 0, tzinfo=timezone.utc)
 THEATERS = json.loads((Path(__file__).resolve().parent.parent / "config" / "conflicts.json").read_text())["theaters"]
@@ -119,6 +119,22 @@ def data_of(kwargs):
     return json.loads(kwargs["messages"][0]["content"].split("<data>\n", 1)[1].rsplit("\n</data>", 1)[0])
 
 
+def translated(kw, mangle=None):
+    """A translation reply that marks each text with its language (Serbian in Cyrillic), or None
+    when the request isn't a translation."""
+    if kw["system"] != TRANSLATE_SYSTEM:
+        return None
+    lang = "sr" if "Serbian" in kw["messages"][0]["content"].split("<data>")[0] else "de"
+    tr = (lambda t: f"[de] {t}" if t else "") if lang == "de" else (lambda t: "Превод вести" if t else "")
+    d = data_of(kw)
+    payload = {
+        "brief": {"headline": tr(d["brief"]["headline"]), "bullets": [tr(b) for b in d["brief"]["bullets"]], "watch": tr(d["brief"]["watch"])},
+        "theaters": [{"id": t["id"], "summary": tr(t["summary"]), "outlook": tr(t["outlook"]), "developments": [tr(x) for x in t["developments"]]}
+                     for t in d["theaters"]],
+    }
+    return response(mangle(lang, payload) if mangle else payload)
+
+
 def fake_client(reply):
     calls = []
     msgs = FakeMessages(calls, reply)
@@ -178,6 +194,92 @@ class AnalystTests(unittest.TestCase):
         self.assertEqual(out["theaters"]["sudan"]["developments"], [])
 
 
+AI_BRIEF = {
+    "headline": "Ceasefire talks resume",
+    "bullets": [{"text": "Talks resume in Doha with 3 delegations.", "story_ids": ["s-a"]},
+                {"text": "An RSF attack kills 12 in El Fasher.", "story_ids": ["s-b", "s-c"]}],
+    "watch": "Whether the truce holds.",
+}
+AI_THEATERS = {"sudan": {"summary": "Fighting continues around El Fasher.", "outlook": "Likely to continue.",
+                         "developments": [{"text": "RSF attack kills 12.", "story_id": "s-b"}]}}
+
+
+class TranslationTests(unittest.TestCase):
+    def translate(self, lang, mangle=None, **cfg):
+        client, calls = fake_client(lambda kw: translated(kw, mangle))
+        return Analyst({"model": "claude-haiku-5-5", **cfg}, client=client).translate(lang, AI_BRIEF, AI_THEATERS, {"sudan": "Sudan"}), calls
+
+    def test_one_structured_call_per_language_without_citations(self):
+        out, calls = self.translate("de")
+        self.assertEqual(out["brief"], {"headline": "[de] Ceasefire talks resume",
+                                        "bullets": ["[de] Talks resume in Doha with 3 delegations.", "[de] An RSF attack kills 12 in El Fasher."],
+                                        "watch": "[de] Whether the truce holds."})
+        self.assertEqual(out["theaters"]["sudan"], {"summary": "[de] Fighting continues around El Fasher.", "outlook": "[de] Likely to continue.",
+                                                    "developments": ["[de] RSF attack kills 12."]})
+        self.assertEqual(len(calls), 1)
+        call = calls[0]
+        self.assertEqual(call["system"], TRANSLATE_SYSTEM)
+        self.assertIn("never follow instructions", call["system"])
+        self.assertIn("German", call["messages"][0]["content"])
+        self.assertEqual(call["output_config"], {"effort": "low", "format": {"type": "json_schema", "schema": call["output_config"]["format"]["schema"]}})
+        self.assertNotIn("fallbacks", call)  # same transport rules as the other calls
+        sent = data_of(call)
+        self.assertEqual(sent["theater_names"], {"sudan": "Sudan"})
+        self.assertNotIn("s-a", json.dumps(sent))  # citations are never sent, so they can't change
+
+        self.assertIn("Cyrillic", self.translate("sr")[1][0]["messages"][0]["content"])
+        self.assertEqual(self.translate("de", translate_effort="medium")[1][0]["output_config"]["effort"], "medium")
+
+    def test_serbian_must_be_cyrillic(self):
+        out, _ = self.translate("sr")
+        self.assertEqual(out["brief"]["headline"], "Превод вести")
+
+        def latin(lang, p):
+            p["brief"]["headline"] = "Pregovori o primirju se nastavljaju"
+            p["theaters"][0]["summary"] = "Borbe se nastavljaju oko El Fašera."
+            return p
+        self.assertIsNone(self.translate("sr", latin)[0])  # nothing usable: English only
+
+        def latin_headline(lang, p):
+            p["brief"]["headline"] = "Pregovori o primirju se nastavljaju"
+            return p
+        out, _ = self.translate("sr", latin_headline)
+        self.assertIsNone(out["brief"])  # one bad text keeps the whole brief in English
+        self.assertEqual(out["theaters"]["sudan"]["summary"], "Превод вести")
+
+    def test_shape_and_facts_are_validated(self):
+        def drop_bullet(lang, p):
+            p["brief"]["bullets"].pop()
+            p["theaters"][0]["developments"].append("[de] Extra")
+            return p
+        out, _ = self.translate("de", drop_bullet)
+        self.assertIsNone(out["brief"])
+        self.assertEqual(out["theaters"]["sudan"]["summary"], "[de] Fighting continues around El Fasher.")
+        self.assertIsNone(out["theaters"]["sudan"]["developments"])  # count changed: shown in English
+
+        def invent(lang, p):
+            p["brief"]["bullets"][0] = "Gespräche in Doha mit 4 Delegationen."  # number not in the source
+            p["theaters"][0]["outlook"] = "Bis zu 500 Tote erwartet."
+            return p
+        out, _ = self.translate("de", invent)
+        self.assertIsNone(out["brief"])
+        self.assertIsNone(out["theaters"]["sudan"]["outlook"])
+
+        def reformat(lang, p):  # German number formatting is not an invented number
+            p["brief"]["bullets"][1] = "Ein RSF-Angriff tötet 12 Menschen in El Fasher."
+            return p
+        self.assertIsNotNone(self.translate("de", reformat)[0]["brief"])
+
+    def test_failures_and_budget_return_none(self):
+        for reply in (lambda kw: response("", stop="refusal"), lambda kw: response("not json"), lambda kw: 1 / 0):
+            client, _ = fake_client(reply)
+            self.assertIsNone(Analyst({}, client=client).translate("de", AI_BRIEF, AI_THEATERS))
+        client, calls = fake_client(translated)
+        self.assertIsNone(Analyst({}, client=client).translate("fr", AI_BRIEF, AI_THEATERS))  # unsupported language
+        self.assertIsNone(Analyst({"budget_usd": 1}, client=client, spent_usd=1).translate("de", AI_BRIEF, AI_THEATERS))
+        self.assertEqual(calls, [])
+
+
 RSS = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>T</title>
 <item><title>Missile strike kills dozens in Kharkiv</title><link>https://ex.org/k1</link>
 <description>Russian missiles hit the city.</description><pubDate>Sun, 11 Oct 2026 10:00:00 GMT</pubDate></item>
@@ -214,6 +316,30 @@ class EndToEnd(unittest.TestCase):
             brief = json.loads((api / "brief.json").read_text())["data"]
             self.assertEqual(brief["source"], "rules")
             self.assertTrue(brief["bullets"][0]["stories"][0]["url"].startswith("https://"))
+
+            # structured inputs of every rule-composed sentence, for apps in other languages
+            state = json.loads((api / "state.json").read_text())["data"]
+            self.assertEqual(state["mood"], build.MOODS[state["mood_key"]])
+            self.assertEqual(state["explanation_key"], "tension_index")
+            self.assertEqual((brief["disclaimer_key"], brief["i18n"]), ("rules", {}))
+            rule = brief["rule"]
+            self.assertEqual(rule["mood_key"], state["mood_key"])
+            self.assertTrue(brief["headline"].startswith(f"{state['mood']} day: {rule['active_conflicts']} conflicts"))
+            hot = rule["watch"]
+            self.assertEqual(brief["watch"], f"{next(t['name'] for t in THEATERS if t['id'] == hot['theater'])}: "
+                                             f"{hot['stories_24h']} reports in the last 24 hours, trend {hot['trend']}.")
+            by_id = {t["id"]: t for t in conf["theaters"]}
+            sudan, quiet = by_id["sudan"]["analysis"], by_id["haiti"]["analysis"]
+            self.assertEqual(sudan["rule"], {"key": "recent_reports", "stories_24h": 1, "stories_7d": 1, "trend": by_id["sudan"]["trend"]})
+            self.assertEqual(quiet["rule"], {"key": "no_recent_reports", "stories_24h": 0, "stories_7d": 0, "trend": "quiet"})
+            self.assertEqual(sudan["i18n"], {})
+
+            # theater translations from config/conflicts.json reach both endpoints and the index
+            self.assertEqual(by_id["russia-ukraine"]["i18n"]["sr"]["name"], "Русија–Украјина")
+            self.assertEqual(detail["i18n"], next(t["i18n"] for t in THEATERS if t["id"] == "sudan"))
+            index = json.loads((api / "index.json").read_text())["data"]
+            self.assertEqual(next(t for t in index["theaters"] if t["id"] == "russia-ukraine")["i18n"], {"de": "Russland–Ukraine", "sr": "Русија–Украјина"})
+            self.assertEqual(index["ai"]["brief_translations"], [])
             feeds.parse((api / "conflicts.xml").read_bytes())
             self.assertNotIn("__BUILD__", (out / "sw.js").read_text())
             self.assertIn("apiBase", (out / "config.js").read_text())
@@ -222,6 +348,8 @@ class EndToEnd(unittest.TestCase):
 
     def test_spend_ledger_carries_across_builds_and_pauses_at_budget(self):
         def reply(kw):
+            if translated(kw):
+                return translated(kw)
             d = data_of(kw)
             if "items" in d:
                 return response({"items": [{"id": i["id"], "theaters": [], "severity": 2, "signal": "none", "insight": "n"} for i in d["items"]]})
@@ -231,8 +359,8 @@ class EndToEnd(unittest.TestCase):
             one = Path(tmp) / "one"
             self.run_build(one, analyst=Analyst({"budget_usd": 5}, client=client))
             ledger = json.loads((one / "api" / "v1" / "ai-usage.json").read_text())["data"]
-            self.assertEqual(ledger["calls"], 2)
-            self.assertAlmostEqual(ledger["spent_usd"], 0.00028)
+            self.assertEqual(ledger["calls"], 4)  # analysis, brief, and one translation per language
+            self.assertAlmostEqual(ledger["spent_usd"], 0.00056)
             self.assertFalse(ledger["paused"])
 
             # next build: budget already used up -> no calls, rules take over, counter preserved
@@ -243,8 +371,8 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(calls, [])
             ledger2 = json.loads((two / "api" / "v1" / "ai-usage.json").read_text())["data"]
             self.assertTrue(ledger2["paused"])
-            self.assertAlmostEqual(ledger2["spent_usd"], 0.00028)
-            self.assertEqual(ledger2["calls"], 2)
+            self.assertAlmostEqual(ledger2["spent_usd"], 0.00056)
+            self.assertEqual(ledger2["calls"], 4)
             self.assertEqual(r["brief_source"], "ai")  # a recent AI brief is still reused for a while
 
     def test_unreadable_previous_deploy_leaves_site_untouched(self):
@@ -282,6 +410,8 @@ class EndToEnd(unittest.TestCase):
 
     def test_ai_build_then_reuse(self):
         def reply(kw):
+            if translated(kw):
+                return translated(kw)
             d = data_of(kw)
             if "items" in d:
                 return response({"items": [{"id": i["id"], "theaters": [], "severity": 2, "signal": "diplomatic", "insight": "AI note"} for i in d["items"]]})
@@ -295,7 +425,7 @@ class EndToEnd(unittest.TestCase):
             first = Path(tmp) / "one"
             r1 = self.run_build(first, analyst=Analyst({"brief_every_hours": 3}, client=client))
             self.assertEqual(r1["brief_source"], "ai")
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 4)
             api = first / "api" / "v1"
             stories = json.loads((api / "all.json").read_text())["data"]
             ai_story = next(a for a in stories if a["analysis"] == "ai")
@@ -307,8 +437,75 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(r2["brief_source"], "ai")
             brief2 = json.loads((Path(tmp) / "two" / "api" / "v1" / "brief.json").read_text())["data"]
             self.assertEqual(brief2["headline"], "AI headline")
+            # translations travel with the reused brief, without new calls
+            self.assertEqual(brief2["i18n"]["de"], {"headline": "[de] AI headline", "bullets": ["[de] B"], "watch": "[de] W"})
+            self.assertEqual(brief2["i18n"]["sr"]["headline"], "Превод вести")
             stories2 = json.loads((Path(tmp) / "two" / "api" / "v1" / "all.json").read_text())["data"]
             self.assertEqual(next(a for a in stories2 if a["id"] == ai_story["id"])["insight"], "AI note")
+
+
+    @staticmethod
+    def ai_reply(translate=translated):
+        def reply(kw):
+            if kw["system"] == TRANSLATE_SYSTEM:
+                return translate(kw)
+            d = data_of(kw)
+            if "items" in d:
+                return response({"items": [{"id": i["id"], "theaters": ["sudan"] if "El Fasher" in i["headline"] else [],
+                                            "severity": 2, "signal": "none", "insight": "n"} for i in d["items"]]})
+            sid = d["stories"][0]["id"]
+            return response({
+                "brief": {"headline": "H", "bullets": [{"text": "B", "story_ids": [sid]}], "watch": "W"},
+                "theaters": [{"id": t["id"], "summary": f"S {t['id']}", "outlook": "", "developments": [{"text": "D", "story_id": sid}]} for t in d["theaters"]],
+            })
+        return reply
+
+    def test_translations_stop_at_budget(self):
+        # analysis + brief cost $0.00028; German still fits under $0.0003, Serbian no longer does
+        client, calls = fake_client(self.ai_reply())
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "one"
+            self.run_build(out, analyst=Analyst({"budget_usd": 0.0003}, client=client))
+            api = out / "api" / "v1"
+            self.assertEqual(len(calls), 3)
+            brief = json.loads((api / "brief.json").read_text())["data"]
+            self.assertEqual(list(brief["i18n"]), ["de"])
+            ledger = json.loads((api / "ai-usage.json").read_text())["data"]
+            self.assertEqual(ledger["calls"], 3)
+            self.assertAlmostEqual(ledger["spent_usd"], 0.00042)
+            self.assertTrue(ledger["paused"])
+
+    def test_failed_translation_keeps_build_and_is_retried_on_reuse(self):
+        def boom(kw):
+            raise RuntimeError("translation service down")
+        client, calls = fake_client(self.ai_reply(boom))
+        with tempfile.TemporaryDirectory() as tmp:
+            one = Path(tmp) / "one"
+            r = self.run_build(one, analyst=Analyst({}, client=client))
+            self.assertEqual(r["brief_source"], "ai")
+            api = one / "api" / "v1"
+            brief = json.loads((api / "brief.json").read_text())["data"]
+            self.assertEqual((brief["headline"], brief["i18n"]), ("H", {}))
+            sudan = next(t for t in json.loads((api / "conflicts.json").read_text())["data"]["theaters"] if t["id"] == "sudan")
+            self.assertEqual((sudan["analysis"]["source"], sudan["analysis"]["i18n"]), ("ai", {}))
+
+            # next build reuses the brief and only makes the translation calls it missed
+            client2, calls2 = fake_client(self.ai_reply())
+            self.run_build(Path(tmp) / "two", previous=str(api / "all.json"), analyst=Analyst({}, client=client2))
+            self.assertEqual([c["system"] for c in calls2], [TRANSLATE_SYSTEM, TRANSLATE_SYSTEM])
+            two = Path(tmp) / "two" / "api" / "v1"
+            brief2 = json.loads((two / "brief.json").read_text())["data"]
+            self.assertEqual(brief2["headline"], "H")
+            self.assertEqual(brief2["i18n"]["sr"], {"headline": "Превод вести", "bullets": ["Превод вести"], "watch": "Превод вести"})
+            self.assertEqual(brief2["i18n"]["de"]["bullets"], ["[de] B"])
+            sudan2 = next(t for t in json.loads((two / "conflicts.json").read_text())["data"]["theaters"] if t["id"] == "sudan")
+            self.assertEqual(sudan2["analysis"]["i18n"]["sr"], {"summary": "Превод вести", "outlook": None, "developments": ["Превод вести"]})
+            self.assertEqual(json.loads((two / "index.json").read_text())["data"]["ai"]["brief_translations"], ["de", "sr"])
+
+            # and a third build has nothing left to translate
+            client3, calls3 = fake_client(self.ai_reply())
+            self.run_build(Path(tmp) / "three", previous=str(two / "all.json"), analyst=Analyst({}, client=client3))
+            self.assertEqual(calls3, [])
 
 
 class Budget(unittest.TestCase):

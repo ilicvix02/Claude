@@ -85,7 +85,6 @@ html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); 
 .end-tag { font: 600 5.2cqw/1.25 var(--body); color: var(--muted); margin: 0; }
 .cta { position: relative; overflow: hidden; display: inline-flex; padding: 2.1cqh 5.4cqw; border-radius: 99cqw; background: var(--accent); color: var(--chip-ink); font: 700 5.6cqw/1 var(--cond); letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 1cqh 6cqw rgba(249, 115, 22, .45); transform-origin: 0 50%; }
 .cta .shine { position: absolute; inset: 0 auto 0 0; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .65), transparent); }
-.presented { font: 700 3.6cqw/1.2 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); margin: 0; opacity: 0; }
 .disclosure { font: 500 3.05cqw/1.4 var(--body); color: var(--muted); max-width: 72cqw; margin: 0; }
 
 /* phone preview: intro card */

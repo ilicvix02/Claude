@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import briefing, classify, cluster, conflicts, feeds
+from . import briefing, classify, cluster, conflicts, feeds, pro
 from .ai import Analyst
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -224,16 +224,30 @@ def tension(crises: int, deals: int) -> int:
     return round(100 * crises / total) if total else 50
 
 
-def mood(index: int) -> str:
+MOODS = {
+    "crisis_dominated": "Crisis-dominated",
+    "tense": "Tense",
+    "balanced": "Balanced",
+    "constructive": "Constructive",
+    "dealmaking_dominated": "Dealmaking-dominated",
+}
+
+
+def mood_key(index: int) -> str:
+    """Stable id of the mood for a tension index; apps localize it, `mood()` is the English label."""
     if index >= 75:
-        return "Crisis-dominated"
+        return "crisis_dominated"
     if index >= 58:
-        return "Tense"
+        return "tense"
     if index > 42:
-        return "Balanced"
+        return "balanced"
     if index > 25:
-        return "Constructive"
-    return "Dealmaking-dominated"
+        return "constructive"
+    return "dealmaking_dominated"
+
+
+def mood(index: int) -> str:
+    return MOODS[mood_key(index)]
 
 
 def trending_terms(articles: list[dict], limit: int = 15) -> list[dict]:
@@ -275,7 +289,9 @@ def state_of_world(articles: list[dict], now: datetime) -> dict:
         "articles": len(recent),
         "tension_index": index,
         "mood": mood(index),
+        "mood_key": mood_key(index),
         "explanation": "Share of crisis coverage among crisis + deal coverage in the last 24h (0 = all deals, 100 = all crises).",
+        "explanation_key": "tension_index",
         "categories": [
             {"id": slug, "label": meta["label"], "articles": cat_counts.get(slug, 0)}
             for slug, meta in classify.CATEGORIES.items()
@@ -309,9 +325,6 @@ def meta(site: dict, generated_at: datetime, base_url: str, count: int | None = 
     }
     if count is not None:
         m["count"] = count
-    sponsor = (site.get("revenue") or {}).get("sponsor") or {}
-    if sponsor.get("text") and http_url(sponsor.get("url")):
-        m["sponsor"] = {"text": sponsor["text"], "url": sponsor["url"]}
     m.update(extra)
     return m
 
@@ -333,10 +346,26 @@ def _handle(value: str, host: str) -> str | None:
     return value if re.fullmatch(r"[A-Za-z0-9_.-]{2,40}", value) else None
 
 
+def plan_i18n(value) -> dict:
+    """A plan's translations from config, {lang: {name, blurb, features, cta}}, keeping only text."""
+    out = {}
+    for lang, t in (value.items() if isinstance(value, dict) else ()):
+        if not (isinstance(t, dict) and re.fullmatch(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?", str(lang))):
+            continue
+        entry = {k: t[k].strip() for k in ("name", "blurb", "cta") if isinstance(t.get(k), str) and t[k].strip()}
+        features = [f.strip() for f in t.get("features") or [] if isinstance(f, str) and f.strip()] if isinstance(t.get("features"), list) else []
+        if features:
+            entry["features"] = features
+        if entry:
+            out[lang] = entry
+    return out
+
+
 def resolve_revenue(revenue: dict, env=os.environ) -> dict:
     """The revenue settings the app and API show: config/site.json, overridden by the repository
     Variables passed in as WORLDPULSE_* (see README → Revenue). Links must be http(s); a plan is only
-    listed once it has somewhere to pay (its own url, the Ko-fi page, or the contact email)."""
+    listed once it has somewhere to pay (its own url, the Ko-fi page, or the contact email). `pricing`
+    lists every plan's price, checkout or not, for places that only show prices (the promo video)."""
     revenue = revenue or {}
     var = lambda name: (env.get(name) or "").strip()  # noqa: E731
     kofi = _handle(var("WORLDPULSE_KOFI") or revenue.get("kofi") or "", "ko-fi.com")
@@ -345,32 +374,29 @@ def resolve_revenue(revenue: dict, env=os.environ) -> dict:
     email = email if re.fullmatch(r"[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}", email) else None
     tiktok = _handle(var("WORLDPULSE_TIKTOK") or (revenue.get("social") or {}).get("tiktok") or "", "tiktok.com")
 
-    sponsor = dict(revenue.get("sponsor") or {})
-    if var("WORLDPULSE_SPONSOR_TEXT") or var("WORLDPULSE_SPONSOR_URL"):
-        sponsor = {"text": var("WORLDPULSE_SPONSOR_TEXT"), "url": var("WORLDPULSE_SPONSOR_URL")}
-    sponsor = {"text": sponsor["text"][:80], "url": sponsor["url"]} if sponsor.get("text") and http_url(sponsor.get("url")) else None
-
     donate = []
     for d in revenue.get("donate", []):
         url = http_url(d.get("url")) or (kofi_url if d.get("label", "").lower() == "ko-fi" else None)
         if url:
             donate.append({"label": d["label"], "url": url})
 
-    plans = []
+    plans, pricing = [], []
     for p in revenue.get("plans", []):
+        i18n = plan_i18n(p.get("i18n"))
+        pricing.append({k: p.get(k) for k in ("id", "name", "price", "period")} | {"i18n": i18n})
         url = http_url(p.get("url"))
         if not url and kofi_url and p.get("kofi"):
             url = f"{kofi_url}/{p['kofi'].strip('/')}"
         if not url and email and p.get("email_subject"):
             url = f"mailto:{email}?subject={urllib.parse.quote(p['email_subject'])}"
         if url:
-            plans.append({k: p.get(k) for k in ("id", "name", "price", "period", "blurb", "features", "cta")} | {"url": url})
+            plans.append({k: p.get(k) for k in ("id", "name", "price", "period", "blurb", "features", "cta")} | {"url": url, "i18n": i18n})
 
     return {
-        "sponsor": sponsor,
         "ethicalads_publisher": revenue.get("ethicalads_publisher") or None,
         "donate": donate,
         "plans": plans,
+        "pricing": pricing,
         "kofi_url": kofi_url,
         "newsletter_url": http_url(var("WORLDPULSE_NEWSLETTER_URL") or revenue.get("newsletter_url")),
         "advertise_email": email,
@@ -424,13 +450,26 @@ def openapi(site: dict, base_url: str, theater_ids: list[str]) -> dict:
         },
         "servers": [{"url": f"{base_url}/api/v1" if base_url else "/api/v1"}],
         "paths": {
-            "/index.json": path("Discovery", "Endpoints, categories, regions, site info."),
+            "/index.json": path("Discovery", "Endpoints, categories, regions, theaters (with i18n names), site info and revenue. "
+                                "revenue.plans lists plans with a checkout url; revenue.pricing lists every plan's id, name, price, "
+                                "period and i18n ({lang: {name, blurb, features, cta}}), checkout or not. ai.brief_translations "
+                                "lists the languages the current brief is translated into."),
             "/latest.json": path("Latest articles", "Most recent articles across all sources."),
             "/all.json": path("Rolling archive", f"Every article from the last {site.get('retention_days', 7)} days."),
-            "/state.json": path("State of the world", "Tension index, mood, category and region breakdowns, 7-day history, trending terms."),
-            "/brief.json": path("World brief", "AI-written (or automated) summary of the last 24h with cited stories."),
-            "/conflicts.json": path("Conflict tracker", "Every tracked conflict theater: intensity, status, trend, 7-day history, situation summary, latest stories."),
-            "/conflicts/{theater}.json": path("Conflict theater", "One theater with all its stories from the last 7 days.", slug("theater", theater_ids)),
+            "/state.json": path("State of the world", "Tension index, mood, category and region breakdowns, 7-day history, trending terms. "
+                                "mood is an English label; mood_key (crisis_dominated, tense, balanced, constructive, dealmaking_dominated) "
+                                "and explanation_key (tension_index) are stable ids for translating it."),
+            "/brief.json": path("World brief", "AI-written (or automated) summary of the last 24h with cited stories. "
+                                "disclaimer_key is the source (ai or rules). When source is rules, rule holds the inputs of the English "
+                                "headline and watch line: {mood_key, active_conflicts, escalating, watch: {theater, stories_24h, trend} or null}; "
+                                "the bullets are original headlines. When source is ai, i18n holds translations by language code "
+                                "({de, sr}: {headline, bullets: [text, in the order of bullets], watch}); a missing language means English only."),
+            "/conflicts.json": path("Conflict tracker", "Every tracked conflict theater: intensity, status, trend, 7-day history, situation summary, latest stories. "
+                                    "i18n holds the theater's name and description by language ({de, sr}: {name, description}). "
+                                    "analysis.rule (source rules) is {key: recent_reports or no_recent_reports, stories_24h, stories_7d, trend}; "
+                                    "analysis.i18n (source ai) is {lang: {summary, outlook, developments: [text] or null}}."),
+            "/conflicts/{theater}.json": path("Conflict theater", "One theater with all its stories from the last 7 days, with the same fields as in conflicts.json.",
+                                              slug("theater", theater_ids)),
             "/sources.json": path("Sources", "Feed list with health status from the last build."),
             "/categories/{category}.json": path("Articles by category", "Filter by topic.", slug("category", list(classify.CATEGORIES))),
             "/regions/{region}.json": path("Articles by region", "Filter by world region.", slug("region", list(classify.REGIONS))),
@@ -457,6 +496,27 @@ def ai_candidates(articles: list[dict], limit: int) -> list[dict]:
     return pending[:limit]
 
 
+def translate_briefing(analyst, langs, brief, summaries, stats) -> None:
+    """Add AI translations to an AI brief and its theater summaries, in place, under "i18n": one call
+    per language that isn't translated yet, so a reused brief keeps its translations for free. A
+    failed or rejected translation only means the app shows that text in English."""
+    for lang in langs:
+        if lang in brief.get("i18n", {}) or not analyst.available:
+            continue
+        try:
+            names = {t["id"]: (t.get("i18n") or {}).get(lang, {}).get("name") for t in stats}
+            result = analyst.translate(lang, brief, summaries, names)
+            if not result:
+                continue
+            if result["brief"]:
+                brief.setdefault("i18n", {})[lang] = result["brief"]
+            for tid, tr in result["theaters"].items():
+                summaries[tid].setdefault("i18n", {})[lang] = tr
+            print(f"  AI translated the brief into {lang} ({len(result['theaters'])} theater summaries)", file=sys.stderr)
+        except Exception as exc:  # never let a translation break the build
+            print(f"  AI translation ({lang}) skipped: {type(exc).__name__}: {exc}", file=sys.stderr)
+
+
 def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
     """Return (brief, theater_summaries, source, model, generated_at), reusing recent AI output."""
     stories = briefing.top_stories(articles, now)
@@ -470,6 +530,7 @@ def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
     prev_conf = (load_previous(previous, "conflicts.json") or {}).get("data") if previous else None
     prev_ok = prev_brief and prev_brief.get("source") == "ai"
     prev_age = hours_since(prev_brief.get("generated_at"), now) if prev_ok else float("inf")
+    langs = [lang for lang in ai_cfg.get("translate", ["de", "sr"]) or [] if isinstance(lang, str)]
 
     def reuse():
         summaries = {}
@@ -479,12 +540,15 @@ def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
                 summaries[t["id"]] = {
                     "summary": an.get("summary"), "outlook": an.get("outlook"),
                     "developments": [{"text": d["text"], "story_id": d["story"]["id"]} for d in an.get("developments", []) if d.get("story")],
+                    "i18n": {k: v for k, v in (an.get("i18n") or {}).items() if k in langs},
                 }
         brief = {
             "headline": prev_brief["headline"],
             "bullets": [{"text": b["text"], "story_ids": [s["id"] for s in b.get("stories", [])]} for b in prev_brief["bullets"]],
             "watch": prev_brief.get("watch"),
+            "i18n": {k: v for k, v in (prev_brief.get("i18n") or {}).items() if k in langs},
         }
+        translate_briefing(analyst, langs, brief, summaries, stats)  # only languages the last run missed
         return brief, summaries, "ai", prev_brief.get("model"), prev_brief["generated_at"]
 
     if prev_ok and prev_age < float(ai_cfg.get("brief_every_hours", 3)):
@@ -502,6 +566,7 @@ def make_briefing(articles, stats, now, mood_label, analyst, ai_cfg, previous):
         ]
         result = analyst.brief([briefing.story_digest(a) for a in pool.values()], theater_input)
         if result:
+            translate_briefing(analyst, langs, result["brief"], result["theaters"], stats)
             return result["brief"], result["theaters"], "ai", result["model"], iso(now)
 
     if prev_ok and prev_age < 12:  # AI temporarily unavailable: a few-hours-old AI brief beats rules
@@ -574,6 +639,10 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         "generated_at": brief_at,
         "disclaimer": "Written by AI from the linked reports; it can make mistakes. Check the original sources."
         if brief_source == "ai" else "Automated digest of the most-covered stories.",
+        "disclaimer_key": brief_source,
+        # Inputs of the rule-based headline and watch line, so apps can write them in any language.
+        "rule": (brief["rule"] | {"mood_key": state["mood_key"]}) if brief_source == "rules" else None,
+        "i18n": (brief.get("i18n") or {}) if brief_source == "ai" else {},
     }
     conflict_docs = []
     for t in stats:
@@ -582,16 +651,25 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         s, src = summaries.get(t["id"]), brief_source
         if not s:  # AI wrote summaries only for theaters with coverage
             s, src = briefing.rule_theater_summary(t, leads), "rules"
+        devs = s.get("developments", [])
+        keep = [i for i, d in enumerate(devs) if d.get("story_id") in by_id]
+        i18n = {}
+        for lang, tr in ((s.get("i18n") or {}) if src == "ai" else {}).items():
+            tdevs = tr.get("developments")
+            i18n[lang] = {
+                "summary": tr["summary"], "outlook": tr.get("outlook"),
+                # same length and order as "developments", or None when they can't be matched up
+                "developments": [tdevs[i] for i in keep] if isinstance(tdevs, list) and len(tdevs) == len(devs) else None,
+            }
         analysis = {
             "summary": s["summary"],
             "outlook": s.get("outlook"),
-            "developments": [
-                {"text": d["text"], "story": slim(by_id[d["story_id"]])}
-                for d in s.get("developments", []) if d.get("story_id") in by_id
-            ],
+            "developments": [{"text": devs[i]["text"], "story": slim(by_id[devs[i]["story_id"]])} for i in keep],
             "source": src,
             "model": brief_model if src == "ai" else None,
             "generated_at": brief_at if src == "ai" else iso(now),
+            "rule": s.get("rule") if src == "rules" else None,
+            "i18n": i18n,
         }
         conflict_docs.append({**t, "analysis": analysis, "latest": [slim(a) for a in leads[:8]], "_items": items})
     conflict_docs.sort(key=lambda t: (t["intensity"], t["stories_7d"]), reverse=True)
@@ -602,6 +680,15 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         "de_escalating": sum(1 for t in stats if t["trend"] == "de-escalating"),
     }
     state["conflicts"] = overview | {"hotspots": [{k: t[k] for k in ("id", "name", "status", "trend", "intensity")} for t in conflict_docs[:5]]}
+
+    # World Pulse Pro: the daily encrypted bundle (dormant until the license server is deployed)
+    pro_bundle, pro_state, pro_index = pro.build_pro(
+        site.get("pro"), articles, stats, now, analyst,
+        [lang for lang in ai_cfg.get("translate", ["de", "sr"]) or [] if isinstance(lang, str)],
+        (load_previous(previous, "pro/state.json") or {}).get("data") if previous else None,
+        (load_previous(previous, "pro/bundle.json") or {}).get("data") if previous else None,
+        slim,
+    )
 
     if out.exists():
         shutil.rmtree(out)
@@ -647,6 +734,9 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
         rss(site["title"], link, f"{link}/feed.xml", site["tagline"], latest, now), encoding="utf-8"
     )
     write_json(api / "openapi.json", openapi(site, base_url, theaters.ids()))
+    write_json(api / "pro" / "state.json", {"meta": M(), "data": pro_state})
+    if pro_bundle:
+        write_json(api / "pro" / "bundle.json", {"meta": M(), "data": pro_bundle})
 
     write_json(
         api / "index.json",
@@ -661,16 +751,19 @@ def build(out: Path, previous: str | None, fetcher=feeds.fetch, now: datetime | 
                 },
                 "categories": cat_index,
                 "regions": region_index,
-                "theaters": [{"id": t["id"], "name": t["name"], "json": f"conflicts/{t['id']}.json"} for t in theaters.items],
+                "theaters": [{"id": t["id"], "name": t["name"], "i18n": {k: v["name"] for k, v in (t.get("i18n") or {}).items()},
+                              "json": f"conflicts/{t['id']}.json"} for t in theaters.items],
                 "ai": {
                     "enabled": analyst.available,
                     "model": analyst.model if analyst.available else None,
                     "brief_source": brief_source,
+                    "brief_translations": sorted(brief_doc["i18n"]),
                     "analysed_stories": sum(1 for a in articles if a.get("analysis") == "ai"),
                 },
                 "sources_ok": sum(s["ok"] for s in status),
                 "sources_total": len(status),
                 "revenue": site["revenue"],
+                "pro": pro_index,
             },
         },
     )

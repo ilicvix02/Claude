@@ -174,9 +174,8 @@
         say: `What to watch: ${text}`, prefix: "What to watch: ".length,
         focus: hottest ? { lat: hottest.lat, lon: hottest.lon, dist: 3.4, shift: 0.46, spin: 1.5, theater: hottest.id } : null });
     }
-    const sponsor = d.meta && d.meta.sponsor ? String(d.meta.sponsor.text).trim() : "";
-    out.push({ id: "outro", kind: "outro", min: 3.6, ai: brief.source === "ai", sponsor,
-      say: `${sponsor ? `Today's brief is presented by ${speakable(sponsor)} ` : ""}Every point links to its sources. Get World Pulse free. The link is in our bio.`,
+    out.push({ id: "outro", kind: "outro", min: 3.6, ai: brief.source === "ai",
+      say: "Every point links to its sources. Get World Pulse free. The link is in our bio.",
       focus: { lat: 16, lon: (hottest ? hottest.lon : 30) + 30, dist: 6.4, shift: 0.3, spin: 7 } });
     return { scenes: out, active: live, byId: ids };
   }
@@ -742,8 +741,7 @@ void main() {
       const disc = el("p", "disclosure", s.ai
         ? "Summaries written by AI (Claude) from the linked news reports. It can make mistakes. Every point links to its sources in the app."
         : "An automated digest of the most-covered stories. Every point links to its sources in the app.");
-      const spon = s.sponsor ? el("p", "presented", `Presented by ${s.sponsor}`) : null;
-      b.append(logo.svg, name, tag, cta, ...(spon ? [spon] : []), disc);
+      b.append(logo.svg, name, tag, cta, disc);
       root.append(b);
       [logo.circle, logo.path].forEach((n) => { n.style.strokeDasharray = "1"; });
       return {
@@ -764,7 +762,6 @@ void main() {
           tf(cta, `scale(${0.55 + 0.45 * cp})`, prog(tl, 1.5, 0.25));
           shine.style.transform = `translateX(${lerp(-150, 360, E.inOutCubic(prog(tl, 2.3, 1.0)))}%)`;
           disc.style.opacity = String(E.outCubic(prog(tl, 2.0, 0.8)));
-          if (spon) { const sp = E.outCubic(prog(tl, 1.8, 0.7)); tf(spon, `translate3d(0,${(1 - sp) * 1.5}cqh,0)`, sp); }
         },
       };
     },

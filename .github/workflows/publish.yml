@@ -53,6 +53,10 @@ jobs:
         if: env.ANTHROPIC_API_KEY != ''
         run: pip install -r requirements-ai.txt
 
+      # Pro bundle encryption (docs/PRO.md); harmless while pro.api_url is empty.
+      - name: Install Pro crypto
+        run: pip install -r requirements-pro.txt
+
       - name: Build site and API
         env:
           WORLDPULSE_BASE_URL: ${{ steps.pages.outputs.base_url }}

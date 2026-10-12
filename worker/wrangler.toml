@@ -1,0 +1,25 @@
+# World Pulse Pro license server. Deployed by .github/workflows/pro-deploy.yml ("Deploy Pro"),
+# which fills in the KV namespace id below; see docs/PRO.md. Free plan only.
+name = "worldpulse-pro"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+[vars]
+SITE_ORIGIN = "https://ilicvix02.github.io"
+APP_URL = "https://ilicvix02.github.io/Claude/"
+CONFLICTS_URL = "https://ilicvix02.github.io/Claude/api/v1/conflicts.json"
+NTFY_SERVER = "https://ntfy.sh"
+SENDER_NAME = "World Pulse"
+SENDER_EMAIL = "ilicvix@gmail.com"
+
+[[kv_namespaces]]
+binding = "LICENSES"
+id = "__KV_NAMESPACE_ID__"
+
+# Pro breaking alerts: poll the public conflicts.json shortly after each hourly rebuild.
+[triggers]
+crons = ["20 * * * *"]
+
+# Secrets (set by the workflow, never in this file): PRO_PRIVATE_KEY, KOFI_VERIFICATION_TOKEN,
+# BREVO_API_KEY, ADMIN_TOKEN.

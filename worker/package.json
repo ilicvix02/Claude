@@ -1,0 +1,9 @@
+{
+  "name": "worldpulse-pro-worker",
+  "private": true,
+  "type": "module",
+  "description": "World Pulse Pro license server (Cloudflare Worker)",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
