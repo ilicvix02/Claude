@@ -83,16 +83,6 @@
    "type": "official"
   },
   {
-   "id": "reliefweb",
-   "name": "ReliefWeb",
-   "url": "https://reliefweb.int/updates/rss.xml",
-   "homepage": "https://reliefweb.int",
-   "lang": "en",
-   "country": "int",
-   "type": "official",
-   "max_items": 40
-  },
-  {
    "id": "gdacs",
    "name": "GDACS Disaster Alerts",
    "url": "https://www.gdacs.org/xml/rss.xml",
@@ -631,15 +621,6 @@
    "name": "Kurir",
    "url": "https://www.kurir.rs/rss",
    "homepage": "https://www.kurir.rs",
-   "lang": "sr",
-   "country": "int",
-   "type": "news"
-  },
-  {
-   "id": "nedeljnik",
-   "name": "Nedeljnik",
-   "url": "https://www.nedeljnik.rs/feed/",
-   "homepage": "https://www.nedeljnik.rs",
    "lang": "sr",
    "country": "int",
    "type": "news"
@@ -1428,15 +1409,6 @@
    "type": "news"
   },
   {
-   "id": "indian-express-world",
-   "name": "Indian Express World",
-   "url": "https://indianexpress.com/section/world/feed/",
-   "homepage": "https://indianexpress.com/",
-   "lang": "en",
-   "country": "in",
-   "type": "news"
-  },
-  {
    "id": "ndtv-world",
    "name": "NDTV World",
    "url": "https://feeds.feedburner.com/ndtvnews-world-news",
@@ -2184,15 +2156,6 @@
    "type": "news"
   },
   {
-   "id": "efecto-cocuyo",
-   "name": "Efecto Cocuyo",
-   "url": "https://efectococuyo.com/feed/",
-   "homepage": "https://efectococuyo.com/",
-   "lang": "es",
-   "country": "ve",
-   "type": "news"
-  },
-  {
    "id": "el-nacional-venezuela",
    "name": "El Nacional Venezuela",
    "url": "https://www.elnacional.com/feed/",
@@ -2253,15 +2216,6 @@
    "homepage": "https://www.abc.com.py/",
    "lang": "es",
    "country": "py",
-   "type": "news"
-  },
-  {
-   "id": "el-pa-s-uruguay",
-   "name": "El País Uruguay",
-   "url": "https://www.elpais.com.uy/rss/",
-   "homepage": "https://www.elpais.com.uy/",
-   "lang": "es",
-   "country": "uy",
    "type": "news"
   },
   {
@@ -2724,15 +2678,6 @@
    "type": "news"
   },
   {
-   "id": "agerpres",
-   "name": "Agerpres",
-   "url": "https://www.agerpres.ro/rss",
-   "homepage": "https://www.agerpres.ro/",
-   "lang": "ro",
-   "country": "ro",
-   "type": "news"
-  },
-  {
    "id": "moldova-org",
    "name": "Moldova.org",
    "url": "https://www.moldova.org/feed/",
@@ -3189,15 +3134,6 @@
    "homepage": "https://www.hespress.com/",
    "lang": "ar",
    "country": "ma",
-   "type": "news"
-  },
-  {
-   "id": "enab-baladi",
-   "name": "Enab Baladi",
-   "url": "https://english.enabbaladi.net/feed/",
-   "homepage": "https://english.enabbaladi.net/",
-   "lang": "en",
-   "country": "sy",
    "type": "news"
   },
   {
@@ -3750,15 +3686,6 @@
    "type": "official"
   },
   {
-   "id": "reliefweb-disasters",
-   "name": "ReliefWeb Disasters",
-   "url": "https://reliefweb.int/disasters/rss.xml",
-   "homepage": "https://reliefweb.int/",
-   "lang": "en",
-   "country": "int",
-   "type": "official"
-  },
-  {
    "id": "unfpa",
    "name": "UNFPA",
    "url": "https://www.unfpa.org/rss.xml",
@@ -3772,15 +3699,6 @@
    "name": "IAEA",
    "url": "https://www.iaea.org/feeds/topnews",
    "homepage": "https://www.iaea.org/",
-   "lang": "en",
-   "country": "int",
-   "type": "official"
-  },
-  {
-   "id": "un-women",
-   "name": "UN Women",
-   "url": "https://www.unwomen.org/en/rss.xml",
-   "homepage": "https://www.unwomen.org/",
    "lang": "en",
    "country": "int",
    "type": "official"
@@ -3844,15 +3762,6 @@
    "name": "Human Rights Watch",
    "url": "https://www.hrw.org/rss/news",
    "homepage": "https://www.hrw.org/",
-   "lang": "en",
-   "country": "int",
-   "type": "official"
-  },
-  {
-   "id": "oxfam",
-   "name": "Oxfam",
-   "url": "https://www.oxfam.org/en/rss.xml",
-   "homepage": "https://www.oxfam.org/",
    "lang": "en",
    "country": "int",
    "type": "official"
@@ -3957,15 +3866,6 @@
    "type": "official"
   },
   {
-   "id": "us-cdc-newsroom",
-   "name": "US CDC Newsroom",
-   "url": "https://tools.cdc.gov/api/v2/resources/media/132608.rss",
-   "homepage": "https://tools.cdc.gov/",
-   "lang": "en",
-   "country": "us",
-   "type": "official"
-  },
-  {
    "id": "federal-reserve",
    "name": "Federal Reserve",
    "url": "https://www.federalreserve.gov/feeds/press_all.xml",
@@ -4033,15 +3933,6 @@
    "name": "Global Affairs Canada",
    "url": "https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofforeignaffairstradeanddevelopment&type=newsreleases&sort=publishedDate&orderBy=desc&pick=50&format=atom",
    "homepage": "https://api.io.canada.ca/",
-   "lang": "en",
-   "country": "ca",
-   "type": "official"
-  },
-  {
-   "id": "prime-minister-of-canada",
-   "name": "Prime Minister of Canada",
-   "url": "https://www.pm.gc.ca/en/news.rss",
-   "homepage": "https://www.pm.gc.ca/",
    "lang": "en",
    "country": "ca",
    "type": "official"
@@ -4206,15 +4097,6 @@
    "homepage": "https://www.info.gov.hk/",
    "lang": "en",
    "country": "hk",
-   "type": "official"
-  },
-  {
-   "id": "south-africa-government",
-   "name": "South Africa Government",
-   "url": "https://www.gov.za/rss.xml",
-   "homepage": "https://www.gov.za/",
-   "lang": "en",
-   "country": "za",
    "type": "official"
   },
   {
@@ -8088,15 +7970,6 @@
    "type": "news"
   },
   {
-   "id": "global-voices-mk",
-   "name": "Global Voices (mk)",
-   "url": "https://mk.globalvoices.org/feed/",
-   "homepage": "https://mk.globalvoices.org/",
-   "lang": "mk",
-   "country": "int",
-   "type": "news"
-  },
-  {
    "id": "global-voices-bn",
    "name": "Global Voices (bn)",
    "url": "https://bn.globalvoices.org/feed/",
@@ -8138,15 +8011,6 @@
    "url": "https://ne.globalvoices.org/feed/",
    "homepage": "https://ne.globalvoices.org/",
    "lang": "ne",
-   "country": "int",
-   "type": "news"
-  },
-  {
-   "id": "global-voices-ro",
-   "name": "Global Voices (ro)",
-   "url": "https://ro.globalvoices.org/feed/",
-   "homepage": "https://ro.globalvoices.org/",
-   "lang": "ro",
    "country": "int",
    "type": "news"
   },
@@ -8313,15 +8177,6 @@
    "type": "official"
   },
   {
-   "id": "gov-uk-national-crime-agency",
-   "name": "GOV.UK – National Crime Agency",
-   "url": "https://www.gov.uk/government/organisations/national-crime-agency.atom",
-   "homepage": "https://www.gov.uk/",
-   "lang": "en",
-   "country": "gb",
-   "type": "official"
-  },
-  {
    "id": "gov-uk-uk-export-finance",
    "name": "GOV.UK – Uk Export Finance",
    "url": "https://www.gov.uk/government/organisations/uk-export-finance.atom",
@@ -8370,15 +8225,6 @@
    "id": "gov-uk-scotland-office",
    "name": "GOV.UK – Scotland Office",
    "url": "https://www.gov.uk/government/organisations/scotland-office.atom",
-   "homepage": "https://www.gov.uk/",
-   "lang": "en",
-   "country": "gb",
-   "type": "official"
-  },
-  {
-   "id": "gov-uk-wales-office",
-   "name": "GOV.UK – Wales Office",
-   "url": "https://www.gov.uk/government/organisations/wales-office.atom",
    "homepage": "https://www.gov.uk/",
    "lang": "en",
    "country": "gb",
@@ -9096,15 +8942,6 @@
    "type": "news"
   },
   {
-   "id": "news-blog",
-   "name": "News Blog",
-   "url": "https://newsnblogs.com/feed/",
-   "homepage": "https://newsnblogs.com/",
-   "lang": "en",
-   "country": "pk",
-   "type": "news"
-  },
-  {
    "id": "urdupoint-com-all-urdu-news",
    "name": "UrduPoint.com All Urdu News",
    "url": "https://www.urdupoint.com/rss/urdupoint.rss",
@@ -9276,21 +9113,732 @@
    "type": "news"
   },
   {
-   "id": "src-10",
-   "name": "Еспресо - український погляд на світ!",
-   "url": "https://espreso.tv/rss",
-   "homepage": "https://espreso.tv/",
-   "lang": "uk",
-   "country": "ua",
+   "id": "inquirer",
+   "name": "Inquirer",
+   "url": "https://www.inquirer.net/fullfeed",
+   "homepage": "https://www.inquirer.net/",
+   "lang": "en",
+   "country": "ph",
    "type": "news"
   },
   {
-   "id": "gazeta-ua",
-   "name": "Gazeta.ua",
-   "url": "https://gazeta.ua/rss",
-   "homepage": "https://gazeta.ua/",
-   "lang": "uk",
-   "country": "ua",
+   "id": "tehran-times",
+   "name": "Tehran Times",
+   "url": "https://www.tehrantimes.com/rss",
+   "homepage": "https://www.tehrantimes.com/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "granma",
+   "name": "Granma",
+   "url": "https://www.granma.cu/feed",
+   "homepage": "https://www.granma.cu/",
+   "lang": "es",
+   "country": "cu",
+   "type": "news"
+  },
+  {
+   "id": "hvg",
+   "name": "HVG",
+   "url": "https://hvg.hu/rss",
+   "homepage": "https://hvg.hu/",
+   "lang": "hu",
+   "country": "hu",
+   "type": "news"
+  },
+  {
+   "id": "mia",
+   "name": "MIA",
+   "url": "https://mia.mk/feed",
+   "homepage": "https://mia.mk/",
+   "lang": "mk",
+   "country": "mk",
+   "type": "news"
+  },
+  {
+   "id": "kommersant",
+   "name": "Kommersant",
+   "url": "https://www.kommersant.ru/RSS/news.xml",
+   "homepage": "https://www.kommersant.ru/",
+   "lang": "ru",
+   "country": "ru",
+   "type": "news"
+  },
+  {
+   "id": "mehr-news",
+   "name": "Mehr News",
+   "url": "https://en.mehrnews.com/rss",
+   "homepage": "https://en.mehrnews.com/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "irna-english",
+   "name": "IRNA English",
+   "url": "https://en.irna.ir/rss",
+   "homepage": "https://en.irna.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "hamshahri",
+   "name": "Hamshahri",
+   "url": "https://www.hamshahrionline.ir/rss",
+   "homepage": "https://www.hamshahrionline.ir/",
+   "lang": "fa",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "who-news",
+   "name": "WHO News",
+   "url": "https://www.who.int/rss-feeds/news-english.xml",
+   "homepage": "https://www.who.int/",
+   "lang": "en",
+   "country": "int",
+   "type": "official"
+  },
+  {
+   "id": "google-news-bg-bg-health",
+   "name": "Google News BG/bg Health",
+   "url": "https://news.google.com/rss/headlines/section/topic/HEALTH?hl=bg&gl=BG&ceid=BG:bg",
+   "homepage": "https://news.google.com/",
+   "lang": "bg",
+   "country": "bg",
+   "type": "news"
+  },
+  {
+   "id": "abc-news",
+   "name": "ABC News",
+   "url": "https://www.abc.net.au/news/feed/1948/rss.xml",
+   "homepage": "https://www.abc.net.au/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "perthnow",
+   "name": "PerthNow",
+   "url": "https://www.perthnow.com.au/news/feed",
+   "homepage": "https://www.perthnow.com.au/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "the-canberra-times-local-news",
+   "name": "The Canberra Times - Local News",
+   "url": "https://www.canberratimes.com.au/rss.xml",
+   "homepage": "https://www.canberratimes.com.au/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "brisbane-times-latest-news",
+   "name": "Brisbane Times - Latest News",
+   "url": "https://www.brisbanetimes.com.au/rss/feed.xml",
+   "homepage": "https://www.brisbanetimes.com.au/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "independent-australia",
+   "name": "Independent Australia",
+   "url": "http://feeds.feedburner.com/IndependentAustralia",
+   "homepage": "http://feeds.feedburner.com/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "business-news-latest-headlines",
+   "name": "Business News - Latest Headlines",
+   "url": "https://www.businessnews.com.au/rssfeed/latest.rss",
+   "homepage": "https://www.businessnews.com.au/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "crikey",
+   "name": "Crikey",
+   "url": "https://feeds.feedburner.com/com/rCTl",
+   "homepage": "https://feeds.feedburner.com/",
+   "lang": "en",
+   "country": "au",
+   "type": "news"
+  },
+  {
+   "id": "bd24live-com",
+   "name": "BD24Live.com",
+   "url": "https://www.bd24live.com/feed",
+   "homepage": "https://www.bd24live.com/",
+   "lang": "en",
+   "country": "bd",
+   "type": "news"
+  },
+  {
+   "id": "src-10",
+   "name": "প্রথম আলো",
+   "url": "https://www.prothomalo.com/feed/",
+   "homepage": "https://www.prothomalo.com/",
+   "lang": "en",
+   "country": "bd",
+   "type": "news"
+  },
+  {
+   "id": "uol",
+   "name": "UOL",
+   "url": "http://rss.home.uol.com.br/index.xml",
+   "homepage": "http://rss.home.uol.com.br/",
+   "lang": "pt",
+   "country": "br",
+   "type": "news"
+  },
+  {
+   "id": "financial-post",
+   "name": "Financial Post",
+   "url": "https://business.financialpost.com/feed/",
+   "homepage": "https://business.financialpost.com/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "national-post",
+   "name": "National Post",
+   "url": "https://nationalpost.com/feed/",
+   "homepage": "https://nationalpost.com/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "ottawa-citizen",
+   "name": "Ottawa Citizen",
+   "url": "https://ottawacitizen.com/feed/",
+   "homepage": "https://ottawacitizen.com/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "the-province",
+   "name": "The Province",
+   "url": "https://theprovince.com/feed/",
+   "homepage": "https://theprovince.com/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "lapresse-ca-actualit-s",
+   "name": "LaPresse.ca - Actualités",
+   "url": "https://www.lapresse.ca/actualites/rss",
+   "homepage": "https://www.lapresse.ca/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "toronto-sun-rss-feed",
+   "name": "Toronto Sun - RSS Feed",
+   "url": "https://torontosun.com/category/news/feed",
+   "homepage": "https://torontosun.com/",
+   "lang": "en",
+   "country": "ca",
+   "type": "news"
+  },
+  {
+   "id": "mediapart",
+   "name": "Mediapart",
+   "url": "https://www.mediapart.fr/articles/feed",
+   "homepage": "https://www.mediapart.fr/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "l-obs-a-la-une",
+   "name": "L'Obs - A la une",
+   "url": "https://www.nouvelobs.com/a-la-une/rss.xml",
+   "homepage": "https://www.nouvelobs.com/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "le-huffington-post",
+   "name": "Le Huffington Post",
+   "url": "https://www.huffingtonpost.fr/feeds/index.xml",
+   "homepage": "https://www.huffingtonpost.fr/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "la-d-p-che-du-midi-actualit-s-et-info-en-direct-",
+   "name": "La Dépêche du Midi : actualités et info en direct de la région Occitanie et des ",
+   "url": "https://www.ladepeche.fr/rss.xml",
+   "homepage": "https://www.ladepeche.fr/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "l-essentiel",
+   "name": "L'essentiel",
+   "url": "https://www.sudouest.fr/essentiel/rss.xml",
+   "homepage": "https://www.sudouest.fr/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "ouest-france-actualit",
+   "name": "Ouest-France - Actualité",
+   "url": "https://www.ouest-france.fr/rss-en-continu.xml",
+   "homepage": "https://www.ouest-france.fr/",
+   "lang": "fr",
+   "country": "fr",
+   "type": "news"
+  },
+  {
+   "id": "hong-kong-free-press-hkfp",
+   "name": "Hong Kong Free Press HKFP",
+   "url": "https://www.hongkongfp.com/feed/",
+   "homepage": "https://www.hongkongfp.com/",
+   "lang": "en",
+   "country": "hk",
+   "type": "news"
+  },
+  {
+   "id": "hongkongnews-net-latest-rss-headlines",
+   "name": "hongkongnews.net latest rss headlines",
+   "url": "http://feeds.hongkongnews.net/rss/b82693edf38ebff8",
+   "homepage": "http://feeds.hongkongnews.net/",
+   "lang": "en",
+   "country": "hk",
+   "type": "news"
+  },
+  {
+   "id": "bbc-news-india",
+   "name": "BBC News - India",
+   "url": "http://feeds.bbci.co.uk/news/world/asia/india/rss.xml",
+   "homepage": "http://feeds.bbci.co.uk/",
+   "lang": "en",
+   "country": "in",
+   "type": "news"
+  },
+  {
+   "id": "yjc",
+   "name": "خبرگزاری باشگاه خبرنگاران | آخرین اخبار ایران و جهان | YJC",
+   "url": "https://www.yjc.ir/fa/rss/allnews",
+   "homepage": "https://www.yjc.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "tabnak",
+   "name": "تابناک | TABNAK",
+   "url": "https://www.tabnak.ir/fa/rss/allnews",
+   "homepage": "https://www.tabnak.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "isna-news-agency",
+   "name": "خبرگزاری ایسنا | صفحه اصلی |  ISNA News Agency",
+   "url": "https://www.isna.ir/rss",
+   "homepage": "https://www.isna.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "mehr-news-agency",
+   "name": "خبرگزاری مهر | اخبار ایران و جهان | Mehr News Agency",
+   "url": "https://www.mehrnews.com/rss",
+   "homepage": "https://www.mehrnews.com/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "khabaronline",
+   "name": "خبرگزاری خبرآنلاین - آخرین اخبار ایران و جهان | Khabaronline",
+   "url": "https://www.khabaronline.ir/rss",
+   "homepage": "https://www.khabaronline.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "src-11",
+   "name": "عصر ايران",
+   "url": "https://www.asriran.com/fa/rss/allnews",
+   "homepage": "https://www.asriran.com/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "the-local-2",
+   "name": "The Local",
+   "url": "https://feeds.thelocal.com/rss/it",
+   "homepage": "https://feeds.thelocal.com/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "libero-quotidiano",
+   "name": "Libero Quotidiano",
+   "url": "https://www.liberoquotidiano.it/rss.xml",
+   "homepage": "https://www.liberoquotidiano.it/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "il-mattino-web",
+   "name": "Il Mattino Web",
+   "url": "https://www.ilmattino.it/?sez=XML&args&p=search&args[box]=Home&limit=20&layout=rss",
+   "homepage": "https://www.ilmattino.it/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "adnkronos-ultimoratop",
+   "name": "Adnkronos - ultimoratop",
+   "url": "http://rss.adnkronos.com/RSS_PrimaPagina.xml",
+   "homepage": "http://rss.adnkronos.com/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "milan-news",
+   "name": "Milan News",
+   "url": "https://www.milannews.it/rss/",
+   "homepage": "https://www.milannews.it/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "internazionale",
+   "name": "Internazionale",
+   "url": "https://www.internazionale.it/sitemaps/rss.xml",
+   "homepage": "https://www.internazionale.it/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "panorama",
+   "name": "Panorama",
+   "url": "https://www.panorama.it/feeds/feed.rss",
+   "homepage": "https://www.panorama.it/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "italy-the-guardian",
+   "name": "Italy | The Guardian",
+   "url": "https://www.theguardian.com/world/italy/rss",
+   "homepage": "https://www.theguardian.com/",
+   "lang": "it",
+   "country": "it",
+   "type": "news"
+  },
+  {
+   "id": "src-12",
+   "name": "朝日新聞デジタル",
+   "url": "http://rss.asahi.com/rss/asahi/newsheadlines.rdf",
+   "homepage": "http://rss.asahi.com/",
+   "lang": "ja",
+   "country": "jp",
+   "type": "news"
+  },
+  {
+   "id": "mexico-the-guardian",
+   "name": "Mexico | The Guardian",
+   "url": "https://www.theguardian.com/world/mexico/rss",
+   "homepage": "https://www.theguardian.com/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "reforma",
+   "name": "Reforma",
+   "url": "https://www.reforma.com/rss/portada.xml",
+   "homepage": "https://www.reforma.com/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "lo-ltimo-en-vanguardia-mx",
+   "name": "Lo último en Vanguardia MX",
+   "url": "https://vanguardia.com.mx/rss.xml",
+   "homepage": "https://vanguardia.com.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "portada-el-siglo-de-torre-n",
+   "name": "Portada, El Siglo de Torreón",
+   "url": "https://www.elsiglodetorreon.com.mx/index.xml",
+   "homepage": "https://www.elsiglodetorreon.com.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "el-financiero",
+   "name": "El Financiero",
+   "url": "https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/?outputType=xml",
+   "homepage": "https://www.elfinanciero.com.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "elnorte",
+   "name": "ElNorte",
+   "url": "https://www.elnorte.com/rss/portada.xml",
+   "homepage": "https://www.elnorte.com/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "el-informador-noticias-de-jalisco-m-xico-deporte",
+   "name": "El Informador :: Noticias de Jalisco, México, Deportes & Entretenimiento",
+   "url": "https://www.informador.mx/rss/ultimas-noticias.xml",
+   "homepage": "https://www.informador.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "24-horas",
+   "name": "24 Horas",
+   "url": "https://www.24-horas.mx/feed/",
+   "homepage": "https://www.24-horas.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "8-columnas",
+   "name": "8 Columnas",
+   "url": "https://8columnas.com.mx/feed/",
+   "homepage": "https://8columnas.com.mx/",
+   "lang": "es",
+   "country": "mx",
+   "type": "news"
+  },
+  {
+   "id": "nigerian-news-latest-nigeria-news-your-online-ni",
+   "name": "Nigerian News. Latest Nigeria News. Your online Nigerian Newspaper.",
+   "url": "http://feeds.feedburner.com/Nigerianeye",
+   "homepage": "http://feeds.feedburner.com/",
+   "lang": "en",
+   "country": "ng",
+   "type": "news"
+  },
+  {
+   "id": "legit-ng",
+   "name": "Legit.ng",
+   "url": "https://www.legit.ng/rss/all.rss",
+   "homepage": "https://www.legit.ng/",
+   "lang": "en",
+   "country": "ng",
+   "type": "news"
+  },
+  {
+   "id": "daily-post-nigeria",
+   "name": "Daily Post Nigeria",
+   "url": "https://dailypost.ng/feed",
+   "homepage": "https://dailypost.ng/",
+   "lang": "en",
+   "country": "ng",
+   "type": "news"
+  },
+  {
+   "id": "information-nigeria",
+   "name": "Information Nigeria",
+   "url": "https://www.informationng.com/feed",
+   "homepage": "https://www.informationng.com/",
+   "lang": "en",
+   "country": "ng",
+   "type": "news"
+  },
+  {
+   "id": "interaksyon",
+   "name": "Interaksyon",
+   "url": "https://www.interaksyon.com/feed/",
+   "homepage": "https://www.interaksyon.com/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "businessworld",
+   "name": "BusinessWorld",
+   "url": "https://www.bworldonline.com/feed/",
+   "homepage": "https://www.bworldonline.com/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "gma-news-online-news",
+   "name": "GMA News Online / News",
+   "url": "https://data.gmanews.tv/gno/rss/news/feed.xml",
+   "homepage": "https://data.gmanews.tv/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "current-ph",
+   "name": "Current PH",
+   "url": "https://currentph.com/feed/",
+   "homepage": "https://currentph.com/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "unbox-ph",
+   "name": "UNBOX PH",
+   "url": "https://www.unbox.ph/feed/",
+   "homepage": "https://www.unbox.ph/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "abante-tonite",
+   "name": "Abante Tonite",
+   "url": "https://tonite.abante.com.ph/feed/",
+   "homepage": "https://tonite.abante.com.ph/",
+   "lang": "en",
+   "country": "ph",
+   "type": "news"
+  },
+  {
+   "id": "the-citizen",
+   "name": "The Citizen",
+   "url": "https://citizen.co.za/feed/",
+   "homepage": "https://citizen.co.za/",
+   "lang": "en",
+   "country": "za",
+   "type": "news"
+  },
+  {
+   "id": "moneyweb",
+   "name": "Moneyweb",
+   "url": "https://www.moneyweb.co.za/feed/",
+   "homepage": "https://www.moneyweb.co.za/",
+   "lang": "en",
+   "country": "za",
+   "type": "news"
+  },
+  {
+   "id": "the-south-african",
+   "name": "The South African",
+   "url": "https://www.thesouthafrican.com/feed/",
+   "homepage": "https://www.thesouthafrican.com/",
+   "lang": "en",
+   "country": "za",
+   "type": "news"
+  },
+  {
+   "id": "euro-weekly-news-spain",
+   "name": "Euro Weekly News Spain",
+   "url": "https://www.euroweeklynews.com/feed/",
+   "homepage": "https://www.euroweeklynews.com/",
+   "lang": "es",
+   "country": "es",
+   "type": "news"
+  },
+  {
+   "id": "home-mail-online",
+   "name": "Home | Mail Online",
+   "url": "https://www.dailymail.co.uk/home/index.rss",
+   "homepage": "https://www.dailymail.co.uk/",
+   "lang": "en",
+   "country": "gb",
+   "type": "news"
+  },
+  {
+   "id": "the-independent",
+   "name": "The Independent",
+   "url": "http://www.independent.co.uk/news/uk/rss",
+   "homepage": "http://www.independent.co.uk/",
+   "lang": "en",
+   "country": "gb",
+   "type": "news"
+  },
+  {
+   "id": "daily-express-news-feed",
+   "name": "Daily Express :: News Feed",
+   "url": "http://feeds.feedburner.com/daily-express-news-showbiz",
+   "homepage": "http://feeds.feedburner.com/",
+   "lang": "en",
+   "country": "gb",
+   "type": "news"
+  },
+  {
+   "id": "world-news-breaking-news-top-stories",
+   "name": "World News - Breaking News, Top Stories",
+   "url": "https://www.huffpost.com/section/world-news/feed",
+   "homepage": "https://www.huffpost.com/",
+   "lang": "en",
+   "country": "us",
+   "type": "news"
+  },
+  {
+   "id": "fox-news",
+   "name": "FOX News",
+   "url": "http://feeds.foxnews.com/foxnews/latest",
+   "homepage": "http://feeds.foxnews.com/",
+   "lang": "en",
+   "country": "us",
+   "type": "news"
+  },
+  {
+   "id": "world-nation",
+   "name": "World & Nation",
+   "url": "https://www.latimes.com/world-nation/rss2.0.xml",
+   "homepage": "https://www.latimes.com/",
+   "lang": "en",
+   "country": "us",
+   "type": "news"
+  },
+  {
+   "id": "playbook",
+   "name": "Playbook",
+   "url": "https://rss.politico.com/playbook.xml",
+   "homepage": "https://rss.politico.com/",
+   "lang": "en",
+   "country": "us",
    "type": "news"
   }
  ]
