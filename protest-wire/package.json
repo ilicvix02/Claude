@@ -1,0 +1,38 @@
+{
+  "name": "protest-wire",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Protest Wire: protesters' own videos, live map, events and solidarity from around the world. Serbia first.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.ts",
+    "cron": "node --env-file-if-exists=.env.local scripts/run-cron.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0",
+    "@electric-sql/pglite": "0.5.8",
+    "fast-xml-parser": "5.11.2",
+    "leaflet": "1.9.4",
+    "next": "16.4.3",
+    "postgres": "3.4.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/leaflet": "1.9.22",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}
