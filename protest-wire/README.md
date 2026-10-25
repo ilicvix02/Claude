@@ -4,6 +4,16 @@
 
 Protest Wire is a mobile-first web app that brings protesters together across the world. It shows raw videos filmed by people in the streets (not TV channels), lets anyone count themselves in with one tap, and gives people shareable cards, flags and signs to spread the movement on TikTok, Instagram and everywhere else. It runs in 41 languages, including every national language in Europe, Serbian Latin and Serbian Cyrillic, and English.
 
+## Put it online in one click
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Filicvix02%2FClaude%2Ftree%2Fccr-5826c468-i8i27b%2Fprotest-wire&project-name=protest-wire&repository-name=protest-wire&env=ADMIN_PASSWORD%2CCRON_SECRET%2CANTHROPIC_API_KEY&envDescription=ADMIN_PASSWORD%20logs%20you%20into%20%2Fadmin.%20CRON_SECRET%20protects%20the%20update%20job%20%28any%20long%20random%20text%29.%20ANTHROPIC_API_KEY%20powers%20captions%2C%20filtering%20and%20translations.&envLink=https%3A%2F%2Fgithub.com%2Filicvix02%2FClaude%2Ftree%2Fccr-5826c468-i8i27b%2Fprotest-wire%23the-keys-you-need&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D)
+
+1. Click the button and sign in to Vercel with GitHub (free).
+2. Vercel copies the app into a new `protest-wire` repository in your account and offers to create a free **Neon** database. Accept it; that sets `DATABASE_URL`.
+3. Fill in `ADMIN_PASSWORD`, `CRON_SECRET` (any long random text) and `ANTHROPIC_API_KEY`, then click **Deploy**.
+4. After 2–3 minutes you get a public address like `https://protest-wire.vercel.app`. **That's the link to share.** Anyone can open it on a phone and tap "Add to Home Screen" to use it as an app.
+5. Set up the 3–5 minute update job (step 5 below) and add `YOUTUBE_API_KEY` and `NEXT_PUBLIC_SITE_URL` in Vercel → Settings → Environment Variables when you have them.
+
 ## What's inside
 
 | Feature | What it does |

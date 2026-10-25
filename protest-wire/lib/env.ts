@@ -10,7 +10,7 @@ function list(name: string): string[] {
 }
 
 export const env = {
-  get databaseUrl() { return process.env.DATABASE_URL ?? ""; },
+  get databaseUrl() { return process.env.DATABASE_URL || process.env.POSTGRES_URL || ""; },
   get anthropicKey() { return process.env.ANTHROPIC_API_KEY ?? ""; },
   get youtubeKey() { return process.env.YOUTUBE_API_KEY ?? ""; },
   get instagramToken() { return process.env.INSTAGRAM_ACCESS_TOKEN ?? ""; },
