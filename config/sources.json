@@ -1283,15 +1283,6 @@
    "type": "news"
   },
   {
-   "id": "the-telegraph-world",
-   "name": "The Telegraph World",
-   "url": "https://www.telegraph.co.uk/news/rss.xml",
-   "homepage": "https://www.telegraph.co.uk/",
-   "lang": "en",
-   "country": "gb",
-   "type": "news"
-  },
-  {
    "id": "financial-times-world",
    "name": "Financial Times World",
    "url": "https://www.ft.com/world?format=rss",
@@ -1670,15 +1661,6 @@
    "type": "news"
   },
   {
-   "id": "the-reporter-ethiopia",
-   "name": "The Reporter Ethiopia",
-   "url": "https://www.thereporterethiopia.com/feed/",
-   "homepage": "https://www.thereporterethiopia.com/",
-   "lang": "en",
-   "country": "et",
-   "type": "news"
-  },
-  {
    "id": "the-standard-kenya",
    "name": "The Standard Kenya",
    "url": "https://www.standardmedia.co.ke/rss/headlines.php",
@@ -1908,15 +1890,6 @@
    "name": "Actualité.cd",
    "url": "https://actualite.cd/rss.xml",
    "homepage": "https://actualite.cd/",
-   "lang": "fr",
-   "country": "cd",
-   "type": "news"
-  },
-  {
-   "id": "radio-okapi",
-   "name": "Radio Okapi",
-   "url": "https://www.radiookapi.net/rss.xml",
-   "homepage": "https://www.radiookapi.net/",
    "lang": "fr",
    "country": "cd",
    "type": "news"
@@ -2525,15 +2498,6 @@
    "type": "news"
   },
   {
-   "id": "err-news",
-   "name": "ERR News",
-   "url": "https://news.err.ee/rss",
-   "homepage": "https://news.err.ee/",
-   "lang": "en",
-   "country": "ee",
-   "type": "news"
-  },
-  {
    "id": "err",
    "name": "ERR",
    "url": "https://www.err.ee/rss",
@@ -2675,15 +2639,6 @@
    "homepage": "https://hotnews.ro/",
    "lang": "ro",
    "country": "ro",
-   "type": "news"
-  },
-  {
-   "id": "moldova-org",
-   "name": "Moldova.org",
-   "url": "https://www.moldova.org/feed/",
-   "homepage": "https://www.moldova.org/",
-   "lang": "ro",
-   "country": "md",
    "type": "news"
   },
   {
@@ -3134,15 +3089,6 @@
    "homepage": "https://www.hespress.com/",
    "lang": "ar",
    "country": "ma",
-   "type": "news"
-  },
-  {
-   "id": "sana",
-   "name": "SANA",
-   "url": "https://sana.sy/en/?feed=rss2",
-   "homepage": "https://sana.sy/",
-   "lang": "en",
-   "country": "sy",
    "type": "news"
   },
   {
@@ -3740,15 +3686,6 @@
    "type": "official"
   },
   {
-   "id": "msf",
-   "name": "MSF",
-   "url": "https://www.msf.org/rss/all",
-   "homepage": "https://www.msf.org/",
-   "lang": "en",
-   "country": "int",
-   "type": "official"
-  },
-  {
    "id": "amnesty-international",
    "name": "Amnesty International",
    "url": "https://www.amnesty.org/en/feed/",
@@ -3983,15 +3920,6 @@
    "type": "official"
   },
   {
-   "id": "swiss-national-bank",
-   "name": "Swiss National Bank",
-   "url": "https://www.snb.ch/public/en/rss/pressrel",
-   "homepage": "https://www.snb.ch/",
-   "lang": "en",
-   "country": "ch",
-   "type": "official"
-  },
-  {
    "id": "spanish-government-la-moncloa",
    "name": "Spanish Government (La Moncloa)",
    "url": "https://www.lamoncloa.gob.es/Paginas/rss.aspx?tipo=16",
@@ -4106,15 +4034,6 @@
    "homepage": "https://statehouse.gov.ng/",
    "lang": "en",
    "country": "ng",
-   "type": "official"
-  },
-  {
-   "id": "colombia-canciller-a",
-   "name": "Colombia Cancillería",
-   "url": "https://www.cancilleria.gov.co/rss.xml",
-   "homepage": "https://www.cancilleria.gov.co/",
-   "lang": "es",
-   "country": "co",
    "type": "official"
   },
   {
@@ -7997,15 +7916,6 @@
    "type": "news"
   },
   {
-   "id": "global-voices-uk",
-   "name": "Global Voices (uk)",
-   "url": "https://uk.globalvoices.org/feed/",
-   "homepage": "https://uk.globalvoices.org/",
-   "lang": "uk",
-   "country": "int",
-   "type": "news"
-  },
-  {
    "id": "global-voices-ne",
    "name": "Global Voices (ne)",
    "url": "https://ne.globalvoices.org/feed/",
@@ -8789,15 +8699,6 @@
    "type": "news"
   },
   {
-   "id": "opindia",
-   "name": "OpIndia",
-   "url": "https://feeds.feedburner.com/opindia",
-   "homepage": "https://feeds.feedburner.com/",
-   "lang": "en",
-   "country": "in",
-   "type": "news"
-  },
-  {
    "id": "swarajya",
    "name": "Swarajya",
    "url": "https://prod-qt-images.s3.amazonaws.com/production/swarajya/feed.xml",
@@ -9149,15 +9050,6 @@
    "type": "news"
   },
   {
-   "id": "mia",
-   "name": "MIA",
-   "url": "https://mia.mk/feed",
-   "homepage": "https://mia.mk/",
-   "lang": "mk",
-   "country": "mk",
-   "type": "news"
-  },
-  {
    "id": "kommersant",
    "name": "Kommersant",
    "url": "https://www.kommersant.ru/RSS/news.xml",
@@ -9201,15 +9093,6 @@
    "lang": "en",
    "country": "int",
    "type": "official"
-  },
-  {
-   "id": "google-news-bg-bg-health",
-   "name": "Google News BG/bg Health",
-   "url": "https://news.google.com/rss/headlines/section/topic/HEALTH?hl=bg&gl=BG&ceid=BG:bg",
-   "homepage": "https://news.google.com/",
-   "lang": "bg",
-   "country": "bg",
-   "type": "news"
   },
   {
    "id": "abc-news",
@@ -9434,15 +9317,6 @@
    "homepage": "http://feeds.bbci.co.uk/",
    "lang": "en",
    "country": "in",
-   "type": "news"
-  },
-  {
-   "id": "yjc",
-   "name": "خبرگزاری باشگاه خبرنگاران | آخرین اخبار ایران و جهان | YJC",
-   "url": "https://www.yjc.ir/fa/rss/allnews",
-   "homepage": "https://www.yjc.ir/",
-   "lang": "en",
-   "country": "ir",
    "type": "news"
   },
   {
@@ -9734,15 +9608,6 @@
    "type": "news"
   },
   {
-   "id": "abante-tonite",
-   "name": "Abante Tonite",
-   "url": "https://tonite.abante.com.ph/feed/",
-   "homepage": "https://tonite.abante.com.ph/",
-   "lang": "en",
-   "country": "ph",
-   "type": "news"
-  },
-  {
    "id": "the-citizen",
    "name": "The Citizen",
    "url": "https://citizen.co.za/feed/",
@@ -9839,6 +9704,87 @@
    "homepage": "https://rss.politico.com/",
    "lang": "en",
    "country": "us",
+   "type": "news"
+  },
+  {
+   "id": "daily-nation",
+   "name": "Daily Nation",
+   "url": "https://nation.africa/kenya/rss.xml",
+   "homepage": "https://nation.africa/",
+   "lang": "en",
+   "country": "ke",
+   "type": "news"
+  },
+  {
+   "id": "suspilne",
+   "name": "Suspilne",
+   "url": "https://suspilne.media/rss/all.rss",
+   "homepage": "https://suspilne.media/",
+   "lang": "uk",
+   "country": "ua",
+   "type": "news"
+  },
+  {
+   "id": "haiti-libre",
+   "name": "Haiti Libre",
+   "url": "https://www.haitilibre.com/rss-flash-en.xml",
+   "homepage": "https://www.haitilibre.com/",
+   "lang": "en",
+   "country": "ht",
+   "type": "news"
+  },
+  {
+   "id": "prime-minister-of-canada",
+   "name": "Prime Minister of Canada",
+   "url": "https://www.pm.gc.ca/en/news.rss",
+   "homepage": "https://www.pm.gc.ca/",
+   "lang": "en",
+   "country": "ca",
+   "type": "official"
+  },
+  {
+   "id": "south-africa-government",
+   "name": "South Africa Government",
+   "url": "https://www.gov.za/rss.xml",
+   "homepage": "https://www.gov.za/",
+   "lang": "en",
+   "country": "za",
+   "type": "official"
+  },
+  {
+   "id": "global-voices-mg",
+   "name": "Global Voices (mg)",
+   "url": "https://mg.globalvoices.org/feed/",
+   "homepage": "https://mg.globalvoices.org/",
+   "lang": "mg",
+   "country": "int",
+   "type": "news"
+  },
+  {
+   "id": "gov-uk-national-crime-agency",
+   "name": "GOV.UK – National Crime Agency",
+   "url": "https://www.gov.uk/government/organisations/national-crime-agency.atom",
+   "homepage": "https://www.gov.uk/",
+   "lang": "en",
+   "country": "gb",
+   "type": "official"
+  },
+  {
+   "id": "jagonews24-com-rss-feed",
+   "name": "jagonews24.com | rss Feed",
+   "url": "https://www.jagonews24.com/rss/rss.xml",
+   "homepage": "https://www.jagonews24.com/",
+   "lang": "en",
+   "country": "bd",
+   "type": "news"
+  },
+  {
+   "id": "news-blog",
+   "name": "News Blog",
+   "url": "https://newsnblogs.com/feed/",
+   "homepage": "https://newsnblogs.com/",
+   "lang": "en",
+   "country": "pk",
    "type": "news"
   }
  ]
