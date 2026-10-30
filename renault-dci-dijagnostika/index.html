@@ -259,6 +259,13 @@
         <div id="connCard"></div>
         <div id="scanPane" hidden>
           <div class="gap16"></div>
+          <div class="card hi" id="fullCheckCard">
+            <h3>Kompletna provera</h3>
+            <div class="small muted" style="margin:6px 0 12px">Jedno dugme: greške, lampica, 20 sekundi rada motora, poređenje sa Renault fabričkim vrednostima i zaključak. Motor neka radi u leru, zagrejan. Ako si već radio proveru, aplikacija sama uporedi „pre“ i „posle“.</div>
+            <button class="btn" id="fcBtn" onclick="runFullCheck()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Pokreni kompletnu proveru</button>
+            <div id="fcOut" style="margin-top:14px"></div>
+          </div>
+          <div class="gap16"></div>
           <div class="card" id="mainScan">
             <div class="row" style="justify-content:space-between"><h3>Greške u memoriji</h3><span class="badge b-real">PRAVI PODACI</span></div>
             <div id="dtcBox" style="margin-top:12px"><div class="small muted">Još nije očitano.</div></div>
@@ -977,6 +984,75 @@ Kratko i konkretno.`;
     const t=await AI.text(prompt,{onText:t=>{a.innerHTML=md(t);}}); a.innerHTML=md(t); box.insertAdjacentHTML("beforeend",MONEY_NOTE);
     addHistory({tip:"AI analiza pravih podataka",kad:Date.now(),ulaz:vals.slice(0,120),rez:"urađena"}); }
   catch(e){ box.innerHTML=`<div class="card small">${aiErr(e.code)}</div>`; }
+}
+
+/* ---- one-button full check + before/after repair comparison ---- */
+function stats(a){ if(!a.length) return null; const avg=a.reduce((s,x)=>s+x,0)/a.length; const sd=Math.sqrt(a.reduce((s,x)=>s+(x-avg)**2,0)/a.length); return {avg,min:Math.min(...a),max:Math.max(...a),sd,n:a.length}; }
+function fcStep(steps,i,state,txt){ steps[i].state=state; if(txt) steps[i].txt=txt;
+  $("#fcSteps").innerHTML=steps.map(s=>`<div class="row" style="align-items:flex-start;padding:7px 0"><span style="width:22px;flex:none;text-align:center">${s.state==="done"?"✅":s.state==="run"?'<span class="thinking"><i></i></span>':s.state==="warn"?"⚠️":"⏳"}</span><div class="small"><b>${esc(s.name)}</b>${s.txt?`<div class="muted">${esc(s.txt)}</div>`:""}</div></div>`).join(""); }
+async function runFullCheck(){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  if(live.on){ live.on=false; await sleep(400); }
+  const btn=$("#fcBtn"); btn.disabled=true;
+  const prev=loadJSON("dd_check",null);
+  const steps=[{name:"Čitam greške i lampicu motora"},{name:"Pratim rad motora 20 sekundi"},{name:"Poredim sa Renault fabričkim vrednostima"},{name:"Pravim zaključak"}];
+  $("#fcOut").innerHTML=`<div id="fcSteps"></div><div id="fcRes"></div>`; fcStep(steps,0,"run");
+  await readDTCs(true); const scan=loadJSON("dd_scan",{codes:[],pending:[]});
+  fcStep(steps,0,scan.codes.length?"warn":"done",scan.codes.length?`${scan.codes.length} grešk${scan.codes.length===1?"a":"e"}: ${scan.codes.join(", ")}`:"Bez sačuvanih grešaka"+(scan.mil?" (ali lampica svetli)":""));
+  fcStep(steps,1,"run");
+  const S={rpm:[],temp:[],rail:[],boost:[],volt:[]}; const map={"0C":"rpm","05":"temp","23":"rail","0B":"boost"}; const t0=Date.now();
+  while(Date.now()-t0<20000&&OBD.connected){
+    for(const pid of ["0C","05","23","0B"]){ if(!OBD.supported.has(pid)) continue; const p=LIVE_PIDS.find(x=>x.pid===pid);
+      const h=hexOf(await OBD.send("01"+pid,2500)); const i=h.indexOf("41"+pid); if(i>=0){ const a=parseInt(h.substr(i+4,2),16),b=parseInt(h.substr(i+6,2),16); const v=p.f(a,isNaN(b)?0:b); S[map[pid]].push(v); live.vals[p.k]=v; paintReal(p,v); } }
+    const vr=parseFloat(lines(await OBD.send("ATRV",1500)).join("").replace(/[^0-9.]/g,"")); if(!isNaN(vr)){ S.volt.push(vr); live.vals.volt=vr; }
+    fcStep(steps,1,"run",`${Math.round((Date.now()-t0)/1000)} / 20 s`);
+  }
+  const st={}; for(const k in S) st[k]=stats(S[k]);
+  fcStep(steps,1,"done",`${S.rpm.length||S.volt.length} merenja`);
+  fcStep(steps,2,"run");
+  // rule-based findings from Renault factory values (offline, no AI needed)
+  const F=[]; const add=(lvl,t)=>F.push({lvl,t});
+  scan.codes.forEach(c=>{ const i=codeInfo(c); add("bad",`${c}${i.df?" ("+i.df+")":""}: ${i.txt}`); });
+  if(scan.mil&&!scan.codes.length) add("warn","Lampica motora svetli, a standardna memorija je prazna — uradi i Renault očitavanje.");
+  const warm=st.temp&&st.temp.avg>=75;
+  if(st.temp&&!warm) add("info",`Motor je hladan (${st.temp.avg.toFixed(0)} °C). Za tačno poređenje ponovi kad se zagreje (preko 80 °C).`);
+  if(st.temp&&st.temp.max>=104) add("bad",`Temperatura ${st.temp.max.toFixed(0)} °C — pregrevanje! Ugasi motor.`);
+  if(st.rpm&&warm){ if(st.rpm.avg<700||st.rpm.avg>1000) add("warn",`Ler ${st.rpm.avg.toFixed(0)} o/min (Renault: ~805). Moguć zaštitni režim ili problem sa vazduhom/gorivom.`); else add("ok",`Ler ${st.rpm.avg.toFixed(0)} o/min — normalno.`);
+    if(st.rpm.sd>40) add("warn",`Ler „šeta“ ±${st.rpm.sd.toFixed(0)} o/min — moguće brizgaljke ili vazduh u gorivu.`); }
+  if(st.rail&&warm){ if(st.rail.avg<170||st.rail.avg>320) add("warn",`Pritisak goriva u leru ${st.rail.avg.toFixed(0)} bar (Renault: ~230). Pumpa, IMV ventil ili filter.`); else add("ok",`Pritisak goriva ${st.rail.avg.toFixed(0)} bar — normalno.`);
+    if(st.rail.sd>40) add("warn",`Pritisak goriva nestabilan (±${st.rail.sd.toFixed(0)} bar).`); }
+  if(st.boost&&st.rpm&&st.rpm.avg<1100){ if(st.boost.avg>1150) add("warn",`Pritisak u usisu u leru ${st.boost.avg.toFixed(0)} mbar — trebalo bi ~1000 (atmosferski). Proveri senzor.`); }
+  if(st.volt){ const running=st.rpm?st.rpm.avg>400:true; if(running&&(st.volt.avg<13||st.volt.avg>14.8)) add("warn",`Napon ${st.volt.avg.toFixed(1)} V dok motor radi (treba 13–14,5 V) — alternator/akumulator.`); else if(running) add("ok",`Punjenje ${st.volt.avg.toFixed(1)} V — normalno.`); }
+  const base=loadJSON("dd_base",null);
+  if(base&&warm) for(const k of ["rpm","rail","boost"]){ if(st[k]&&base.vals[k]){ const d=(st[k].avg-base.vals[k])/base.vals[k]; if(Math.abs(d)>.15) add("warn",`${k==="rpm"?"Obrtaji":k==="rail"?"Pritisak goriva":"Pritisak u usisu"}: ${d>0?"+":""}${(d*100).toFixed(0)}% u odnosu na tvoje „zdravo stanje“.`); } }
+  // before/after comparison
+  let cmp=null;
+  if(prev){ const fixed=prev.codes.filter(c=>!scan.codes.includes(c)), still=prev.codes.filter(c=>scan.codes.includes(c)), fresh=scan.codes.filter(c=>!prev.codes.includes(c));
+    cmp={kad:prev.kad,fixed,still,fresh,rail:prev.st&&prev.st.rail&&st.rail?[prev.st.rail.avg,st.rail.avg]:null,rpmsd:prev.st&&prev.st.rpm&&st.rpm?[prev.st.rpm.sd,st.rpm.sd]:null}; }
+  fcStep(steps,2,F.some(f=>f.lvl!=="ok"&&f.lvl!=="info")?"warn":"done",`${F.filter(f=>f.lvl==="ok").length} u redu · ${F.filter(f=>f.lvl==="warn"||f.lvl==="bad").length} za pažnju`);
+  const check={kad:Date.now(),codes:scan.codes,mil:scan.mil,st,findings:F,cmp};
+  saveJSON("dd_check",check);
+  addHistory({tip:"Kompletna provera",kad:Date.now(),ulaz:OBD.protoName,rez:F.filter(f=>f.lvl!=="ok").map(f=>f.t).slice(0,3).join(" | ")||"sve u redu"});
+  // render
+  const ico={ok:"✅",warn:"⚠️",bad:"🔴",info:"ℹ️"};
+  let h=`<div class="divider"></div><div class="row" style="justify-content:space-between"><h3>Rezultat</h3><span class="badge b-real">PRAVI PODACI</span></div>`;
+  h+=F.map(f=>`<div class="row" style="align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)"><span style="flex:none">${ico[f.lvl]}</span><span class="small">${esc(f.t)}</span></div>`).join("")||`<div class="small muted">Nema dovoljno podataka.</div>`;
+  if(cmp){ h+=`<div class="card" style="margin-top:14px"><h3>Pre i posle (od ${esc(new Date(cmp.kad).toLocaleDateString('sr-RS'))})</h3>
+    ${cmp.fixed.length?`<div class="small" style="margin-top:8px;color:var(--ok)">✅ Nestalo: ${esc(cmp.fixed.join(", "))} — popravka je izgleda uspela.</div>`:""}
+    ${cmp.still.length?`<div class="small" style="margin-top:8px;color:var(--warn)">⚠️ I dalje tu: ${esc(cmp.still.join(", "))} — kvar nije rešen (ili greška nije obrisana posle popravke).</div>`:""}
+    ${cmp.fresh.length?`<div class="small" style="margin-top:8px;color:var(--bad)">🔴 Novo: ${esc(cmp.fresh.join(", "))}</div>`:""}
+    ${!cmp.fixed.length&&!cmp.still.length&&!cmp.fresh.length?`<div class="small muted" style="margin-top:8px">Bez grešaka i pre i sada.</div>`:""}
+    ${cmp.rail?`<div class="small muted" style="margin-top:8px">Pritisak goriva u leru: ${cmp.rail[0].toFixed(0)} → ${cmp.rail[1].toFixed(0)} bar</div>`:""}
+    ${cmp.rpmsd?`<div class="small muted" style="margin-top:4px">Mirnoća lera: ±${cmp.rpmsd[0].toFixed(0)} → ±${cmp.rpmsd[1].toFixed(0)} o/min</div>`:""}</div>`; }
+  $("#fcRes").innerHTML=h;
+  fcStep(steps,3,"run");
+  if(AI.ready()){
+    const box=el("div","ai"); $("#fcRes").appendChild(el("div",null,`<div class="divider"></div><div class="eyebrow">Zaključak</div>`)); $("#fcRes").appendChild(box);
+    const prompt=`${AI_RULES}\n\n${carCtx()}\n${NORM_CTX}\nPRAVI PODACI IZ KOMPLETNE PROVERE (20 s u leru, ${OBD.protoName}):\nGreške: ${scan.codes.length?scan.codes.map(c=>c+" ("+codeInfo(c).txt+")").join(", "):"nema"}; lampica: ${scan.mil==null?"nepoznato":scan.mil?"upaljena":"ugašena"}\nStatistika: ${Object.entries(st).filter(([k,v])=>v).map(([k,v])=>`${k}: prosek ${v.avg.toFixed(1)}, min ${v.min.toFixed(1)}, max ${v.max.toFixed(1)}, kolebanje ±${v.sd.toFixed(1)}`).join("; ")}\nNalazi po pravilima: ${F.map(f=>f.t).join(" | ")}\n${cmp?`POREĐENJE SA PRETHODNOM PROVEROM: nestalo ${cmp.fixed.join(",")||"-"}; i dalje ${cmp.still.join(",")||"-"}; novo ${cmp.fresh.join(",")||"-"}.`:""}\n\nMarkdown naslovi:\n### Ukratko (1-2 rečenice)\n### Šta prvo da uradiš (od najjeftinijeg)\n### Smeš li da voziš\n${cmp?"### Da li je popravka uspela\n":""}Kratko.`;
+    try{ const t=await AI.text(prompt,{onText:t=>{box.innerHTML=md(t);}}); box.innerHTML=md(t); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); fcStep(steps,3,"done","Gotovo"); }
+    catch(e){ box.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; fcStep(steps,3,"warn","AI nije uspeo — nalazi gore važe"); }
+  } else { fcStep(steps,3,"done","Nalazi po Renault vrednostima su gore (AI nije uključen)"); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); }
+  btn.disabled=false;
 }
 
 /* ---- car tab mode ---- */
