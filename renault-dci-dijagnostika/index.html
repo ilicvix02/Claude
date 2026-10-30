@@ -1,184 +1,157 @@
 <title>Dizel Doktor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Dijagnostika za Renault Mégane 1.5 dCi — pravo očitavanje preko OBD adaptera, fabričke vrednosti, servisni plan i AI pomoć, jednostavnim jezikom.">
+<meta name="description" content="Dijagnostika za Renault Mégane 1.5 dCi za auto-mehaničare: poveži, pokreni proveru, čuj rezultat.">
 <style>
-  /* ============================================================
-     Dizel Doktor v3 — Renault Mégane II 1.5 dCi (K9K), 2004
-     - Real OBD (ELM327/OBDLink over Web Bluetooth or Web Serial)
-     - Renault factory reference values & DF code table (offline)
-     - Maintenance tracker, guided checks, warning-light guide
-     - AI via the viewer's Claude account (artifact) or own API key (standalone)
-     UI copy: plain Serbian. Code comments: English.
-     ============================================================ */
-  :root {
-    color-scheme: dark;
+  /* Dizel Doktor v4 — za auto-mehaničare. Tri koraka, krupno, sa glasom. */
+  :root{
+    color-scheme:dark;
     --bg:#070b16; --bg-2:#0b1226; --panel:#101a33; --panel-2:#0e1830; --panel-hi:#16233f;
-    --line:rgba(120,165,255,.14); --line-2:rgba(120,165,255,.26);
-    --fg:#eaf1ff; --muted:#93a6cf; --muted-2:#6e82ad;
+    --line:rgba(120,165,255,.16); --line-2:rgba(120,165,255,.30);
+    --fg:#f0f5ff; --muted:#a3b4d8; --muted-2:#7488b3;
     --royal:#2f52ff; --cyan:#27e5ff; --cyan-2:#00bfe6;
     --grad:linear-gradient(100deg,var(--royal) 0%,var(--cyan) 100%);
     --grad-soft:linear-gradient(100deg,rgba(47,82,255,.18),rgba(39,229,255,.18));
     --ok:#2fe0a6; --warn:#ffba45; --bad:#ff6b78; --danger:#ff3b52;
     --f-display:"Sora",system-ui,sans-serif; --f-body:"Manrope",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
-    --maxw:680px; --nav-h:64px; --radius:18px;
+    --maxw:680px; --nav-h:72px; --radius:20px;
   }
   *{box-sizing:border-box} html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
   body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(60% 40% at 82% -5%,rgba(39,229,255,.12),transparent 60%),radial-gradient(70% 45% at 0% 0%,rgba(47,82,255,.16),transparent 55%)}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg-2);z-index:60}
-  .app{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;min-height:100%;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px)}
+  .app{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;min-height:100%;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px)}
 
-  header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:linear-gradient(var(--bg-2),rgba(11,18,38,.88));backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-block:11px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:11px}
-  .logo{width:36px;height:36px;border-radius:10px;flex:none;background:var(--grad);display:grid;place-items:center;box-shadow:0 0 18px rgba(39,229,255,.5)}
-  .logo svg{width:21px;height:21px}
-  .brand{display:flex;flex-direction:column;line-height:1.12;min-width:0}
-  .brand b{font-family:var(--f-display);font-weight:800;font-size:16.5px}
-  .brand span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .spacer{flex:1}
-  .pill{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:6px 10px;display:flex;align-items:center;gap:6px;white-space:nowrap}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted-2);flex:none}
+  header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:linear-gradient(var(--bg-2),rgba(11,18,38,.9));backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:10px}
+  .logo{width:40px;height:40px;border-radius:12px;flex:none;background:var(--grad);display:grid;place-items:center;box-shadow:0 0 18px rgba(39,229,255,.5)}
+  .logo svg{width:23px;height:23px}
+  .brand{display:flex;flex-direction:column;line-height:1.12;min-width:0;flex:1}
+  .brand b{font-family:var(--f-display);font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spacer{display:none}
+  .pill{font-size:13px;font-weight:800;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:8px 12px;display:flex;align-items:center;gap:7px;white-space:nowrap;font-family:var(--f-display)}
+  .pill.on{color:#9ff5d6;border-color:rgba(47,224,166,.5);background:rgba(47,224,166,.08)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted-2);flex:none}
   .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.wait{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .iconbtn{width:46px;height:46px;border-radius:14px;border:1px solid var(--line-2);background:var(--panel);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}
+  .iconbtn svg{width:23px;height:23px} .iconbtn.on{border-color:var(--cyan-2);color:var(--cyan)}
 
   main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:16px}
-  .screen{display:none;animation:fade .22s ease} .screen.active{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){.screen{animation:none}}
+  .screen{display:none} .screen.active{display:block}
   h1,h2,h3{font-family:var(--f-display);font-weight:800;text-wrap:balance;margin:0}
-  h1.pg{font-size:27px;margin:6px 0 14px}
-  .eyebrow{font-size:11.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--cyan-2);font-weight:700}
-  .muted{color:var(--muted)} .small{font-size:13.5px} .tiny{font-size:12px} .center{text-align:center}
+  h1.pg{font-size:28px;margin:4px 0 16px}
+  h3{font-size:18px}
+  .eyebrow{font-size:12px;letter-spacing:1.3px;text-transform:uppercase;color:var(--cyan-2);font-weight:800}
+  .muted{color:var(--muted)} .small{font-size:15px} .tiny{font-size:13px} .center{text-align:center}
   .stack{display:flex;flex-direction:column;gap:14px} .row{display:flex;gap:10px;align-items:center} .wrap{flex-wrap:wrap}
-  .gap16{height:16px}
+  .gap{height:16px}
 
-  .hero{border:1px solid var(--line);border-radius:24px;padding:24px 20px;overflow:hidden;position:relative;background:radial-gradient(120% 90% at 85% -20%,rgba(39,229,255,.18),transparent 55%),radial-gradient(120% 90% at -10% -10%,rgba(47,82,255,.22),transparent 50%),var(--panel)}
-  .hero .chev{position:absolute;right:-30px;top:-20px;opacity:.13;width:220px;height:220px}
-  .hero h1{font-size:clamp(28px,8vw,40px);line-height:1.03;letter-spacing:-.5px}
-  .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p{color:var(--muted);margin:13px 0 0;max-width:40ch;font-size:16px}
-
-  .btn{appearance:none;border:0;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:16px;border-radius:999px;padding:17px 20px;display:inline-flex;align-items:center;justify-content:center;gap:10px;color:#041024;background:var(--grad);box-shadow:0 8px 26px rgba(39,120,255,.35);width:100%;transition:transform .12s ease}
-  .btn:active{transform:translateY(1px) scale(.995)} .btn svg{width:20px;height:20px;flex:none}
-  .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line-2);box-shadow:none} .btn.ghost svg{color:var(--cyan)}
-  .btn.sm{width:auto;padding:12px 16px;font-size:14px}
+  .btn{appearance:none;border:0;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:18px;border-radius:999px;padding:19px 22px;min-height:62px;display:inline-flex;align-items:center;justify-content:center;gap:11px;color:#041024;background:var(--grad);box-shadow:0 8px 26px rgba(39,120,255,.35);width:100%;transition:transform .12s ease}
+  .btn:active{transform:translateY(1px) scale(.995)} .btn svg{width:23px;height:23px;flex:none}
+  .btn.ghost{background:transparent;color:var(--fg);border:1.5px solid var(--line-2);box-shadow:none} .btn.ghost svg{color:var(--cyan)}
+  .btn.sm{width:auto;min-height:50px;padding:13px 18px;font-size:16px}
+  .btn.big{font-size:22px;min-height:84px;letter-spacing:.6px;border-radius:24px}
   .btn.danger{background:linear-gradient(100deg,#ff3b52,#ff7a5a);color:#1a0208;box-shadow:0 8px 24px rgba(255,59,82,.28)}
   .btn[disabled]{opacity:.45;cursor:default}
-  .btn:focus-visible,.chip:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-  .linkbtn{background:none;border:0;color:var(--cyan);font-family:var(--f-display);font-weight:700;font-size:14px;cursor:pointer;padding:6px 0;display:inline-flex;gap:7px;align-items:center}
+  button:focus-visible,.btn:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+  .linkbtn{background:none;border:0;color:var(--cyan);font-family:var(--f-display);font-weight:800;font-size:15.5px;cursor:pointer;padding:8px 0}
 
-  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:16px}
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:18px}
   .card.hi{background:var(--panel-hi)}
-  .card h3{font-size:16.5px}
-  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .tiles button{text-align:left;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--fg);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:116px;justify-content:space-between;transition:border-color .15s,background .15s}
-  .tiles button:hover{border-color:var(--line-2);background:var(--panel-hi)}
-  .ti{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--grad-soft);border:1px solid var(--line-2)}
-  .ti svg{width:22px;height:22px;color:var(--cyan)}
-  .tiles b{font-family:var(--f-display);font-size:16px} .tiles span{font-size:12.5px;color:var(--muted);line-height:1.35}
-
-  .safety{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line-2);border-radius:14px;padding:13px 14px;background:var(--grad-soft)}
-  .safety svg{width:20px;height:20px;color:var(--cyan);flex:none;margin-top:1px}
+  .stepcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:18px}
+  .stephead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .num{width:38px;height:38px;border-radius:50%;background:var(--grad);color:#041024;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:19px;flex:none}
+  .num.done{background:var(--ok)}
+  .stephead h3{font-size:19px} .stephead .opt{font-size:13px;color:var(--muted);font-weight:600}
 
   .chips{display:flex;flex-wrap:wrap;gap:10px}
-  .chip{border:1px solid var(--line-2);background:var(--panel);color:var(--fg);border-radius:999px;padding:11px 15px;font-size:14px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:all .14s ease}
-  .chip:hover{border-color:var(--cyan-2)} .chip.on{background:var(--grad);color:#041024;border-color:transparent}
-  .chip.mono{font-family:var(--f-mono);font-weight:600}
+  .chip{border:1.5px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:14px;padding:13px 16px;font-size:16px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:7px;min-height:50px}
+  .chip.on{background:var(--grad);color:#041024;border-color:transparent}
+  .chip.mono{font-family:var(--f-mono)}
+  textarea,input[type=text],input[type=number],input[type=password]{width:100%;background:var(--panel-2);color:var(--fg);border:1.5px solid var(--line-2);border-radius:16px;padding:15px;font-family:var(--f-body);font-size:18px;resize:vertical}
+  textarea:focus,input:focus{outline:3px solid var(--cyan-2);outline-offset:1px;border-color:transparent}
+  label.fld{display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--muted);font-weight:700}
+  .microw{display:flex;gap:10px;align-items:stretch}
+  .mic{width:62px;flex:none;border-radius:16px;border:1.5px solid var(--line-2);background:var(--panel-2);color:var(--cyan);display:grid;place-items:center;cursor:pointer}
+  .mic svg{width:26px;height:26px} .mic.rec{background:rgba(255,59,82,.15);border-color:var(--danger);color:var(--danger);animation:pulse 1s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(255,59,82,.18)}}
 
-  textarea,input[type=text],input[type=number],input[type=date],input[type=password]{width:100%;background:var(--panel-2);color:var(--fg);border:1px solid var(--line-2);border-radius:14px;padding:14px;font-family:var(--f-body);font-size:16px;resize:vertical}
-  textarea:focus,input:focus{outline:2px solid var(--cyan-2);outline-offset:1px;border-color:transparent}
-  label.fld{display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--muted);font-weight:600}
-  .photo-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;border:1px solid var(--line-2)}
-  .step{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:800;font-size:13px;color:var(--cyan)}
-  .step i{width:22px;height:22px;border-radius:50%;background:var(--grad);color:#041024;display:grid;place-items:center;font-size:13px;font-style:normal}
-
-  .cause{border:1px solid var(--line);border-left-width:4px;border-radius:14px;background:var(--panel);padding:15px;margin-top:12px}
-  .cause h3{font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .badge{font-size:10.5px;font-weight:800;letter-spacing:.3px;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .badge{font-size:11.5px;font-weight:800;letter-spacing:.3px;padding:5px 10px;border-radius:999px;white-space:nowrap}
   .b-vis{background:rgba(255,59,82,.16);color:#ff93a0} .b-sre{background:rgba(255,186,69,.16);color:#ffcf84} .b-niz{background:rgba(47,224,166,.16);color:#7df0cb}
   .b-real{background:rgba(47,224,166,.16);color:#7df0cb;border:1px solid rgba(47,224,166,.4)}
   .b-demo{background:rgba(255,186,69,.14);color:#ffcf84;border:1px solid rgba(255,186,69,.4)}
-  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .tag{font-size:12px;border:1px solid var(--line-2);border-radius:8px;padding:5px 9px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
-  .tag b{color:var(--fg);font-weight:700}
-  .how{margin-top:11px;font-size:14px;color:var(--muted)} .how b{color:var(--fg)}
+  .cause{border:1px solid var(--line);border-left-width:5px;border-radius:16px;background:var(--panel);padding:16px;margin-top:12px}
+  .cause h3{font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .h-opasno{border-left-color:var(--danger)} .h-hitno{border-left-color:var(--warn)} .h-ok{border-left-color:var(--ok)}
+  .tag{font-size:13px;border:1px solid var(--line-2);border-radius:9px;padding:6px 10px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+  .tag b{color:var(--fg)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 
-  .banner{border-radius:14px;padding:13px 15px;display:flex;gap:11px;align-items:flex-start}
-  .banner svg{width:22px;height:22px;flex:none;margin-top:1px}
+  .banner{border-radius:16px;padding:15px 16px;display:flex;gap:12px;align-items:flex-start}
+  .banner svg{width:26px;height:26px;flex:none;margin-top:1px}
   .banner.danger{border:1px solid rgba(255,59,82,.5);background:rgba(255,59,82,.12)} .banner.danger svg{color:var(--danger)} .banner.danger b{color:#ffb3bc}
   .banner.warn{border:1px solid rgba(255,186,69,.5);background:rgba(255,186,69,.12)} .banner.warn svg{color:var(--warn)} .banner.warn b{color:#ffd591}
   .banner.ok{border:1px solid rgba(47,224,166,.45);background:rgba(47,224,166,.10)} .banner.ok svg{color:var(--ok)} .banner.ok b{color:#9ff5d6}
-  .moneynote{margin-top:15px;border:1px dashed var(--line-2);border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
-  .moneynote svg{width:18px;height:18px;color:var(--warn);flex:none;margin-top:1px} .moneynote b{color:var(--fg)}
+  .moneynote{margin-top:15px;border:1px dashed var(--line-2);border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted)}
+  .moneynote svg{width:20px;height:20px;color:var(--warn);flex:none;margin-top:1px} .moneynote b{color:var(--fg)}
 
   .gauges{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .gauge{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:13px 13px 10px;text-align:center;min-width:0}
-  .gauge .lbl{font-size:12px;color:var(--muted);font-weight:700}
-  .gauge svg{width:100%;height:76px;display:block}
-  .gauge .val{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:-6px}
-  .gauge .val small{font-size:11px;color:var(--muted);font-family:var(--f-body)}
-  .gauge .norm{font-size:10.5px;color:var(--muted-2);margin-top:2px}
+  .gauge{border:1px solid var(--line);border-radius:18px;background:var(--panel-2);padding:13px 12px 10px;text-align:center;min-width:0}
+  .gauge .lbl{font-size:13.5px;color:var(--muted);font-weight:800}
+  .gauge svg{width:100%;height:72px;display:block}
+  .gauge .val{font-family:var(--f-mono);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:-6px}
+  .gauge .val small{font-size:12px;color:var(--muted);font-family:var(--f-body)}
+  .gauge .norm{font-size:11.5px;color:var(--muted-2);margin-top:2px}
   .gauge.alert{border-color:rgba(255,59,82,.55)} .gauge.alert .val{color:var(--bad)}
   .gauge.warnv{border-color:rgba(255,186,69,.5)} .gauge.warnv .val{color:var(--warn)}
-  .scen{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px} .scen .chip{flex:none}
-  .gasbtn{user-select:none;-webkit-user-select:none;touch-action:none}
 
   .list{display:flex;flex-direction:column;gap:10px}
-  .list>button,.li{display:flex;gap:13px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--fg);padding:14px;cursor:pointer;transition:border-color .15s,background .15s}
+  .list>button{display:flex;gap:14px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--fg);padding:16px;cursor:pointer;min-height:70px}
   .list>button:hover{border-color:var(--line-2);background:var(--panel-hi)}
-  .ic{width:42px;height:42px;border-radius:11px;background:var(--grad-soft);border:1px solid var(--line-2);display:grid;place-items:center;flex:none;font-size:21px}
-  .list b{font-family:var(--f-display);font-size:15.5px;display:block} .list span.s{font-size:13px;color:var(--muted)}
-  .sev{margin-left:auto;align-self:flex-start;font-weight:700;font-size:12.5px;white-space:nowrap}
+  .ic{width:46px;height:46px;border-radius:13px;background:var(--grad-soft);border:1px solid var(--line-2);display:grid;place-items:center;flex:none;font-size:23px}
+  .list b{font-family:var(--f-display);font-size:17px;display:block} .list span.s{font-size:14px;color:var(--muted)}
+  .sev{margin-left:auto;align-self:center;font-weight:800;font-size:13.5px;white-space:nowrap}
   .s-opasno{color:var(--danger)} .s-visok{color:var(--bad)} .s-srednji{color:var(--warn)} .s-nizak{color:var(--ok)}
+  .chev{margin-left:auto;color:var(--muted-2);font-size:22px}
 
+  details.card>summary{cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:17px;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:30px}
+  details.card>summary::after{content:"▾";color:var(--muted)} details.card[open]>summary::after{content:"▴"}
+  details.card>summary::-webkit-details-marker{display:none}
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel-2)}
-  .seg button{border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-weight:700;font-size:14px;padding:11px;border-radius:999px;cursor:pointer}
+  .seg button{border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-weight:800;font-size:15px;padding:13px;border-radius:999px;cursor:pointer}
   .seg button.on{background:var(--grad);color:#041024}
-
-  .kv{width:100%;border-collapse:collapse;font-size:13.5px}
-  .kv td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-  .kv td:first-child{color:var(--muted);width:55%} .kv td:last-child{font-family:var(--f-mono);font-size:13px}
-  .tblwrap{overflow-x:auto}
-
-  .bar{height:8px;border-radius:8px;background:rgba(120,165,255,.14);overflow:hidden;margin-top:9px}
-  .bar i{display:block;height:100%;border-radius:8px;background:var(--grad)}
-  .bar i.w{background:linear-gradient(90deg,#ffba45,#ff9a3c)} .bar i.d{background:linear-gradient(90deg,#ff3b52,#ff7a5a)}
-  .mt-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .codebox{font-family:var(--f-mono);font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto}
-  .dtc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:12px;background:var(--panel)}
-  .dtc .c{font-family:var(--f-mono);font-weight:700;color:var(--cyan);font-size:16px;min-width:64px}
-  .checkrow{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
-  .checkrow input{width:20px;height:20px;margin-top:2px;accent-color:#27e5ff;flex:none}
+  .kv{width:100%;border-collapse:collapse;font-size:15px}
+  .kv td{padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .kv td:first-child{color:var(--muted);width:55%} .kv td:last-child{font-family:var(--f-mono);font-size:14px}
+  .codebox{font-family:var(--f-mono);font-size:13px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+  .dtc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:14px;padding:13px;background:var(--panel)}
+  .dtc .c{font-family:var(--f-mono);font-weight:700;color:var(--cyan);font-size:17px;min-width:66px}
+  .checkrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .checkrow input{width:24px;height:24px;margin-top:1px;accent-color:#27e5ff;flex:none}
+  .divider{height:1px;background:var(--line);margin:14px 0}
 
   .sheet-bg{position:fixed;inset:0;background:rgba(2,6,16,.66);backdrop-filter:blur(3px);z-index:80;display:none}
   .sheet-bg.open{display:block}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:81;max-width:var(--maxw);margin:0 auto;background:var(--bg-2);border:1px solid var(--line-2);border-bottom:0;border-radius:22px 22px 0 0;padding:8px 0 calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);max-height:90vh;display:flex;flex-direction:column}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:81;max-width:var(--maxw);margin:0 auto;background:var(--bg-2);border:1px solid var(--line-2);border-bottom:0;border-radius:24px 24px 0 0;padding:8px 0 calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);max-height:90vh;display:flex;flex-direction:column}
   .sheet.open{transform:none}
-  .sheet .grab{width:42px;height:4px;border-radius:4px;background:var(--line-2);margin:6px auto 4px;flex:none}
+  .sheet .grab{width:46px;height:5px;border-radius:5px;background:var(--line-2);margin:6px auto 4px;flex:none}
   .sheet .sbody{overflow-y:auto;padding:8px max(16px,env(safe-area-inset-left,0px)) 4px}
-  .sheet h2{font-size:21px;margin-bottom:4px}
-
-  .ai{font-size:15px;line-height:1.6;word-wrap:break-word}
-  .ai h3{font-size:16px;margin:15px 0 4px;color:var(--cyan)} .ai ul{padding-left:18px;margin:6px 0} .ai li{margin:3px 0}
-  .ai strong{color:#fff} .ai p{margin:7px 0} .ai code{font-family:var(--f-mono);background:var(--panel-2);padding:1px 5px;border-radius:6px;font-size:13px}
-  .thinking{display:inline-flex;gap:5px;align-items:center;color:var(--muted);font-size:14px}
-  .thinking i{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:blink 1.2s infinite}
+  .sheet h2{font-size:22px;margin-bottom:6px}
+  .ai{font-size:16.5px;line-height:1.6;word-wrap:break-word}
+  .ai h3{font-size:18px;margin:16px 0 4px;color:var(--cyan)} .ai ul,.ai ol{padding-left:20px;margin:6px 0} .ai li{margin:4px 0}
+  .ai strong{color:#fff} .ai p{margin:7px 0} .ai code{font-family:var(--f-mono);background:var(--panel-2);padding:1px 5px;border-radius:6px;font-size:14px}
+  .thinking{display:inline-flex;gap:5px;align-items:center;color:var(--muted);font-size:16px}
+  .thinking i{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:blink 1.2s infinite}
   .thinking i:nth-child(2){animation-delay:.2s} .thinking i:nth-child(3){animation-delay:.4s}
   @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
-  .notice{font-size:12.5px;color:var(--muted-2);line-height:1.5}
-  .divider{height:1px;background:var(--line);margin:12px 0}
-  .chat{display:flex;flex-direction:column;gap:10px}
-  .bubble{padding:12px 14px;border-radius:14px;font-size:14.5px;line-height:1.55;max-width:92%}
-  .bubble.me{align-self:flex-end;background:var(--grad);color:#041024;border-bottom-right-radius:4px}
-  .bubble.ai{align-self:flex-start;background:var(--panel-hi);border:1px solid var(--line);border-bottom-left-radius:4px;white-space:pre-wrap}
+  @media (prefers-reduced-motion:reduce){.thinking i,.mic.rec{animation:none}}
+  .notice{font-size:14px;color:var(--muted-2);line-height:1.5}
 
-  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:var(--maxw);margin:0 auto;background:rgba(9,15,31,.95);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-  nav.tabs button{background:none;border:0;cursor:pointer;color:var(--muted-2);padding:10px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;font-family:var(--f-display)}
-  nav.tabs button svg{width:23px;height:23px}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:var(--maxw);margin:0 auto;background:rgba(9,15,31,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  nav.tabs button{background:none;border:0;cursor:pointer;color:var(--muted-2);padding:11px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px;font-weight:800;font-family:var(--f-display)}
+  nav.tabs button svg{width:27px;height:27px}
   nav.tabs button.on{color:var(--cyan)} nav.tabs button.on svg{filter:drop-shadow(0 0 6px rgba(39,229,255,.6))}
-  .finenote{text-align:center;color:var(--muted-2);font-size:11.5px;padding:18px 0 2px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:90;background:var(--panel-hi);border:1px solid var(--line-2);color:var(--fg);padding:13px 18px;border-radius:999px;font-size:15.5px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:calc(100% - 32px)}
   a{color:var(--cyan)}
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:90;background:var(--panel-hi);border:1px solid var(--line-2);color:var(--fg);padding:11px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:calc(100% - 32px)}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap">
@@ -186,173 +159,94 @@
 <div class="app">
   <header class="top">
     <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#041024" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-5h8l2 5h3"/><path d="M5 12v4h14v-4"/><circle cx="8" cy="16" r="1.4" fill="#041024" stroke="none"/><circle cx="16" cy="16" r="1.4" fill="#041024" stroke="none"/></svg></div>
-    <div class="brand"><b>Dizel Doktor</b><span id="hdrCar">Renault Mégane 1.5 dCi · 2004</span></div>
+    <div class="brand"><b>Dizel Doktor</b><span id="hdrCar">Mégane 1.5 dCi · 2004</span></div>
     <div class="spacer"></div>
-    <div class="pill" id="carPill" title="Veza sa autom"><span class="dot" id="carDot"></span><span id="carTxt">Auto</span></div>
-    <div class="pill" title="Veštačka inteligencija"><span class="dot" id="aiDot"></span><span id="aiTxt">AI</span></div>
+    <div class="pill" id="carPill"><span class="dot" id="carDot"></span><span id="carTxt">Nije povezan</span></div>
+    <button class="iconbtn" id="voiceBtn" onclick="toggleVoice()" aria-label="Glas uključen/isključen"></button>
   </header>
 
   <main>
-    <!-- ======================= POČETAK ======================= -->
-    <section class="screen active" id="s-home">
-      <div class="hero">
-        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5"><path d="M4 4l8 8-8 8M12 4l8 8-8 8"/></svg>
-        <div class="eyebrow">Tvoj auto, objašnjeno ljudski</div>
-        <h1>Šta <span class="g">fali</span> tvom autu?</h1>
-        <p>Reci šta primećuješ ili poveži auto — dobićeš najverovatniji uzrok, kako da proveriš i koliko košta.</p>
-        <div style="margin-top:20px" class="stack">
-          <button class="btn" onclick="go('diag')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/></svg>Opiši problem</button>
-          <button class="btn ghost" onclick="go('car')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V3M15 7V3"/><path d="M6 7h12v4a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></svg>Poveži auto (OBD adapter)</button>
+    <!-- ============ PROVERA (glavni ekran) ============ -->
+    <section class="screen active" id="s-car">
+      <div id="connCard"></div>
+      <div class="gap"></div>
+      <div class="stepcard">
+        <div class="stephead"><div class="num" id="num2">2</div><div><h3>Šta kaže mušterija?</h3><div class="opt">Nije obavezno — dodirni ili izgovori</div></div></div>
+        <div class="chips" id="symChips"></div>
+        <div class="microw" style="margin-top:12px">
+          <textarea id="symText" rows="2" placeholder="npr. gubi snagu na uzbrdici…"></textarea>
+          <button class="mic" id="micBtn" onclick="dictate()" aria-label="Izgovori"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg></button>
         </div>
       </div>
-      <div class="gap16"></div>
-      <div id="homeStatus"></div>
-      <div class="safety">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-        <div class="small" style="color:#cfe0ff">Saveti su <b style="color:#fff">procena</b>. <b style="color:#fff">Pre nego što platiš popravku ili kupiš deo — neka majstor potvrdi.</b><br><button class="linkbtn" onclick="openHelp()">Kako ovo radi? →</button></div>
-      </div>
-      <div class="gap16"></div>
-      <div class="tiles">
-        <button onclick="goCode()"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/><path d="M8 12h8"/></svg></div><div><b>Imam šifru</b><br><span>P0401, DF053… šta znači?</span></div></button>
-        <button onclick="go('faults');setTimeout(()=>$('#lampCard').scrollIntoView({behavior:'smooth'}),60)"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg></div><div><b>Lampica na tabli</b><br><span>Šta znači i smeš li da voziš</span></div></button>
-        <button onclick="go('service')"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div><b>Servis</b><br><span>Šta je na redu i kad</span></div></button>
-        <button onclick="go('service');setTimeout(()=>$('#checksCard').scrollIntoView({behavior:'smooth'}),60)"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div><b>Provere bez alata</b><br><span>Dim, ulje, creva, akumulator</span></div></button>
-      </div>
-      <div class="gap16"></div>
-      <div class="card">
-        <div class="row">
-          <div class="ic">🚗</div>
-          <div style="flex:1;min-width:0"><b style="font-family:var(--f-display)" id="carName">Renault Mégane II 1.5 dCi</b><div class="small muted" id="carSub">Dizel · K9K · 2004.</div></div>
-          <button class="btn ghost sm" onclick="openCar()">Izmeni</button>
+      <div class="gap"></div>
+      <div class="stephead" style="margin:4px 0 10px"><div class="num">3</div><h3>Pokreni</h3></div>
+      <button class="btn big" id="checkBtn" onclick="runCheck()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg><span id="checkLbl">POKRENI PROVERU</span></button>
+      <div class="notice center" id="checkHint" style="margin-top:10px">Sa povezanim autom: AI sam pita auto i kaže ti rezultat naglas.</div>
+      <div id="result" style="margin-top:8px"></div>
+      <div id="afterActions" hidden>
+        <div class="gap"></div>
+        <div class="row wrap" style="gap:10px">
+          <button class="btn ghost sm" style="flex:1" onclick="repeatVoice()">🔊 Ponovi naglas</button>
+          <button class="btn ghost sm" style="flex:1" onclick="openReport()">📄 Izveštaj</button>
         </div>
-        <div class="divider"></div>
-        <div class="row wrap" style="gap:6px"><button class="linkbtn" onclick="go('history')">Istorija provera →</button><span class="muted">·</span><button class="linkbtn" onclick="openSettings()">Podešavanja →</button></div>
-      </div>
-      <div class="finenote">Dizel Doktor · aplikacija samo čita podatke i ništa ne menja u autu</div>
-    </section>
-
-    <!-- ======================= PROBLEM ======================= -->
-    <section class="screen" id="s-diag">
-      <div class="step"><i>1</i> Reci šta primećuješ</div>
-      <h1 class="pg" style="margin-top:8px">Opiši problem</h1>
-      <div class="stack">
-        <div class="card"><div class="small muted" style="font-weight:700;margin-bottom:12px">Dodirni sve što se dešava:</div><div class="chips" id="symChips"></div></div>
-        <label class="fld">Dopuni svojim rečima (ako želiš)<textarea id="symText" rows="3" placeholder="npr. gubi snagu na uzbrdici, puši crno kad dam gas, teško pali ujutru…"></textarea></label>
-        <div class="card">
-          <div class="small muted" style="font-weight:700;margin-bottom:10px">Dodaj sliku (ako želiš) — tabla, dim, curenje, deo…</div>
-          <div class="photo-row"><label class="btn ghost sm" style="width:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Slikaj / izaberi<input type="file" id="photo" accept="image/*" hidden></label><div id="photoPrev" class="photo-row"></div></div>
+        <div class="row wrap" style="gap:10px;margin-top:10px">
+          <button class="btn ghost sm" style="flex:1" id="clearBtn" onclick="askClear()">🧹 Obriši greške</button>
+          <button class="btn ghost sm" style="flex:1" onclick="runCheck()">🔁 Proveri ponovo</button>
         </div>
-        <div id="diagScanNote"></div>
-        <button class="btn" id="diagBtn" onclick="runDiag()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>Pronađi kvar</button>
-        <div class="notice center" id="diagHint">Dobićeš najverovatnije uzroke, poređane od najverovatnijeg.</div>
+        <div class="notice center" style="margin-top:8px">Posle popravke: obriši greške, provozaj auto, pa „Proveri ponovo“ — aplikacija pokaže šta je nestalo.</div>
       </div>
-      <div id="diagResult" style="margin-top:6px"></div>
-    </section>
-
-    <!-- ======================= AUTO (OBD) ======================= -->
-    <section class="screen" id="s-car">
-      <div class="eyebrow">Pravi podaci iz motora</div>
-      <h1 class="pg">Moj auto</h1>
-      <div class="seg" style="margin-bottom:14px"><button id="segReal" class="on" onclick="setCarMode('real')">Pravi auto</button><button id="segDemo" onclick="setCarMode('demo')">Primer (vežba)</button></div>
-
-      <div id="realPane">
-        <div id="connCard"></div>
-        <div id="scanPane" hidden>
-          <div class="gap16"></div>
-          <div class="card hi" id="agentCard">
-            <div class="row" style="justify-content:space-between"><h3>🤖 AI agent razgovara sa autom</h3><span class="badge b-real srcbadge">PRAVI PODACI</span></div>
-            <div class="small muted" style="margin:6px 0 12px">Reci šta želiš. Agent sam odlučuje šta da pita računar auta, čita odgovore, postavlja dodatna pitanja i traži od tebe pomoć kad treba. Ništa ne menja u autu bez tvoje potvrde.</div>
-            <div class="chips" id="agentChips" style="margin-bottom:10px"></div>
-            <div class="row"><input type="text" id="agentGoal" placeholder="npr. zašto gubi snagu na uzbrdici?" style="flex:1"><button class="btn sm" id="agentBtn" onclick="runAgent()">Pokreni</button></div>
-            <div id="agentOut" style="margin-top:14px"></div>
-          </div>
-          <div class="gap16"></div>
-          <div class="card hi" id="fullCheckCard">
-            <h3>Kompletna provera</h3>
-            <div class="small muted" style="margin:6px 0 12px">Jedno dugme: greške, lampica, 20 sekundi rada motora, poređenje sa Renault fabričkim vrednostima i zaključak. Motor neka radi u leru, zagrejan. Ako si već radio proveru, aplikacija sama uporedi „pre“ i „posle“.</div>
-            <button class="btn" id="fcBtn" onclick="runFullCheck()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Pokreni kompletnu proveru</button>
-            <div id="fcOut" style="margin-top:14px"></div>
-          </div>
-          <div class="gap16"></div>
-          <div class="card" id="mainScan">
-            <div class="row" style="justify-content:space-between"><h3>Greške u memoriji</h3><span class="badge b-real srcbadge">PRAVI PODACI</span></div>
-            <div id="dtcBox" style="margin-top:12px"><div class="small muted">Još nije očitano.</div></div>
-            <div class="row wrap" style="margin-top:14px;gap:8px">
-              <button class="btn sm" onclick="readDTCs()">Očitaj greške</button>
-              <button class="btn ghost sm" onclick="askClear()">Obriši greške…</button>
-              <button class="btn ghost sm" onclick="readRenault()">Renault očitavanje (beta)</button>
-            </div>
-          </div>
-          <div class="gap16"></div>
-          <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Rad motora uživo</h3><span class="badge b-real srcbadge">PRAVI PODACI</span></div>
-          <div class="small muted" style="margin:4px 0 12px">Ovaj auto (2004) daje samo deo podataka preko standardnog priključka. Prikazujem sve što javlja.</div>
-          <div class="gauges" id="realGauges"></div>
-          <div class="gap16"></div>
-          <div class="row wrap" style="gap:8px">
-            <button class="btn sm" id="liveBtn" onclick="toggleLive()">Pokreni praćenje</button>
-            <button class="btn ghost sm" onclick="saveBaseline()">Zapamti „zdravo stanje“</button>
-            <button class="btn ghost sm" onclick="analyzeReal()">AI analiza</button>
-          </div>
+      <div id="scanPane" hidden>
+        <div class="gap"></div>
+        <details class="card"><summary>Rad motora uživo</summary>
+          <div style="margin-top:14px" class="gauges" id="realGauges"></div>
+          <div class="row wrap" style="gap:8px;margin-top:14px"><button class="btn sm" id="liveBtn" onclick="toggleLive()">Pokreni praćenje</button><button class="btn ghost sm" onclick="saveBaseline()">Zapamti „zdravo“</button><button class="btn ghost sm" onclick="analyzeReal()">AI analiza</button></div>
           <div class="notice" id="baselineNote" style="margin-top:10px"></div>
-          <div id="realResult" style="margin-top:14px"></div>
-          <div class="gap16"></div>
-          <details class="card"><summary class="small" style="cursor:pointer;font-weight:700">Tehnički detalji veze</summary><div class="codebox" id="obdLog" style="margin-top:10px"></div></details>
-        </div>
-      </div>
-
-      <div id="demoPane" hidden>
-        <div class="banner warn" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div><b>Izmišljeni brojevi za vežbu.</b><div class="small" style="margin-top:3px;color:#ffe0b0">Nisu iz tvog auta. Služe da naučiš šta je normalno. <b>Ne troši novac na osnovu ovoga.</b></div></div></div>
-        <div class="scen" id="scenRow"></div>
-        <div style="height:12px"></div>
-        <div class="gauges" id="demoGauges"></div>
-        <div class="gap16"></div>
-        <div class="row" style="gap:10px"><button class="btn ghost gasbtn" id="gasBtn" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Drži za gas</button><button class="btn sm" style="flex:1" onclick="explainExample()">Objasni primer</button></div>
-        <div id="demoResult" style="margin-top:14px"></div>
+          <div id="realResult" style="margin-top:12px"></div>
+        </details>
+        <div class="gap"></div>
+        <details class="card"><summary>Ručno (za iskusne)</summary>
+          <div style="margin-top:12px" id="dtcBox"><div class="small muted">Još nije očitano.</div></div>
+          <div class="row wrap" style="margin-top:12px;gap:8px"><button class="btn sm" onclick="readDTCs()">Očitaj greške</button><button class="btn ghost sm" onclick="readRenault()">Renault očitavanje (beta)</button></div>
+          <details style="margin-top:12px"><summary class="tiny muted" style="cursor:pointer">Komunikacija sa adapterom</summary><div class="codebox" id="obdLog" style="margin-top:8px"></div></details>
+        </details>
       </div>
     </section>
 
-    <!-- ======================= KVAROVI ======================= -->
+    <!-- ============ ŠIFRE ============ -->
     <section class="screen" id="s-faults">
-      <div class="eyebrow">Razumej kvar</div>
-      <h1 class="pg">Kvarovi i šifre</h1>
+      <h1 class="pg">Šifre i lampice</h1>
       <div class="card" id="codeCard">
-        <h3>Imaš šifru greške?</h3>
-        <div class="tiny muted" style="margin:4px 0 12px">Upiši kod (P0089 ili Renault DF053). Značenje vidiš odmah, i bez interneta.</div>
-        <div class="row"><input type="text" id="codeInput" placeholder="npr. P0401 ili DF053" style="flex:1" autocomplete="off" spellcheck="false"><button class="btn sm" onclick="lookupCode()">Objasni</button></div>
+        <h3>Upiši šifru greške</h3>
+        <div class="row" style="margin-top:12px"><input type="text" id="codeInput" placeholder="P0089 ili DF053" style="flex:1;font-family:var(--f-mono)" autocomplete="off" spellcheck="false"><button class="btn sm" onclick="lookupCode()">Objasni</button></div>
         <div class="chips" id="commonCodes" style="margin-top:12px"></div>
         <div id="codeResult" style="margin-top:14px"></div>
       </div>
-      <div class="gap16"></div>
-      <div class="card" id="lampCard"><h3>Lampice na tabli</h3><div class="tiny muted" style="margin:4px 0 12px">Dodirni lampicu koja ti svetli.</div><div class="list" id="lampList"></div></div>
-      <div class="gap16"></div>
-      <div class="small muted" style="font-weight:700;margin-bottom:10px">Slabe tačke baš ovog motora:</div>
-      <div class="list" id="kbList"></div>
-      <div class="gap16"></div>
-      <div class="card"><h3>Normalne vrednosti (Renault fabrički podaci)</h3><div class="tiny muted" style="margin:4px 0 8px">Za Delphi sistem (K9K, 2004). Majstor ih koristi pri proveri.</div><div class="tblwrap"><table class="kv" id="normTable"></table></div></div>
+      <div class="gap"></div>
+      <div class="card" id="lampCard"><h3>Lampica na tabli</h3><div class="tiny muted" style="margin:4px 0 12px">Dodirni lampicu koja svetli.</div><div class="list" id="lampList"></div></div>
     </section>
 
-    <!-- ======================= SERVIS ======================= -->
-    <section class="screen" id="s-service">
-      <div class="eyebrow">Održavanje</div>
-      <h1 class="pg">Servis</h1>
-      <div class="card">
-        <h3>Koliko auto ima kilometara?</h3>
-        <div class="row" style="margin-top:10px"><input type="number" id="kmNow" inputmode="numeric" placeholder="npr. 236000" style="flex:1"><button class="btn sm" onclick="saveKm()">Sačuvaj</button></div>
-        <div class="tiny muted" style="margin-top:8px">Na osnovu ovoga računam šta je na redu.</div>
+    <!-- ============ VIŠE ============ -->
+    <section class="screen" id="s-more">
+      <h1 class="pg">Više</h1>
+      <div class="list">
+        <button onclick="openCar()"><div class="ic">🚗</div><div style="flex:1;min-width:0"><b id="carName">Renault Mégane II 1.5 dCi</b><span class="s" id="carSub">K9K · 2004</span></div><span class="chev">›</span></button>
+        <button onclick="go('history')"><div class="ic">🗂️</div><div style="flex:1"><b>Istorija provera</b><span class="s">Sve ranije provere</span></div><span class="chev">›</span></button>
+        <button onclick="openReport()"><div class="ic">📄</div><div style="flex:1"><b>Izveštaj</b><span class="s">Za mušteriju ili kolegu</span></div><span class="chev">›</span></button>
+        <button onclick="openSettings()"><div class="ic">⚙️</div><div style="flex:1"><b>Podešavanja</b><span class="s">Glas, AI ključ, USB brzina</span></div><span class="chev">›</span></button>
+        <button onclick="openHelp()"><div class="ic">❓</div><div style="flex:1"><b>Kako se koristi</b><span class="s">Uputstvo u 4 koraka</span></div><span class="chev">›</span></button>
       </div>
-      <div class="gap16"></div>
-      <div class="list" id="maintList"></div>
-      <div class="gap16"></div>
-      <div class="card" id="checksCard"><h3>Provere bez alata</h3><div class="tiny muted" style="margin:4px 0 12px">Korak po korak, sam pored auta.</div><div class="list" id="checkList"></div></div>
-      <div class="gap16"></div>
-      <div class="card"><h3>Fabričke akcije (opozivi) za 2004.</h3><div class="tiny muted" style="margin:4px 0 10px">Ako je tvoj auto proizveden u ovim periodima, pitaj Renault servis da proveri po broju šasije (VIN) da li je urađeno.</div><div id="recallList"></div></div>
-      <div class="gap16"></div>
-      <div class="card"><h3>Izveštaj za majstora</h3><div class="small muted" style="margin:6px 0 12px">Sve što aplikacija zna o kvaru, na jednom mestu — pokaži majstoru.</div><button class="btn" onclick="openReport()">Napravi izveštaj</button></div>
+      <div class="gap"></div>
+      <details class="card"><summary>Fabričke vrednosti (Renault)</summary><div style="overflow-x:auto;margin-top:10px"><table class="kv" id="normTable"></table></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Slabe tačke K9K motora</summary><div class="list" id="kbList" style="margin-top:12px"></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Servisni intervali</summary><div id="intervalList" style="margin-top:10px"></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Fabričke akcije (opozivi) 2004</summary><div id="recallList" style="margin-top:10px"></div></details>
     </section>
 
-    <!-- ======================= ISTORIJA ======================= -->
     <section class="screen" id="s-history">
-      <div class="eyebrow">Ranije provere</div>
+      <button class="linkbtn" onclick="go('more')">‹ Nazad</button>
       <h1 class="pg">Istorija</h1>
       <div id="histList"></div>
     </section>
@@ -631,9 +525,7 @@ function aiErr(code){
   return m[code]||"Nešto nije u redu. Probaj ponovo.";
 }
 function aiOff(){ return `<div class="card"><h3>Veštačka inteligencija nije uključena</h3><div class="small muted" style="margin-top:8px">U Claude aplikaciji: dozvoli je kad te pita. Van nje: unesi svoj API ključ u Podešavanjima. Sve ostalo (šifre, lampice, servis, očitavanje) radi i bez nje.</div><button class="btn ghost sm" style="margin-top:12px" onclick="openSettings()">Podešavanja</button></div>`; }
-function setAIPill(){ const d=$("#aiDot"),t=$("#aiTxt"); if(AI.mode){ d.className="dot on"; t.textContent="AI"; } else { d.className="dot"; t.textContent="AI"; } }
 
-const AI_RULES = `Ti si iskusan auto-mehaničar specijalista za Renault dizel 1.5 dCi (K9K). Govoriš ISKLJUČIVO na srpskom (latinica), najjednostavnijim rečima, kao čoveku koji ne zna ništa o autima. Kratke rečenice. Tehnički izraz odmah objasni u zagradi. Uvek upozori ako je opasno. Nikad ne tvrdiš 100% — daješ najverovatnije. Podseti da majstor ima konačnu reč i da ne troši novac pre provere. Cene daj u dinarima (1 € = 117,5 din; rad u Srbiji ~3.000 din/h).`;
 function carCtx(){
   const v=VARIANTS[car.kw];
   return `AUTO: ${car.model}, ${car.godina}. ${v?`Verzija ${v.name}, motor ${v.code}, ${v.turbo}, ubrizgavanje ${v.rail}, ${v.ecu}.`:"Verzija nepoznata (dCi 80 K9K 722 ili dCi 100 K9K 728)."} ${car.ecu?`Računar: ${car.ecu}.`:""} ${getMaint().km?`Kilometraža: ${getMaint().km} km.`:""}`;
@@ -645,104 +537,54 @@ function scanCtx(){
   return `POSLEDNJE PRAVO OČITAVANJE IZ AUTA (${new Date(s.kad).toLocaleDateString('sr-RS')}): kodovi: ${s.codes&&s.codes.length?s.codes.join(", "):"nema"}; na čekanju: ${s.pending&&s.pending.length?s.pending.join(", "):"nema"}${s.mil!=null?`; lampica motora: ${s.mil?"upaljena":"ugašena"}`:""}.`;
 }
 
-/* ===================================================================== NAV */
-const TABS=[
-  {id:"home",lbl:"Početak",svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>'},
-  {id:"diag",lbl:"Problem",svg:'<path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/>'},
-  {id:"car",lbl:"Moj auto",svg:'<circle cx="12" cy="12" r="9"/><path d="M12 12l4-2.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>'},
-  {id:"faults",lbl:"Kvarovi",svg:'<path d="M5 19l9-9 3 3-9 9H5z"/><path d="M14.5 5.5 18 2l4 4-3.5 3.5"/>'},
-  {id:"service",lbl:"Servis",svg:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'},
-];
-let current="home";
-function buildTabs(){ const n=$("#tabs"); n.innerHTML=""; TABS.forEach(t=>{ const b=el("button",t.id===current?"on":"",`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg><span>${t.lbl}</span>`); b.onclick=()=>go(t.id); n.appendChild(b); }); }
-function go(id){
-  current=id;
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  const sc=$("#s-"+id); if(sc) sc.classList.add("active");
-  document.querySelectorAll("#tabs button").forEach((b,i)=>b.classList.toggle("on",TABS[i]&&TABS[i].id===id));
-  if(id==="history") renderHistory();
-  if(id==="service") renderService();
-  if(id==="home") renderHomeStatus();
-  if(id==="diag") renderDiagScanNote();
-  if(id==="car") renderCar(); else stopSim();
-  window.scrollTo({top:0,behavior:"instant"});
+
+/* ===================================================================== v4: mechanic tone + Serbian voice */
+const AI_RULES = `Pričaš sa auto-mehaničarom u Srbiji, kao iskusan kolega specijalista za Renault 1.5 dCi (K9K, Delphi). Srpski, latinica. Kratko i praktično: konkretni koraci provere, vrednosti i redosled od najjeftinijeg. Stručni izrazi su OK (rail, IMV, EGR, DF kodovi, povratno curenje), bez objašnjavanja osnova. Rečenice kratke jer se tekst čita naglas. Nikad ne tvrdiš 100% — daj najverovatnije. Upozori ako je opasno. Cene u dinarima (1 € = 117,5 din; norma sat ~3.000 din). Koristi samo podatke koje dobiješ, ne izmišljaj vrednosti.`;
+function setAIPill(){}
+const MECH_SYMPTOMS=["Gubi snagu","Teško pali","Ne pali","Trese u leru","Gasi se","Crn dim","Beo dim","Plav dim","Lampica motora","Kuca","Zviždi turbina","Havarijski režim"];
+let selected=new Set(), lastSpoken="";
+
+// Text-to-speech (works inside the artifact) + speech-to-text (needs a page with mic access)
+const Voice={
+  on:loadJSON("dd_voice",true), voice:null,
+  pick(){ try{ const vs=speechSynthesis.getVoices(); this.voice=vs.find(v=>/^sr/i.test(v.lang))||vs.find(v=>/^hr/i.test(v.lang))||vs.find(v=>/^bs/i.test(v.lang))||null; }catch(e){} },
+  say(t){
+    return new Promise(res=>{
+      if(!this.on||!("speechSynthesis" in window)) return res();
+      const clean=plain(t).slice(0,700); if(!clean) return res();
+      try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(clean); u.lang=this.voice?this.voice.lang:"sr-RS"; if(this.voice) u.voice=this.voice; u.rate=1;
+        u.onend=()=>res(); u.onerror=()=>res(); speechSynthesis.speak(u); setTimeout(res,Math.min(30000,clean.length*90)); }catch(e){ res(); }
+    });
+  },
+  stop(){ try{ speechSynthesis.cancel(); }catch(e){} }
+};
+if("speechSynthesis" in window){ Voice.pick(); try{ speechSynthesis.onvoiceschanged=()=>Voice.pick(); }catch(e){} }
+function plain(t){ return String(t||"").replace(/<[^>]+>/g," ").replace(/[#*_`>|]/g," ")
+  .replace(/\b([PCBU])(\d)(\d)(\d)(\d)\b/g,"$1 $2 $3 $4 $5").replace(/\bDF0*(\d+)/g,"D F $1")
+  .replace(/o\/min/g,"obrtaja").replace(/°C/g," stepeni").replace(/\bbar\b/g,"bara").replace(/\bdin\b/g,"dinara").replace(/±/g,"plus minus ")
+  .replace(/\s+/g," ").trim(); }
+function renderVoiceBtn(){ const b=$("#voiceBtn"); if(!b) return; b.classList.toggle("on",Voice.on);
+  b.innerHTML=Voice.on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>'; }
+function toggleVoice(){ Voice.on=!Voice.on; saveJSON("dd_voice",Voice.on); renderVoiceBtn(); if(Voice.on) Voice.say("Glas je uključen."); else Voice.stop(); toast(Voice.on?"Glas uključen":"Glas isključen"); }
+function repeatVoice(){ if(!Voice.on){ Voice.on=true; saveJSON("dd_voice",true); renderVoiceBtn(); } Voice.say(lastSpoken||"Nema rezultata za čitanje."); }
+function listen(){ return new Promise((res,rej)=>{ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR) return rej({code:"nosr"});
+  let r; try{ r=new SR(); }catch(e){ return rej({code:"nosr"}); } r.lang="sr-RS"; r.interimResults=false; r.maxAlternatives=1;
+  let got=false; r.onresult=e=>{ got=true; res(e.results[0][0].transcript); }; r.onerror=e=>rej({code:e.error||"err"}); r.onend=()=>{ if(!got) rej({code:"no-speech"}); };
+  try{ r.start(); }catch(e){ rej({code:"start"}); } }); }
+async function dictate(){
+  const b=$("#micBtn"); if(b.classList.contains("rec")) return; Voice.stop(); b.classList.add("rec");
+  try{ const t=await listen(); const ta=$("#symText"); ta.value=(ta.value?ta.value+" ":"")+t; toast("Zapisano: "+t); }
+  catch(e){ toast(e.code==="not-allowed"||e.code==="service-not-allowed"?"Mikrofon nije dozvoljen ovde. Radi u samostalnoj verziji u Chrome-u.":e.code==="nosr"?"Ovaj pregledač ne podržava diktiranje.":"Nisam čuo. Dodirni i pričaj odmah."); }
+  finally{ b.classList.remove("rec"); }
 }
-function goCode(){ go("faults"); setTimeout(()=>{ $("#codeCard").scrollIntoView({behavior:"smooth"}); $("#codeInput").focus(); },60); }
-
-/* ===================================================================== HOME */
-function renderHomeStatus(){
-  const box=$("#homeStatus"); let h="";
-  const s=loadJSON("dd_scan",null);
-  if(OBD.connected) h+=`<div class="banner ok" style="margin-bottom:14px">${SVG_OK}<div><b>Auto je povezan.</b><div class="small" style="margin-top:3px">Idi na „Moj auto“ da očitaš greške i pratiš motor.</div></div></div>`;
-  else if(s&&s.codes&&s.codes.length) h+=`<div class="banner warn" style="margin-bottom:14px">${SVG_WARN}<div><b>Poslednje očitavanje: ${s.codes.length} ${s.codes.length===1?"greška":"greške"}</b><div class="small" style="margin-top:3px">${esc(s.codes.join(", "))} · <button class="linkbtn" onclick="goCode();$('#codeInput').value='${esc(s.codes[0])}';lookupCode()">Šta znači?</button></div></div></div>`;
-  const due=maintDue().filter(x=>x.state!=="ok");
-  if(due.length) h+=`<div class="banner warn" style="margin-bottom:14px">${SVG_WARN}<div><b>Servis: ${due.length} ${due.length===1?"stavka je":"stavke su"} na redu</b><div class="small" style="margin-top:3px">${esc(due.slice(0,3).map(d=>d.ime).join(", "))} · <button class="linkbtn" onclick="go('service')">Pogledaj</button></div></div></div>`;
-  box.innerHTML=h;
-}
-
-/* ===================================================================== DIAGNOSIS */
-let selected=new Set(), photoBlob=null, lastDiag=loadJSON("dd_lastdiag",null);
-function buildSymptoms(){ const w=$("#symChips"); w.innerHTML=""; SYMPTOMS.forEach(s=>{ const c=el("button","chip",esc(s)); c.onclick=()=>{ selected.has(s)?(selected.delete(s),c.classList.remove("on")):(selected.add(s),c.classList.add("on")); }; w.appendChild(c); }); }
-document.addEventListener("change",e=>{
-  if(e.target.id!=="photo") return;
-  const f=e.target.files&&e.target.files[0], prev=$("#photoPrev"); prev.innerHTML="";
-  if(!f){ photoBlob=null; return; }
-  photoBlob=f; const img=el("img","thumb"); img.src=URL.createObjectURL(f); img.alt="Izabrana slika"; prev.appendChild(img);
-  const rm=el("button","chip","✕ ukloni"); rm.onclick=()=>{ photoBlob=null; prev.innerHTML=""; $("#photo").value=""; }; prev.appendChild(rm);
-});
-function renderDiagScanNote(){ const s=loadJSON("dd_scan",null); $("#diagScanNote").innerHTML = s ? `<div class="banner ok">${SVG_OK}<div class="small"><b>Uključujem i pravo očitavanje iz auta</b> (${esc(new Date(s.kad).toLocaleDateString('sr-RS'))}): ${s.codes&&s.codes.length?esc(s.codes.join(", ")):"bez grešaka"}.</div></div>` : ""; }
-async function runDiag(){
-  const syms=[...selected], free=$("#symText").value.trim();
-  if(!syms.length&&!free&&!photoBlob){ $("#diagHint").textContent="Izaberi bar jedan simptom, napiši nešto ili dodaj sliku."; return; }
-  const box=$("#diagResult");
-  if(!AI.ready()){ box.innerHTML=aiOff(); return; }
-  const btn=$("#diagBtn"); btn.disabled=true; box.innerHTML=thinking("Tražim najverovatnije uzroke…");
-  const danger=syms.some(s=>DANGER_SYMS.includes(s));
-  const prompt=`${AI_RULES}
-
-${carCtx()}
-${KB_CTX}
-${NORM_CTX}
-${scanCtx()}
-
-VOZAČ PRIJAVLJUJE:
-- Simptomi: ${syms.length?syms.join(", "):"(nije izabrano)"}
-- Opis: ${free||"(nema)"}
-${photoBlob?"- Priložena je slika (pogledaj je pažljivo).":""}
-
-Daj najverovatnije uzroke baš za ovaj motor. Odgovori ISKLJUČIVO JSON-om:
-{"uzroci":[{"naziv":"kratak naziv","verovatnoca":"visoka|srednja|niska","objasnjenje":"1-2 jednostavne rečenice","kako_proveriti":"konkretan korak, prvo besplatne provere","tezina":"lako|srednje|teško","cena_min_rsd":0,"cena_max_rsd":0,"hitnost":"nije hitno|može da čeka|uskoro kod majstora|opasno - ne vozi"}],"sazetak":"jedna rečenica šta prvo da uradi","upozorenje":""}
-Poređaj od najverovatnijeg, najviše 5. Cena = delovi + rad.`;
-  try{ const data=await AI.json(prompt,{images:photoBlob?[photoBlob]:null}); renderDiag(data,{syms,free,danger}); }
-  catch(e){ box.innerHTML=`<div class="card"><div class="small">${aiErr(e.code)}</div><button class="btn ghost sm" style="margin-top:12px" onclick="runDiag()">Probaj ponovo</button></div>`; }
-  finally{ btn.disabled=false; }
-}
-const hClass=h=>{h=(h||"").toLowerCase(); return h.includes("opasno")?"h-opasno":(h.includes("uskoro")||h.includes("hitno"))?"h-hitno":"h-ok";};
-const verBadge=v=>{v=(v||"").toLowerCase(); return v.includes("vis")?'<span class="badge b-vis">VISOKA</span>':v.includes("sre")?'<span class="badge b-sre">SREDNJA</span>':'<span class="badge b-niz">NISKA</span>';};
-function renderDiag(data,ctx){
-  const list=(data&&data.uzroci)||[]; let h="";
-  const danger=ctx.danger||(data.upozorenje&&data.upozorenje.trim())||list.some(u=>(u.hitnost||"").toLowerCase().includes("opasno"));
-  if(danger) h+=`<div class="banner danger" style="margin:14px 0">${SVG_WARN}<div><b>Pažnja — možda je ozbiljno.</b><div class="small" style="color:#ffc9cf;margin-top:3px">${esc(data.upozorenje&&data.upozorenje.trim()?data.upozorenje:"Ako auto kuca, pregreva se ili svetli lampica ulja/STOP — ne vozi ga, pozovi majstora ili šlep.")}</div></div></div>`;
-  if(data.sazetak) h+=`<div class="card hi" style="margin:14px 0 4px"><div class="eyebrow">Prvo uradi</div><div style="margin-top:6px">${esc(data.sazetak)}</div></div>`;
-  list.forEach(u=>{ const c=(u.cena_min_rsd||u.cena_max_rsd)?`${rsd(u.cena_min_rsd||0)} – ${rsd(u.cena_max_rsd||0)}`:"zavisi";
-    h+=`<div class="cause ${hClass(u.hitnost)}"><h3>${esc(u.naziv||"Mogući uzrok")} ${verBadge(u.verovatnoca)}</h3><div class="small" style="margin-top:6px">${esc(u.objasnjenje||"")}</div><div class="how"><b>Kako proveriti:</b> ${esc(u.kako_proveriti||"—")}</div><div class="meta"><span class="tag">Težina: <b>${esc(u.tezina||"—")}</b></span><span class="tag">Okvirno: <b>${c}</b></span><span class="tag">${esc(u.hitnost||"—")}</span></div></div>`; });
-  if(!list.length) h+=`<div class="card">Nisam uspeo da izdvojim uzroke. Dodaj još opisa pa probaj ponovo.</div>`;
-  h+=MONEY_NOTE;
-  h+=`<div class="card" style="margin-top:14px"><h3>Imaš pitanje?</h3><div class="tiny muted" style="margin:4px 0 10px">Pitaj bilo šta o ovom nalazu.</div><div class="chat" id="diagChat"></div><div class="row" style="margin-top:10px"><input type="text" id="diagQ" placeholder="npr. smem li da vozim do kuće?" style="flex:1"><button class="btn sm" onclick="askFollow()">Pitaj</button></div></div>`;
-  $("#diagResult").innerHTML=h;
-  lastDiag={kad:Date.now(),syms:ctx.syms,free:ctx.free,uzroci:list.slice(0,5).map(u=>({naziv:u.naziv,verovatnoca:u.verovatnoca,kako:u.kako_proveriti})),sazetak:data.sazetak||""};
-  saveJSON("dd_lastdiag",lastDiag);
-  addHistory({tip:"Dijagnoza po opisu",kad:Date.now(),ulaz:[ctx.syms.join(", "),ctx.free].filter(Boolean).join(" · ")||"slika",rez:list.slice(0,3).map(u=>`${u.naziv} (${u.verovatnoca})`).join(", ")});
-  followCtx=`Nalaz: ${list.map(u=>u.naziv+" ("+u.verovatnoca+")").join(", ")}. Simptomi: ${ctx.syms.join(", ")||ctx.free}.`; followTurns=[];
-}
-let followCtx="", followTurns=[];
-async function askFollow(){
-  const inp=$("#diagQ"), q=inp.value.trim(); if(!q||!AI.ready()) return;
-  const chat=$("#diagChat"); chat.appendChild(el("div","bubble me",esc(q))); inp.value="";
-  const a=el("div","bubble ai",'<span class="thinking"><i></i><i></i><i></i></span>'); chat.appendChild(a);
-  followTurns.push({role:"user",content:q});
-  try{ const t=await AI.text([{role:"user",content:`${AI_RULES}\n\n${carCtx()}\n${scanCtx()}\n${followCtx}\nOdgovaraj kratko.`},...followTurns],{chat:true,onText:t=>{a.textContent=t;}}); a.textContent=t; followTurns.push({role:"assistant",content:t}); }
-  catch(e){ a.textContent=aiErr(e.code); followTurns.pop(); }
+// Agent asks the mechanic out loud; the mechanic may answer by voice ("gotovo" / "ne mogu")
+async function voicePrompt(card,text,kind){
+  await Voice.say(kind==="clear"?"Agent traži dozvolu da obriše greške. Potvrdi na ekranu.":text+". Reci gotovo kad uradiš.");
+  if(kind==="clear"||!Voice.on) return;
+  try{ const t=(await listen()).toLowerCase(); if(!card.isConnected) return;
+    if(/ne mogu|nemoguće|\bne\b/.test(t)) card.querySelector(".no")?.click();
+    else if(/gotov|urađen|uradio|uradila|može|spreman|spremno|\bda\b|\bok\b|okej/.test(t)) card.querySelector(".yes")?.click();
+  }catch(e){}
 }
 
 /* ===================================================================== OBD — clean-room ELM327 / STN client
@@ -895,25 +737,6 @@ async function disconnect(){ live.on=false; if(OBD.link) await OBD.link.close();
 let connState={kind:"idle",msg:""};
 function setConn(kind,msg){ connState={kind,msg}; renderConn(); updateHeader(); }
 function connFail(msg){ setConn("fail",msg); }
-function renderConn(){
-  const c=$("#connCard"); if(!c) return;
-  if(OBD.connected&&OBD.demo){ c.innerHTML=`<div class="banner warn">${SVG_WARN}<div style="flex:1"><b>Povezan PRIMER auto (izmišljen)</b><div class="small" style="margin-top:3px;color:#ffe0b0">Simulacija za vežbu: kvar pritiska goriva i EGR. Ništa se ne čuva u istoriji. Ne troši novac na osnovu ovoga.</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
-  if(OBD.connected){ c.innerHTML=`<div class="banner ok">${SVG_OK}<div style="flex:1"><b>Povezano</b><div class="small" style="margin-top:3px">${esc(connState.msg)}${OBD.voltage?` · akumulator ${OBD.voltage.toFixed(1)} V`:""}</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
-  let st="";
-  if(connState.kind==="wait") st=`<div class="card hi" style="margin-bottom:12px"><span class="thinking"><i></i><i></i><i></i></span> <span class="small" style="margin-left:6px">${esc(connState.msg)}</span></div>`;
-  if(connState.kind==="fail") st=`<div class="banner warn" style="margin-bottom:12px">${SVG_WARN}<div class="small">${esc(connState.msg)}</div></div>`;
-  c.innerHTML=st+`<div class="card"><h3>Poveži svoj auto</h3>
-    <ol class="small muted" style="padding-left:18px;margin:10px 0 14px;line-height:1.7"><li>Utakni OBD adapter u utičnicu ispod volana (levo, kod kolena).</li><li>Okreni kontakt (ili upali motor).</li><li>Dodirni dugme ispod i izaberi adapter.</li></ol>
-    <div class="stack"><button class="btn" onclick="connectBLE()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>Poveži preko Bluetooth-a</button><button class="btn ghost" onclick="connectDemo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Probaj na primer autu (bez adaptera)</button><button class="btn ghost" onclick="connectSerial()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M8 6h8"/><circle cx="12" cy="19" r="3"/></svg>Poveži preko USB kabla</button></div>
-    <div class="divider"></div>
-    <div class="small muted"><b style="color:var(--fg)">Koji adapter?</b> Za ovaj auto treba adapter koji podržava i <b style="color:var(--fg)">K-liniju</b> i CAN. Pouzdani: <b style="color:var(--fg)">OBDLink CX</b> (Bluetooth LE, radi i sa iPhone-om u aplikacijama), <b style="color:var(--fg)">vLinker FS</b> (USB, najstabilniji), OBDLink EX/SX. Jeftini „ELM327 v1.5/v2.1“ klonovi često ne rade — natpis na kutiji ne znači ništa.</div></div>`;
-}
-function updateHeader(){
-  const d=$("#carDot"),t=$("#carTxt");
-  if(OBD.connected){ d.className="dot on"; t.textContent="Povezan"; } else if(connState.kind==="wait"){ d.className="dot wait"; t.textContent="Veza…"; } else { d.className="dot"; t.textContent="Auto"; }
-  const v=VARIANTS[car.kw]; $("#hdrCar").textContent=`${v?v.name:"Mégane 1.5 dCi"} · ${car.godina}`;
-  $("#carName").textContent=car.model; $("#carSub").textContent=`${v?v.code+" · "+v.name:"K9K"} · ${car.godina}.${car.vin?" · VIN "+car.vin:""}`;
-}
 function showScanPane(){ $("#scanPane").hidden=false; renderConn(); const s=loadJSON("dd_scan",null); if(s) renderDTCs(s); updateBaselineNote(); }
 
 /* ---- live data (real) ---- */
@@ -1073,7 +896,7 @@ function askDriver(text,kind){
       card.querySelector(".yes").onclick=()=>{ card.innerHTML=`<div class="small">✅ ${esc(text)} — urađeno.</div>`; res("urađeno"); };
       card.querySelector(".no").onclick=()=>{ card.innerHTML=`<div class="small">❌ ${esc(text)} — vozač ne može.</div>`; res("vozač ne može"); };
     }
-    o.appendChild(card); card.scrollIntoView({behavior:"smooth",block:"center"});
+    o.appendChild(card); card.scrollIntoView({behavior:"smooth",block:"center"}); voicePrompt(card,text,kind);
     agentCtl&&agentCtl.signal.addEventListener("abort",()=>res("prekinuto"));
   });
 }
@@ -1112,7 +935,7 @@ Ti si DIJAGNOSTIČKI AGENT povezan sa računarom motora ovog auta preko OBD adap
 5. Ne izmišljaj brojeve — koristi samo ono što alati vrate. Ako alat kaže da je PRIMER auto, jasno reci da je ovo vežba.
 6. Nikad ne briši greške osim ako vozač to izričito traži ili posle potvrđene popravke.
 7. Najviše 8 poziva alata. Između koraka napiši jednu kratku rečenicu šta radiš.
-Na kraju napiši (markdown): ### Šta sam proverio ### Šta sam našao ### Šta prvo da uradiš (od najjeftinijeg, cene u dinarima) ### Smeš li da voziš`;
+Na kraju napiši (markdown): ### Ukratko (2 kratke rečenice) ### Šta sam našao ### Šta prvo da uradiš (od najjeftinijeg, cene u dinarima) ### Sme li da se vozi`;
 AI.agent=async function(prompt,tools,{onText,signal}){
   if(this.mode==="claude"){
     const lim=await this.s.limits().catch(()=>null); if(!lim||!lim.tools) throw {code:"tools_unavailable"};
@@ -1141,28 +964,6 @@ AI.agent=async function(prompt,tools,{onText,signal}){
   }
   throw {code:"no_ai"};
 };
-const AGENT_GOALS=["Uradi kompletan pregled","Zašto gubi snagu?","Teško pali — šta je?","Da li je popravka uspela?"];
-function buildAgentChips(){ const w=$("#agentChips"); if(!w) return; w.innerHTML=""; AGENT_GOALS.forEach(g=>{ const c=el("button","chip",esc(g)); c.onclick=()=>{ $("#agentGoal").value=g; runAgent(); }; w.appendChild(c); }); }
-async function runAgent(){
-  if(!OBD.connected) return toast("Prvo poveži auto (ili primer auto).");
-  if(agentCtl){ agentCtl.abort(); return; }
-  const goal=$("#agentGoal").value.trim()||"Uradi kompletan pregled";
-  const out=$("#agentOut");
-  if(!AI.ready()){ out.innerHTML=aiOff(); return; }
-  if(live.on){ live.on=false; await sleep(300); }
-  agentCtl=new AbortController(); const btn=$("#agentBtn"); btn.textContent="Zaustavi";
-  out.innerHTML=`<div class="small" style="margin-bottom:6px"><b>Cilj:</b> ${esc(goal)} ${srcBadge()}</div><div id="agentLog"></div><div class="divider"></div><div class="ai" id="agentText"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted">Agent planira…</span></div>`;
-  const s=OBD.lastScan;
-  const prompt=`${AGENT_RULES}\n\nVEZA: ${OBD.demo?"PRIMER AUTO (simulacija za vežbu, NIJE pravi auto)":"pravi auto"}, protokol ${OBD.protoName}.\nCILJ VOZAČA: ${goal}\n${loadJSON("dd_check",null)&&!OBD.demo?"PRETHODNA PROVERA: greške "+(loadJSON("dd_check",null).codes.join(", ")||"nema")+" ("+new Date(loadJSON("dd_check",null).kad).toLocaleDateString('sr-RS')+").":""}`;
-  try{
-    const t=await AI.agent(prompt,agentTools(),{signal:agentCtl.signal,onText:t=>{ $("#agentText").innerHTML=md(t); }});
-    $("#agentText").innerHTML=md(t); out.insertAdjacentHTML("beforeend",MONEY_NOTE);
-    addHistory({tip:"AI agent",kad:Date.now(),ulaz:goal,rez:(t.split("### Šta sam našao")[1]||t).replace(/[#*]/g,"").trim().slice(0,160)});
-  }catch(e){
-    $("#agentText").innerHTML = e.code==="cancelled"?`<div class="small muted">Zaustavljeno.</div>`: e.code==="tools_unavailable"?`<div class="small">Ovaj prikaz ne podržava AI agenta sa alatima. Koristi „Kompletnu proveru“ ispod, ili samostalnu verziju sa API ključem.</div>`:`<div class="small">${aiErr(e.code)}</div>`;
-  }finally{ agentCtl=null; btn.textContent="Pokreni"; }
-}
-
 /* ---- one-button full check + before/after repair comparison ---- */
 function stats(a){ if(!a.length) return null; const avg=a.reduce((s,x)=>s+x,0)/a.length; const sd=Math.sqrt(a.reduce((s,x)=>s+(x-avg)**2,0)/a.length); return {avg,min:Math.min(...a),max:Math.max(...a),sd,n:a.length}; }
 function fcStep(steps,i,state,txt){ steps[i].state=state; if(txt) steps[i].txt=txt;
@@ -1170,10 +971,10 @@ function fcStep(steps,i,state,txt){ steps[i].state=state; if(txt) steps[i].txt=t
 async function runFullCheck(){
   if(!OBD.connected) return toast("Prvo poveži auto.");
   if(live.on){ live.on=false; await sleep(400); }
-  const btn=$("#fcBtn"); btn.disabled=true;
+  const btn=$("#checkBtn"); btn.disabled=true;
   const prev=OBD.demo?OBD.demoCheck:loadJSON("dd_check",null);
   const steps=[{name:"Čitam greške i lampicu motora"},{name:"Pratim rad motora 20 sekundi"},{name:"Poredim sa Renault fabričkim vrednostima"},{name:"Pravim zaključak"}];
-  $("#fcOut").innerHTML=`<div id="fcSteps"></div><div id="fcRes"></div>`; fcStep(steps,0,"run");
+  $("#result").innerHTML=`<div id="fcSteps"></div><div id="fcRes"></div>`; fcStep(steps,0,"run");
   await readDTCs(true); const scan=OBD.lastScan||{codes:[],pending:[]};
   fcStep(steps,0,scan.codes.length?"warn":"done",scan.codes.length?`${scan.codes.length} grešk${scan.codes.length===1?"a":"e"}: ${scan.codes.join(", ")}`:"Bez sačuvanih grešaka"+(scan.mil?" (ali lampica svetli)":""));
   fcStep(steps,1,"run");
@@ -1229,55 +1030,14 @@ async function runFullCheck(){
     try{ const t=await AI.text(prompt,{onText:t=>{box.innerHTML=md(t);}}); box.innerHTML=md(t); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); fcStep(steps,3,"done","Gotovo"); }
     catch(e){ box.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; fcStep(steps,3,"warn","AI nije uspeo — nalazi gore važe"); }
   } else { fcStep(steps,3,"done","Nalazi po Renault vrednostima su gore (AI nije uključen)"); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); }
-  btn.disabled=false;
+  btn.disabled=false; showAfter();
+  const bads=F.filter(f=>f.lvl==="bad"||f.lvl==="warn").map(f=>f.t);
+  lastSpoken=bads.length?("Pronašao sam "+bads.length+(bads.length===1?" stvar":" stvari")+" za pažnju. "+bads.slice(0,3).join(". ")):"Sve proverene vrednosti su u redu. Nema grešaka.";
+  Voice.say(lastSpoken);
 }
 
-/* ---- car tab mode ---- */
-let carMode="real";
-function setCarMode(m){ carMode=m; $("#segReal").classList.toggle("on",m==="real"); $("#segDemo").classList.toggle("on",m==="demo"); renderCar(); }
-function renderCar(){
-  $("#realPane").hidden=carMode!=="real"; $("#demoPane").hidden=carMode!=="demo";
-  if(carMode==="real"){ stopSim(); renderConn(); if(OBD.connected){ $("#scanPane").hidden=false; } }
-  else startSim();
-}
-
-/* ===================================================================== DEMO (clearly labeled practice data) */
-const DP={ rpm:{lbl:"Obrtaji",unit:"o/min",min:0,max:5000,idle:805}, temp:{lbl:"Temp. motora",unit:"°C",min:0,max:120,idle:88}, rail:{lbl:"Pritisak goriva",unit:"bar",min:0,max:1600,idle:230}, boost:{lbl:"Pritisak turbine",unit:"mbar",min:900,max:2300,idle:1010}, maf:{lbl:"Protok vazduha",unit:"kg/h",min:0,max:90,idle:14}, volt:{lbl:"Akumulator",unit:"V",min:8,max:15,idle:14.1} };
-const SCEN={zdrav:"Zdrav auto",turbina:"Slaba turbina",brizg:"Problem brizgaljke",egr:"Zapušen EGR",rail:"Pad pritiska goriva"};
-let sim={scen:"zdrav",gas:0,t:0,vals:{},timer:null};
 function gaugeSVG(frac){ const r=42,cx=50,cy=48,len=Math.PI*r,off=len*(1-Math.max(0,Math.min(1,frac)));
   return `<svg viewBox="0 0 100 54" aria-hidden="true"><path d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="rgba(120,165,255,.16)" stroke-width="7" stroke-linecap="round"/><path class="arc" d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="url(#gg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#2f52ff"/><stop offset="1" stop-color="#27e5ff"/></linearGradient></defs></svg>`; }
-function startSim(){
-  if(sim.timer) return; if(!sim.vals.rpm) for(const k in DP) sim.vals[k]=DP[k].idle;
-  const sr=$("#scenRow"); sr.innerHTML=""; Object.entries(SCEN).forEach(([id,n])=>{ const c=el("button","chip"+(id===sim.scen?" on":""),n); c.onclick=()=>{ sim.scen=id; sr.querySelectorAll(".chip").forEach(x=>x.classList.remove("on")); c.classList.add("on"); }; sr.appendChild(c); });
-  const w=$("#demoGauges"); w.innerHTML=""; for(const k in DP){ const g=el("div","gauge"); g.id="dg-"+k; g.innerHTML=`<div class="lbl">${DP[k].lbl}</div>${gaugeSVG(0)}<div class="val" id="dv-${k}">–</div><div class="norm"><span class="badge b-demo" style="font-size:9px;padding:2px 6px">PRIMER</span></div>`; w.appendChild(g); }
-  sim.timer=setInterval(simTick,280); simTick();
-}
-function stopSim(){ if(sim.timer){ clearInterval(sim.timer); sim.timer=null; } }
-function simTick(){
-  sim.t++; const g=sim.gas, n=a=>(Math.random()-.5)*a;
-  let rpm=805+g*(4200-805), rail=230+g*(1250-230), boost=1010+g*(2050-1010), maf=14+g*48, temp=sim.vals.temp+(88-sim.vals.temp)*.05;
-  if(sim.scen==="turbina"){ boost=1010+g*240; maf*=.8; rpm=805+g*(3400-805); }
-  if(sim.scen==="brizg"){ if(g<.15) rpm+=n(260); rail+=n(90); }
-  if(sim.scen==="egr"){ maf*=.7; boost=1010+g*490; }
-  if(sim.scen==="rail"){ rail+=Math.sin(sim.t/2)*140+n(80); if(g>.5) rail*=.8; }
-  const e=(c,t)=>c+(t-c)*.25;
-  sim.vals.rpm=Math.max(0,e(sim.vals.rpm,rpm)+n(18)); sim.vals.rail=Math.max(0,e(sim.vals.rail,rail)); sim.vals.boost=Math.max(900,e(sim.vals.boost,boost));
-  sim.vals.maf=Math.max(0,e(sim.vals.maf,maf)+n(.6)); sim.vals.temp=temp+n(.3); sim.vals.volt=14.1+n(.08);
-  sim.gas=Math.max(0,sim.gas-.08);
-  for(const k in DP){ const p=DP[k],v=sim.vals[k],gg=$("#dg-"+k); if(!gg) continue; const a=gg.querySelector(".arc"); a.setAttribute("stroke-dashoffset",(Math.PI*42*(1-Math.max(0,Math.min(1,(v-p.min)/(p.max-p.min))))).toFixed(1)); $("#dv-"+k).innerHTML=`${v.toFixed(k==="volt"?1:0)} <small>${p.unit}</small>`; gg.classList.toggle("alert",(k==="boost"&&sim.scen==="turbina"&&sim.gas>.4&&v<1300)); }
-}
-function bindGas(){ const b=$("#gasBtn"); const d=e=>{ e.preventDefault(); clearInterval(sim._h); sim._h=setInterval(()=>{ sim.gas=Math.min(1,sim.gas+.14); },90); }; const u=()=>clearInterval(sim._h);
-  b.addEventListener("pointerdown",d); ["pointerup","pointerleave","pointercancel"].forEach(x=>b.addEventListener(x,u)); }
-async function explainExample(){
-  const box=$("#demoResult"); if(!AI.ready()){ box.innerHTML=aiOff(); return; }
-  const snap=Object.entries(DP).map(([k,p])=>`${p.lbl}: ${sim.vals[k].toFixed(k==="volt"?1:0)} ${p.unit}`).join("; ");
-  box.innerHTML=thinking("Objašnjavam primer…");
-  const prompt=`${AI_RULES}\n\nOVO SU IZMIŠLJENI BROJEVI ZA VEŽBU (scenario "${SCEN[sim.scen]}"), NISU iz pravog auta. Nauči korisnika da čita brojeve; NE daj dijagnozu pravog auta.\nBrojevi: ${snap}\n${NORM_CTX}\n\nMarkdown naslovi:\n### Šta ovaj primer pokazuje\n### Koji broj odskače i zašto\n### Šta bi to značilo da su pravi brojevi\nNa kraju jedna rečenica: ovo nije tvoj auto; za pravu proveru poveži adapter. Kratko.`;
-  try{ const a=el("div","ai"); box.innerHTML=`<div class="banner warn" style="margin-bottom:10px">${SVG_WARN}<div class="small"><b>Objašnjenje PRIMERA</b> — ne tvog auta.</div></div>`; box.appendChild(a); const t=await AI.text(prompt,{chat:true,onText:t=>{a.innerHTML=md(t);}}); a.innerHTML=md(t); }
-  catch(e){ box.innerHTML=`<div class="card small">${aiErr(e.code)}</div>`; }
-}
-
 /* ===================================================================== CODES / LAMPS / KB / NORMS */
 function buildFaults(){
   const cc=$("#commonCodes"); cc.innerHTML=""; ["DF053","DF130","P0401","P0101","P0299","DF007","DF016","P0380","DF038","P0335"].forEach(k=>{ const b=el("button","chip mono",k); b.onclick=()=>{ $("#codeInput").value=k; lookupCode(); }; cc.appendChild(b); });
@@ -1307,7 +1067,7 @@ async function lookupCode(){
   };
   addHistory({tip:"Kod greške",kad:Date.now(),ulaz:code,rez:df?DF[df][1]:(PEXTRA[p]||"nepoznat")});
 }
-function openLamp(l){ openSheet(`<h2>${l.emoji} ${esc(l.ime)}</h2><div class="banner ${l.sev==="opasno"?"danger":"warn"}" style="margin:14px 0">${SVG_WARN}<div class="small">${l.txt}</div></div><button class="btn ghost" onclick="closeSheet();go('diag')">Opiši problem detaljnije</button>`); }
+function openLamp(l){ openSheet(`<h2>${l.emoji} ${esc(l.ime)}</h2><div class="banner ${l.sev==="opasno"?"danger":"warn"}" style="margin:14px 0">${SVG_WARN}<div class="small">${l.txt}</div></div><button class="btn ghost" onclick="closeSheet();go('car')">Opiši problem detaljnije</button>`); }
 async function openKB(k){
   openSheet(`<h2>${k.emoji} ${esc(k.ime)}</h2><div class="small muted">${esc(k.kratko)}</div>
   <div class="card" style="margin:14px 0"><div class="eyebrow">Znaci</div><div class="small" style="margin-top:6px">${esc(k.znaci)}</div><div class="divider"></div><div class="eyebrow">Zašto se dešava</div><div class="small" style="margin-top:6px">${esc(k.uzrok)}</div><div class="divider"></div><div class="eyebrow">Kako da sprečiš</div><div class="small" style="margin-top:6px">${esc(k.prevencija)}</div><div class="divider"></div><div class="eyebrow">Okvirna cena (Srbija, 2026)</div><div class="small" style="margin-top:6px">${esc(k.cena)}${k.rad&&k.rad!=="—"?`<br>Rad: ${esc(k.rad)} × ${rsd(LABOR)}/h`:""}</div></div>
@@ -1319,7 +1079,6 @@ async function openKB(k){
     catch(e){ h.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; } };
 }
 
-/* ===================================================================== SERVICE */
 function getMaint(){ return loadJSON("dd_maint",{km:0,items:{}}); }
 function maintDue(){
   const m=getMaint(), now=Date.now();
@@ -1337,34 +1096,6 @@ function maintDue(){
     return {...it,frac,txt,state};
   });
 }
-function renderService(){
-  const m=getMaint(); $("#kmNow").value=m.km||"";
-  const ml=$("#maintList"); ml.innerHTML="";
-  maintDue().forEach(it=>{
-    const c=el("div","card");
-    const col=it.state==="late"?"var(--bad)":it.state==="soon"?"var(--warn)":it.state==="ok"?"var(--ok)":"var(--muted)";
-    const lbl=it.state==="late"?"KASNI":it.state==="soon"?"USKORO":it.state==="ok"?"U REDU":"UNESI";
-    c.innerHTML=`<div class="mt-row"><div style="min-width:0"><b style="font-family:var(--f-display)">${esc(it.ime)}</b><div class="tiny muted" style="margin-top:2px">Svakih ${it.km?it.km.toLocaleString('sr-RS')+" km":""}${it.km&&it.god?" ili ":""}${it.god?it.god+" god.":""}</div></div><span class="badge" style="color:${col};border:1px solid ${col}">${lbl}</span></div>
-      ${it.frac!=null?`<div class="bar"><i class="${it.state==="late"?"d":it.state==="soon"?"w":""}" style="width:${Math.min(100,Math.round(it.frac*100))}%"></i></div>`:""}
-      <div class="small" style="margin-top:8px;color:${col}">${esc(it.txt)}</div>
-      <div class="tiny muted" style="margin-top:6px">${esc(MAINT.find(x=>x.id===it.id).txt)} · ${esc(it.cena)}</div>
-      <div class="row wrap" style="margin-top:10px;gap:8px"><button class="btn sm" onclick="markDone('${it.id}')">Urađeno danas</button><button class="btn ghost sm" onclick="editDone('${it.id}')">Unesi ranije</button></div>`;
-    ml.appendChild(c);
-  });
-  const cl=$("#checkList"); cl.innerHTML=""; CHECKS.forEach((ch,i)=>{ const b=el("button","",`<div class="ic">${ch.emoji}</div><div style="flex:1"><b>${esc(ch.ime)}</b><span class="s">${ch.steps.length} koraka</span></div>`); b.onclick=()=>openCheck(i); cl.appendChild(b); });
-  $("#recallList").innerHTML=RECALLS.map(r=>`<div class="row" style="justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)"><span class="small">${esc(r[0])}</span><span class="tiny muted" style="text-align:right;max-width:45%">${esc(r[1])}</span></div>`).join("");
-}
-function saveKm(){ const v=parseInt($("#kmNow").value,10); if(!v||v<1000) return toast("Unesi kilometražu (npr. 236000)."); const m=getMaint(); m.km=v; saveJSON("dd_maint",m); renderService(); toast("Sačuvano."); }
-function markDone(id){ const m=getMaint(); if(!m.km) return toast("Prvo unesi trenutnu kilometražu."); m.items[id]={km:m.km,date:new Date().toISOString().slice(0,10)}; saveJSON("dd_maint",m); renderService(); toast("Zapisano."); }
-function editDone(id){ const it=MAINT.find(x=>x.id===id); const cur=getMaint().items[id]||{};
-  openSheet(`<h2>${esc(it.ime)}</h2><div class="small muted">Kad je poslednji put rađeno?</div><div class="stack" style="margin-top:14px"><label class="fld">Na kilometraži<input type="number" id="ed-km" value="${cur.km||""}" placeholder="npr. 210000"></label><label class="fld">Datum<input type="date" id="ed-date" value="${cur.date||""}"></label><button class="btn" onclick="saveDone('${id}')">Sačuvaj</button></div>`); }
-function saveDone(id){ const m=getMaint(); const km=parseInt($("#ed-km").value,10); const d=$("#ed-date").value; m.items[id]={km:isNaN(km)?null:km,date:d||null}; saveJSON("dd_maint",m); closeSheet(); renderService(); }
-function openCheck(i){ const ch=CHECKS[i];
-  openSheet(`<h2>${ch.emoji} ${esc(ch.ime)}</h2><div class="stack" style="margin-top:12px">${ch.steps.map((s,n)=>`<div class="row" style="align-items:flex-start"><span class="step"><i>${n+1}</i></span><span class="small">${esc(s)}</span></div>`).join("")}</div>
-  ${ch.res.length?`<div class="divider"></div><div class="small muted" style="font-weight:700;margin-bottom:8px">Šta si video? Dodirni:</div><div class="list">${ch.res.map((r,n)=>`<button onclick="checkResult(${i},${n})"><div style="flex:1"><b>${esc(r[0])}</b><span class="s">${esc(r[1])}</span></div></button>`).join("")}</div>`:""}`); }
-function checkResult(i,n){ const ch=CHECKS[i], r=ch.res[n]; addHistory({tip:"Provera: "+ch.ime,kad:Date.now(),ulaz:r[0],rez:r[1]});
-  const t=$("#symText"); t.value=(t.value?t.value+" ":"")+`[${ch.ime}: ${r[0]}]`; closeSheet(); toast("Dodato u opis problema."); }
-
 /* ===================================================================== REPORT */
 function buildReport(){
   const v=VARIANTS[car.kw], s=loadJSON("dd_scan",null), d=loadJSON("dd_lastdiag",null), m=getMaint(), base=loadJSON("dd_base",null);
@@ -1376,6 +1107,7 @@ function buildReport(){
   if(Object.keys(live.vals).length){ L.push("VREDNOSTI UŽIVO: "+Object.entries(live.vals).map(([k,v])=>k+"="+Number(v).toFixed(1)).join(", ")); }
   if(base) L.push("ZDRAVO STANJE ("+new Date(base.kad).toLocaleDateString('sr-RS')+"): "+Object.entries(base.vals).map(([k,v])=>k+"="+Number(v).toFixed(1)).join(", "));
   if(d){ L.push("", "OPIS VOZAČA: "+[d.syms.join(", "),d.free].filter(Boolean).join(" · ")); L.push("AI PROCENA (nije konačna dijagnoza):"); d.uzroci.forEach((u,i)=>L.push("  "+(i+1)+". "+u.naziv+" ("+u.verovatnoca+") — provera: "+(u.kako||""))); if(d.sazetak) L.push("  Prvo: "+d.sazetak); }
+  const ag=loadJSON("dd_lastagent",null); if(ag){ L.push("", "AI AGENT ("+new Date(ag.kad).toLocaleString('sr-RS')+") — cilj: "+ag.goal); L.push(plain(ag.text).slice(0,1500)); }
   const due=maintDue().filter(x=>x.state==="late"||x.state==="soon"); if(due.length){ L.push("", "SERVIS NA REDU: "+due.map(x=>x.ime+" ("+x.txt+")").join("; ")); }
   const hist=loadJSON("dd_hist",[]).filter(h=>h.tip.startsWith("Provera")).slice(0,5); if(hist.length){ L.push("", "PROVERE VOZAČA:"); hist.forEach(h=>L.push("  "+h.tip.replace("Provera: ","")+": "+h.ulaz)); }
   L.push("", "Napomena: aplikacija samo čita podatke; nalazi su procena za pomoć majstoru.");
@@ -1397,12 +1129,6 @@ function renderHistory(){
 }
 function openSheet(html){ $("#sheetBody").innerHTML=html; $("#sheetBg").classList.add("open"); $("#sheet").classList.add("open"); }
 function closeSheet(){ $("#sheetBg").classList.remove("open"); $("#sheet").classList.remove("open"); }
-function openHelp(){ openSheet(`<h2>Kako ovo radi?</h2><div class="stack" style="margin-top:14px">
-  <div class="card"><b style="font-family:var(--f-display);color:var(--ok)">Pravi podaci iz auta</b><div class="small muted" style="margin-top:6px">Sa OBD adapterom aplikacija čita greške i rad motora <b style="color:var(--fg)">baš tvog auta</b>. Obeleženo zelenom oznakom „PRAVI PODACI“.</div></div>
-  <div class="card"><b style="font-family:var(--f-display);color:var(--cyan)">Opiši problem</b><div class="small muted" style="margin-top:6px">AI gleda ono što ti kažeš (i pravo očitavanje ako postoji) i daje najverovatnije uzroke. To je <b style="color:var(--fg)">procena</b> — majstor potvrđuje pre plaćanja.</div></div>
-  <div class="card"><b style="font-family:var(--f-display);color:var(--warn)">Primer (vežba)</b><div class="small muted" style="margin-top:6px">Izmišljeni brojevi samo za učenje. Obeleženo narandžastom oznakom „PRIMER“. <b style="color:var(--fg)">Nikad ne troši novac na osnovu primera.</b></div></div>
-  <div class="card"><b style="font-family:var(--f-display)">Radi i bez interneta</b><div class="small muted" style="margin-top:6px">Šifre grešaka, lampice, fabričke vrednosti, servisni plan i provere su ugrađeni.</div></div>
-  <div class="notice center">Aplikacija samo čita. Jedino što može da pošalje autu je brisanje grešaka, i to tek posle tvoje potvrde.</div></div>`); }
 function openCar(){ openSheet(`<h2>Tvoj auto</h2><div class="small muted">Najlakše: u saobraćajnoj dozvoli pogledaj <b style="color:var(--fg)">snagu motora u kW</b>.</div>
   <div class="small muted" style="margin:14px 0 8px;font-weight:700">Snaga iz saobraćajne:</div>
   <div class="seg" style="grid-template-columns:1fr 1fr 1fr"><button class="${car.kw==="60"?"on":""}" onclick="setKw('60')">60 kW</button><button class="${car.kw==="74"?"on":""}" onclick="setKw('74')">74 kW</button><button class="${!car.kw?"on":""}" onclick="setKw('')">Ne znam</button></div>
@@ -1413,20 +1139,140 @@ function openCar(){ openSheet(`<h2>Tvoj auto</h2><div class="small muted">Najlak
 function setKw(k){ car.kw=k; document.querySelectorAll("#sheetBody .seg button").forEach(b=>b.classList.toggle("on",(k==="60"&&b.textContent==="60 kW")||(k==="74"&&b.textContent==="74 kW")||(!k&&b.textContent==="Ne znam"))); showKwInfo(); }
 function showKwInfo(){ const v=VARIANTS[car.kw], b=$("#kwInfo"); if(!b) return; b.innerHTML=v?`<div class="card hi small"><b>${v.name} · ${v.code}</b><div class="muted" style="margin-top:4px">${v.turbo}; ubrizgavanje ${v.rail}; ${v.torque}; računar ${v.ecu}; menjač JR5 (5 brzina).</div></div>`:`<div class="notice">U 2004. postoje dve verzije: 60 kW (dCi 80) i 74 kW (dCi 100).</div>`; }
 function saveCar(){ car.godina=$("#c-god").value||"2004"; car.vin=($("#c-vin").value||"").toUpperCase().trim(); const v=VARIANTS[car.kw]; car.ecu=v?v.ecu:"Delphi DDCR (najverovatnije)"; saveJSON("dd_car",car); closeSheet(); updateHeader(); toast("Sačuvano."); }
-function openSettings(){ const inClaude=AI.mode==="claude";
-  openSheet(`<h2>Podešavanja</h2><div class="stack" style="margin-top:14px">
-  <div class="card"><h3>Veštačka inteligencija</h3><div class="small muted" style="margin-top:6px">${inClaude?"Radi preko tvog Claude naloga — ništa ne treba podešavati.":"Van Claude aplikacije: unesi svoj Anthropic API ključ (čuva se samo na ovom telefonu)."}</div>
-  ${inClaude?"":`<label class="fld" style="margin-top:12px">API ključ<input type="password" id="set-key" value="${esc(getKey())}" placeholder="sk-ant-…" autocomplete="off"></label><button class="btn sm" style="margin-top:10px" onclick="saveKey()">Sačuvaj ključ</button>`}</div>
-  <div class="card"><h3>USB brzina (za USB adaptere)</h3><div class="small muted" style="margin:6px 0 10px">ELM327: 38400. vLinker FS / OBDLink: probaj 115200 ako 38400 ne radi.</div><div class="seg"><button class="${loadJSON("dd_baud",38400)==38400?"on":""}" onclick="saveJSON('dd_baud',38400);openSettings()">38400</button><button class="${loadJSON("dd_baud",38400)==115200?"on":""}" onclick="saveJSON('dd_baud',115200);openSettings()">115200</button></div></div>
-  <div class="card"><h3>Samostalna verzija</h3><div class="small muted" style="margin-top:6px">Unutar Claude aplikacije pregledač ne dozvoljava Bluetooth/USB. Za povezivanje sa autom otvori istu aplikaciju kao zasebnu stranicu u <b style="color:var(--fg)">Chrome-u na Android telefonu</b> ili računaru (fajl <span style="font-family:var(--f-mono)">renault-dci-dijagnostika/index.html</span> iz tvog projekta).</div></div>
-  <div class="card"><h3>Podaci</h3><div class="small muted" style="margin:6px 0 10px">Sve se čuva samo na ovom uređaju.</div><button class="btn ghost sm" onclick="if(confirmWipe())location.reload()">Obriši sve podatke</button></div>
-  </div>`); }
 function confirmWipe(){ const b=document.activeElement; if(b&&b.dataset.armed){ ["dd_car","dd_hist","dd_scan","dd_base","dd_maint","dd_lastdiag"].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} }); return true; } if(b){ b.dataset.armed="1"; b.textContent="Dodirni ponovo za potvrdu"; } return false; }
 function saveKey(){ try{ localStorage.setItem("dd_key",$("#set-key").value.trim()); }catch(e){} AI.init().then(()=>toast(AI.mode?"AI uključen.":"Ključ obrisan.")); closeSheet(); }
 
+
+/* ===================================================================== v4 UI: connection step, header, nav, main flow */
+let lastConnKind="";
+function renderConn(){
+  const c=$("#connCard"); if(!c) return;
+  if(connState.kind!==lastConnKind){ lastConnKind=connState.kind; if(connState.kind==="ok") Voice.say(OBD.demo?"Povezan je primer auto, za vežbu.":"Auto je povezan."); else if(connState.kind==="fail") Voice.say("Veza nije uspela. Pogledaj poruku na ekranu."); }
+  if(OBD.connected&&OBD.demo){ c.innerHTML=`<div class="banner warn">${SVG_WARN}<div style="flex:1"><b>1 · Povezan PRIMER auto (vežba)</b><div class="small" style="margin-top:3px;color:#ffe0b0">Izmišljen auto sa kvarom pritiska goriva i EGR-a. Ništa se ne čuva.</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
+  if(OBD.connected){ c.innerHTML=`<div class="banner ok">${SVG_OK}<div style="flex:1;min-width:0"><b>1 · Auto povezan</b><div class="small" style="margin-top:3px">${esc(OBD.protoName)}${OBD.vin?" · VIN "+esc(OBD.vin):""}${OBD.voltage?" · "+OBD.voltage.toFixed(1)+" V":""}</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
+  let st="";
+  if(connState.kind==="wait") st=`<div class="card hi" style="margin-top:12px"><span class="thinking"><i></i><i></i><i></i></span> <span class="small" style="margin-left:6px">${esc(connState.msg)}</span></div>`;
+  if(connState.kind==="fail") st=`<div class="banner warn" style="margin-top:12px">${SVG_WARN}<div class="small">${esc(connState.msg)}</div></div>`;
+  c.innerHTML=`<div class="stepcard"><div class="stephead"><div class="num">1</div><div><h3>Poveži auto</h3><div class="opt">Adapter u utičnicu ispod volana, kontakt uključen</div></div></div>
+    <div class="stack"><button class="btn" onclick="connectBLE()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>Bluetooth adapter</button>
+    <button class="btn ghost" onclick="connectSerial()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M8 6h8"/><circle cx="12" cy="19" r="3"/></svg>USB kabl</button></div>
+    ${st}
+    <div class="row" style="justify-content:center;margin-top:8px"><button class="linkbtn" onclick="connectDemo()">Nema auta ovde? Probaj na primer autu →</button></div></div>`;
+}
+function updateHeader(){
+  const pill=$("#carPill"), d=$("#carDot"), t=$("#carTxt");
+  if(OBD.connected){ d.className="dot on"; t.textContent=OBD.demo?"Primer":"Povezan"; pill.classList.add("on"); }
+  else if(connState.kind==="wait"){ d.className="dot wait"; t.textContent="Veza…"; pill.classList.remove("on"); }
+  else { d.className="dot"; t.textContent="Nije povezan"; pill.classList.remove("on"); }
+  const v=VARIANTS[car.kw]; $("#hdrCar").textContent=`${v?v.name:"Mégane 1.5 dCi"} · ${car.godina}`;
+  const n=$("#carName"), s=$("#carSub"); if(n) n.textContent=car.model; if(s) s.textContent=`${v?v.code+" · "+v.name:"K9K"} · ${car.godina}${car.vin?" · "+car.vin:""}`;
+  const lbl=$("#checkLbl"); if(lbl&&!agentCtl) lbl.textContent=OBD.connected?"POKRENI PROVERU":"PROVERI PO OPISU";
+  const h=$("#checkHint"); if(h) h.textContent=OBD.connected?"AI sam pita auto, traži od tebe pomoć kad treba i kaže rezultat naglas.":"Bez auta: procena samo po onome što kaže mušterija. Za pravu proveru poveži auto (korak 1).";
+  const n2=$("#num2"); if(n2) n2.className="num"+(selected.size||($("#symText")&&$("#symText").value.trim())?" done":"");
+}
+function renderCar(){ renderConn(); const sp=$("#scanPane"); if(sp) sp.hidden=!OBD.connected; updateHeader(); }
+
+const TABS=[
+  {id:"car",lbl:"Provera",svg:'<path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/>'},
+  {id:"faults",lbl:"Šifre",svg:'<path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/><path d="M8 12h8"/>'},
+  {id:"more",lbl:"Više",svg:'<path d="M4 6h16M4 12h16M4 18h16"/>'},
+];
+let current="car";
+function buildTabs(){ const n=$("#tabs"); n.innerHTML=""; TABS.forEach(t=>{ const b=el("button",t.id===current?"on":"",`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg><span>${t.lbl}</span>`); b.onclick=()=>go(t.id); n.appendChild(b); }); }
+function go(id){
+  current=id; document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  const sc=$("#s-"+id); if(sc) sc.classList.add("active");
+  const navId=id==="history"?"more":id; document.querySelectorAll("#tabs button").forEach((b,i)=>b.classList.toggle("on",TABS[i].id===navId));
+  if(id==="history") renderHistory(); if(id==="car") renderCar();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function goCode(){ go("faults"); setTimeout(()=>{ $("#codeInput").focus(); },60); }
+
+function buildMechSymptoms(){ const w=$("#symChips"); w.innerHTML=""; MECH_SYMPTOMS.forEach(s=>{ const c=el("button","chip",esc(s)); c.onclick=()=>{ selected.has(s)?(selected.delete(s),c.classList.remove("on")):(selected.add(s),c.classList.add("on")); updateHeader(); }; w.appendChild(c); }); $("#symText").addEventListener("input",updateHeader); }
+function showAfter(){ $("#afterActions").hidden=false; $("#clearBtn").hidden=!OBD.connected; }
+const hClass=h=>{h=(h||"").toLowerCase(); return h.includes("opasno")?"h-opasno":(h.includes("uskoro")||h.includes("hitno"))?"h-hitno":"h-ok";};
+const verBadge=v=>{v=(v||"").toLowerCase(); return v.includes("vis")?'<span class="badge b-vis">VISOKA</span>':v.includes("sre")?'<span class="badge b-sre">SREDNJA</span>':'<span class="badge b-niz">NISKA</span>';};
+function summaryOf(t){ const get=h=>{ const parts=t.split(new RegExp("###\\s*"+h,"i")); if(!parts[1]) return ""; const body=parts[1].split("###")[0]; const nl=body.indexOf("\n"); return nl>=0?body.slice(nl+1):body; };
+  const a=get("Ukratko"), b=get("Šta prvo"); const first=(b||"").replace(/\n/g," ").split(/(?<=[.!?])\s/).slice(0,2).join(" ");
+  return ((a||"")+" "+(first?"Prvo: "+first:"")).trim()||t.slice(0,400); }
+
+async function runCheck(){
+  if(agentCtl){ agentCtl.abort(); return; }
+  Voice.stop();
+  const symTxt=[[...selected].join(", "),$("#symText").value.trim()].filter(Boolean).join(". ");
+  $("#afterActions").hidden=true;
+  if(OBD.connected){
+    if(AI.ready()){ const r=await runAgentFlow(symTxt); if(r!=="fallback") return; }
+    return runFullCheck();
+  }
+  if(!symTxt){ const m="Prvo poveži auto, ili izaberi šta mušterija kaže."; $("#checkHint").textContent=m; Voice.say(m); toast(m); return; }
+  return runDiagOnly(symTxt);
+}
+async function runAgentFlow(symTxt){
+  const out=$("#result"); if(live.on){ live.on=false; await sleep(300); }
+  agentCtl=new AbortController(); $("#checkLbl").textContent="ZAUSTAVI";
+  const goal=symTxt?`Mušterija kaže: ${symTxt}. Pronađi uzrok.`:"Uradi kompletan pregled motora.";
+  out.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-family:var(--f-display)">Agent proverava auto</b>${srcBadge()}</div><div id="agentLog"></div><div class="divider"></div><div class="ai" id="agentText"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted">Planiram…</span></div></div>`;
+  Voice.say("Počinjem proveru.");
+  const prev=OBD.demo?null:loadJSON("dd_check",null);
+  const prompt=`${AGENT_RULES}\n\nVEZA: ${OBD.demo?"PRIMER AUTO (simulacija za vežbu, NIJE pravi auto)":"pravi auto"}, protokol ${OBD.protoName}.\nCILJ: ${goal}\n${prev?`PRETHODNA PROVERA (${new Date(prev.kad).toLocaleDateString('sr-RS')}): greške ${prev.codes.join(", ")||"nema"}. Ako je cilj provera posle popravke, uporedi.`:""}`;
+  try{
+    const t=await AI.agent(prompt,agentTools(),{signal:agentCtl.signal,onText:t=>{ $("#agentText").innerHTML=md(t); }});
+    $("#agentText").innerHTML=md(t); out.insertAdjacentHTML("beforeend",MONEY_NOTE);
+    lastSpoken=summaryOf(t); Voice.say(lastSpoken); showAfter();
+    if(!OBD.demo){ saveJSON("dd_lastagent",{kad:Date.now(),goal,text:t}); if(OBD.lastScan) saveJSON("dd_check",{kad:Date.now(),codes:OBD.lastScan.codes,mil:OBD.lastScan.mil,st:null,findings:[],cmp:null}); }
+    addHistory({tip:"Provera (AI agent)",kad:Date.now(),ulaz:goal,rez:plain(summaryOf(t)).slice(0,180)});
+    return "ok";
+  }catch(e){
+    if(e.code==="tools_unavailable"){ out.innerHTML=""; return "fallback"; }
+    $("#agentText").innerHTML=e.code==="cancelled"?`<div class="small muted">Zaustavljeno.</div>`:`<div class="small">${aiErr(e.code)}</div>`;
+    if(e.code!=="cancelled") Voice.say(aiErr(e.code));
+    return "err";
+  }finally{ agentCtl=null; updateHeader(); }
+}
+async function runDiagOnly(symTxt){
+  const out=$("#result"); if(!AI.ready()){ out.innerHTML=aiOff(); return; }
+  const btn=$("#checkBtn"); btn.disabled=true; out.innerHTML=`<div class="card"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted" style="margin-left:6px">Tražim najverovatnije uzroke…</span></div>`;
+  const prompt=`${AI_RULES}\n\n${carCtx()}\n${KB_CTX}\n${NORM_CTX}\n${scanCtx()}\n\nMUŠTERIJA KAŽE: ${symTxt}\nAuto NIJE povezan — procena samo po opisu.\n\nOdgovori ISKLJUČIVO JSON-om:\n{"uzroci":[{"naziv":"kratko","verovatnoca":"visoka|srednja|niska","objasnjenje":"1 rečenica","kako_proveriti":"konkretan korak za majstora","cena_min_rsd":0,"cena_max_rsd":0,"hitnost":"nije hitno|može da čeka|uskoro|opasno - ne vozi"}],"sazetak":"jedna rečenica: šta prvo da proveriš","upozorenje":""}\nNajviše 4, od najverovatnijeg. Cena = delovi + rad.`;
+  try{
+    const data=await AI.json(prompt); const list=(data&&data.uzroci)||[]; let h="";
+    const danger=(data.upozorenje&&data.upozorenje.trim())||list.some(u=>(u.hitnost||"").includes("opasno"))||selected.has("Kuca");
+    if(danger) h+=`<div class="banner danger" style="margin:12px 0">${SVG_WARN}<div><b>Pažnja — možda je ozbiljno.</b><div class="small" style="margin-top:3px;color:#ffc9cf">${esc(data.upozorenje||"Ako motor kuca ili svetli lampica ulja — ne paliti dalje.")}</div></div></div>`;
+    h+=`<div class="banner warn" style="margin:12px 0">${SVG_WARN}<div class="small"><b>Procena bez auta</b> — samo po opisu. Za siguran nalaz poveži auto.</div></div>`;
+    if(data.sazetak) h+=`<div class="card hi"><div class="eyebrow">Prvo proveri</div><div style="margin-top:6px;font-size:18px">${esc(data.sazetak)}</div></div>`;
+    list.forEach(u=>{ const c=(u.cena_min_rsd||u.cena_max_rsd)?`${rsd(u.cena_min_rsd||0)} – ${rsd(u.cena_max_rsd||0)}`:"zavisi";
+      h+=`<div class="cause ${hClass(u.hitnost)}"><h3>${esc(u.naziv)} ${verBadge(u.verovatnoca)}</h3><div class="small" style="margin-top:6px">${esc(u.objasnjenje||"")}</div><div class="small muted" style="margin-top:8px"><b style="color:var(--fg)">Provera:</b> ${esc(u.kako_proveriti||"—")}</div><div class="meta"><span class="tag">Okvirno: <b>${c}</b></span><span class="tag">${esc(u.hitnost||"—")}</span></div></div>`; });
+    out.innerHTML=h+MONEY_NOTE;
+    lastSpoken=(data.sazetak||"")+(list[0]?" Najverovatnije: "+list[0].naziv+".":""); Voice.say((danger?"Pažnja. ":"")+lastSpoken); showAfter();
+    saveJSON("dd_lastdiag",{kad:Date.now(),syms:[...selected],free:$("#symText").value.trim(),uzroci:list.map(u=>({naziv:u.naziv,verovatnoca:u.verovatnoca,kako:u.kako_proveriti})),sazetak:data.sazetak||""});
+    addHistory({tip:"Procena po opisu",kad:Date.now(),ulaz:symTxt,rez:list.slice(0,3).map(u=>u.naziv).join(", ")});
+  }catch(e){ out.innerHTML=`<div class="card small">${aiErr(e.code)}</div>`; Voice.say(aiErr(e.code)); }
+  finally{ btn.disabled=false; }
+}
+
+function buildMore(){
+  $("#intervalList").innerHTML=MAINT.map(m=>`<div class="row" style="justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span class="small"><b>${esc(m.ime)}</b><br><span class="muted tiny">${esc(m.txt)}</span></span><span class="small" style="text-align:right;white-space:nowrap;font-family:var(--f-mono)">${m.km?m.km.toLocaleString('sr-RS')+" km":""}${m.km&&m.god?"<br>":""}${m.god?m.god+" god.":""}</span></div>`).join("");
+  $("#recallList").innerHTML=`<div class="tiny muted" style="margin-bottom:6px">Proveriti po VIN-u u Renault servisu.</div>`+RECALLS.map(r=>`<div class="row" style="justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span class="small">${esc(r[0])}</span><span class="tiny muted" style="text-align:right;max-width:45%">${esc(r[1])}</span></div>`).join("");
+}
+function openHelp(){ openSheet(`<h2>Kako se koristi</h2><div class="stack" style="margin-top:14px">
+  <div class="row" style="align-items:flex-start"><div class="num">1</div><div class="small"><b>Poveži auto.</b> Adapter u OBD utičnicu (ispod volana, levo). Kontakt ili motor upaljen. Dodirni „Bluetooth adapter“ ili „USB kabl“.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">2</div><div class="small"><b>Šta kaže mušterija</b> — dodirni ili dodirni 🎤 i izgovori. Nije obavezno.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">3</div><div class="small"><b>POKRENI PROVERU.</b> AI sam pita auto (greške, vrednosti, Renault memorija). Ako mu treba nešto od tebe (npr. „drži 2500 obrtaja“), kaže naglas — odgovori „gotovo“ ili dodirni dugme.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">4</div><div class="small"><b>Posle popravke:</b> „Obriši greške“, provozaj auto, pa „Proveri ponovo“ — vidiš šta je nestalo.</div></div>
+  <div class="notice">Aplikacija ništa ne menja u autu bez tvoje potvrde. Rezultat je procena — konačnu reč daje majstor.</div></div>`); }
+function openSettings(){ const inClaude=AI.mode==="claude"; const baud=loadJSON("dd_baud",38400);
+  openSheet(`<h2>Podešavanja</h2><div class="stack" style="margin-top:14px">
+  <div class="card"><h3>Glas</h3><div class="small muted" style="margin:6px 0 12px">${Voice.voice?`Glas: ${esc(Voice.voice.name)}`:"Srpski glas nije pronađen — koristi se podrazumevani. Android: Podešavanja → Pretvaranje teksta u govor → Google → instaliraj srpski (ili hrvatski)."}</div>
+    <div class="seg"><button class="${Voice.on?"on":""}" onclick="if(!Voice.on)toggleVoice();openSettings()">Uključen</button><button class="${!Voice.on?"on":""}" onclick="if(Voice.on)toggleVoice();openSettings()">Isključen</button></div>
+    <button class="btn ghost sm" style="margin-top:12px" onclick="Voice.say('Auto je povezan. Pronađena greška P0089, regulacija pritiska goriva.')">🔊 Probaj glas</button></div>
+  <div class="card"><h3>AI</h3><div class="small muted" style="margin-top:6px">${inClaude?"Radi preko Claude naloga — ništa ne treba.":"Van Claude aplikacije: unesi Anthropic API ključ (ostaje samo na ovom uređaju)."}</div>
+  ${inClaude?"":`<input type="password" id="set-key" value="${esc(getKey())}" placeholder="sk-ant-…" autocomplete="off" style="margin-top:12px"><button class="btn sm" style="margin-top:10px" onclick="saveKey()">Sačuvaj ključ</button>`}</div>
+  <div class="card"><h3>USB brzina</h3><div class="small muted" style="margin:6px 0 10px">ELM327: 38400. vLinker / OBDLink: probaj 115200.</div><div class="seg"><button class="${baud==38400?"on":""}" onclick="saveJSON('dd_baud',38400);openSettings()">38400</button><button class="${baud==115200?"on":""}" onclick="saveJSON('dd_baud',115200);openSettings()">115200</button></div></div>
+  <div class="card"><h3>Povezivanje sa autom</h3><div class="small muted" style="margin-top:6px">Unutar Claude aplikacije Bluetooth, USB i mikrofon nisu dozvoljeni. Za rad na autu otvori aplikaciju kao stranicu u <b style="color:var(--fg)">Chrome-u na Android telefonu</b> ili računaru.</div></div>
+  <div class="card"><h3>Podaci</h3><button class="btn ghost sm" style="margin-top:10px" onclick="if(confirmWipe())location.reload()">Obriši sve podatke</button></div></div>`); }
+
 /* ===================================================================== INIT */
-buildTabs(); buildSymptoms(); buildFaults(); bindGas(); updateHeader(); renderHomeStatus(); renderConn(); buildAgentChips();
+buildTabs(); buildMechSymptoms(); buildFaults(); buildMore(); renderVoiceBtn(); renderCar();
 AI.init();
-document.addEventListener("keydown",e=>{ if(e.key!=="Enter") return; if(e.target.id==="codeInput") lookupCode(); if(e.target.id==="diagQ") askFollow(); if(e.key==="Escape") closeSheet(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); if(e.key!=="Enter") return; if(e.target.id==="codeInput") lookupCode(); });
 </script>
