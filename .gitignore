@@ -50,3 +50,6 @@ __pycache__/
 
 # Rendered videos
 world-brief*.mp4
+
+# Deep-research working notes (intermediate; final report lives in reports/)
+research_notes/

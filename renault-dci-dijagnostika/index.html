@@ -1,0 +1,1173 @@
+<title>Dizel Doktor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Dijagnostika za Renault Mégane 1.5 dCi — jednostavnim jezikom, uz pomoć veštačke inteligencije.">
+<style>
+  /* ============================================================
+     Dizel Doktor — dijagnostika za Renault Mégane 1.5 dCi (2004)
+     Layout: tamna "komandna tabla" sa plavo-cijan sjajem, donja navigacija.
+     Jezik: najjednostavniji srpski (latinica). Komentari: engleski.
+     ============================================================ */
+
+  /* --- Design tokens (deliberately dark, single visual world) --- */
+  :root {
+    color-scheme: dark;
+
+    /* color */
+    --bg:      #070b16;   /* near-black navy */
+    --bg-2:    #0b1226;   /* app frame */
+    --panel:   #101a33;   /* card */
+    --panel-2: #0e1830;   /* input field bg */
+    --panel-hi:#16233f;   /* raised card */
+    --line:    rgba(120,165,255,.14);
+    --line-2:  rgba(120,165,255,.26);
+    --fg:      #eaf1ff;
+    --muted:   #93a6cf;
+    --muted-2: #6e82ad;
+
+    --royal:   #2f52ff;   /* royal blue */
+    --royal-2: #1b36c9;
+    --cyan:    #27e5ff;   /* cyan */
+    --cyan-2:  #00bfe6;
+    --grad:    linear-gradient(100deg, var(--royal) 0%, var(--cyan) 100%);
+    --grad-soft: linear-gradient(100deg, rgba(47,82,255,.18), rgba(39,229,255,.18));
+
+    /* semantic (separate from accent) */
+    --ok:   #2fe0a6;
+    --warn: #ffba45;
+    --bad:  #ff6b78;
+    --danger:#ff3b52;
+
+    /* type */
+    --f-display: "Sora", system-ui, sans-serif;
+    --f-body:    "Manrope", system-ui, sans-serif;
+    --f-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+    /* layout */
+    --maxw: 680px;
+    --nav-h: 62px;
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* ambient glow behind everything */
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(60% 40% at 80% -5%, rgba(39,229,255,.12), transparent 60%),
+      radial-gradient(70% 45% at 0% 0%, rgba(47,82,255,.16), transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  /* paint the safe-area band at the very top so content doesn't show under it */
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+    background: var(--bg-2); z-index: 60;
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    min-height: 100%;
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);
+  }
+
+  /* ---------- header ---------- */
+  header.top {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+    background: linear-gradient(var(--bg-2), rgba(11,18,38,.86));
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding-block: 10px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; align-items: center; gap: 11px;
+  }
+  .logo {
+    width: 34px; height: 34px; border-radius: 10px; flex: none;
+    background: var(--grad);
+    display: grid; place-items: center;
+    box-shadow: 0 0 18px rgba(39,229,255,.5);
+  }
+  .logo svg { width: 20px; height: 20px; }
+  .brand { display: flex; flex-direction: column; line-height: 1.1; }
+  .brand b { font-family: var(--f-display); font-weight: 800; font-size: 16px; letter-spacing: .2px; }
+  .brand span { font-size: 11.5px; color: var(--muted); }
+  .top .spacer { flex: 1; }
+  .pill-live {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .4px;
+    color: var(--cyan);
+    border: 1px solid var(--line-2); border-radius: 999px;
+    padding: 5px 10px; display: flex; align-items: center; gap: 6px;
+    background: rgba(39,229,255,.06);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.sim { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+  /* ---------- generic layout ---------- */
+  main {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-top: 16px;
+  }
+  .screen { display: none; animation: fade .25s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .screen{animation:none} }
+
+  h1,h2,h3 { font-family: var(--f-display); font-weight: 800; text-wrap: balance; margin: 0; }
+  .eyebrow { font-size: 11.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--cyan-2); font-weight: 700; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .tiny { font-size: 11.5px; }
+  .center { text-align: center; }
+  .stack { display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 10px; }
+  .wrap { flex-wrap: wrap; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    border: 1px solid var(--line); border-radius: 24px;
+    background:
+      radial-gradient(120% 90% at 85% -20%, rgba(39,229,255,.18), transparent 55%),
+      radial-gradient(120% 90% at -10% -10%, rgba(47,82,255,.22), transparent 50%),
+      var(--panel);
+    padding: 22px 20px;
+    overflow: hidden; position: relative;
+  }
+  .hero .chev { position: absolute; right: -30px; top: -20px; opacity: .14; width: 220px; height: 220px; }
+  .hero h1 { font-size: clamp(27px, 7.5vw, 38px); line-height: 1.04; letter-spacing: -0.5px; }
+  .hero h1 .g { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: var(--muted); margin: 12px 0 0; max-width: 42ch; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    appearance: none; border: 0; cursor: pointer; font-family: var(--f-display);
+    font-weight: 700; font-size: 15px; border-radius: 999px; padding: 15px 20px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    color: #041024; background: var(--grad);
+    box-shadow: 0 8px 26px rgba(39,120,255,.35); width: 100%;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active { transform: translateY(1px) scale(.995); }
+  .btn svg { width: 19px; height: 19px; }
+  .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line-2); box-shadow: none; }
+  .btn.ghost svg { color: var(--cyan); }
+  .btn.sm { width: auto; padding: 11px 15px; font-size: 13.5px; }
+  .btn.danger { background: linear-gradient(100deg,#ff3b52,#ff7a5a); color: #1a0208; box-shadow: 0 8px 26px rgba(255,59,82,.3); }
+  .btn[disabled] { opacity: .5; cursor: default; }
+
+  /* ---------- cards ---------- */
+  .card {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); padding: 16px;
+  }
+  .card.hi { background: var(--panel-hi); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 420px){ .grid2 { grid-template-columns: 1fr; } }
+
+  .quick {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .quick button {
+    text-align: left; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); color: var(--fg); padding: 15px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 9px; min-height: 108px; justify-content: space-between;
+    transition: border-color .15s ease, transform .12s ease, background .15s ease;
+  }
+  .quick button:active { transform: translateY(1px); }
+  .quick button:hover { border-color: var(--line-2); background: var(--panel-hi); }
+  .qi { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: var(--grad-soft); border: 1px solid var(--line-2); }
+  .qi svg { width: 20px; height: 20px; color: var(--cyan); }
+  .quick b { font-family: var(--f-display); font-size: 15px; }
+  .quick span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* ---------- car strip ---------- */
+  .carstrip { display: flex; align-items: center; gap: 13px; }
+  .carstrip .ci { width: 44px; height: 44px; border-radius: 12px; background: var(--grad-soft); border: 1px solid var(--line-2); display: grid; place-items: center; flex: none; }
+  .carstrip .ci svg { width: 24px; height: 24px; color: var(--cyan); }
+
+  /* ---------- chips ---------- */
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+  .chip {
+    border: 1px solid var(--line-2); background: var(--panel); color: var(--fg);
+    border-radius: 999px; padding: 9px 13px; font-size: 13px; cursor: pointer; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px; transition: all .14s ease;
+  }
+  .chip:hover { border-color: var(--cyan-2); }
+  .chip.on { background: var(--grad); color: #041024; border-color: transparent; }
+  .chip .x { font-size: 15px; line-height: 1; }
+
+  textarea, input[type=text] {
+    width: 100%; background: var(--panel-2); color: var(--fg);
+    border: 1px solid var(--line-2); border-radius: 14px; padding: 13px 14px;
+    font-family: var(--f-body); font-size: 15px; resize: vertical;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--cyan-2); outline-offset: 1px; border-color: transparent; }
+  label.fld { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+  /* file / photo */
+  .photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .thumb { width: 54px; height: 54px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line-2); }
+
+  /* ---------- diagnosis result ---------- */
+  .cause {
+    border: 1px solid var(--line); border-left-width: 4px; border-radius: 14px;
+    background: var(--panel); padding: 14px; margin-top: 12px;
+  }
+  .cause h3 { font-size: 16.5px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .badge { font-size: 10.5px; font-weight: 800; letter-spacing: .3px; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+  .b-vis { background: rgba(255,59,82,.16); color: #ff93a0; }
+  .b-sre { background: rgba(255,186,69,.16); color: #ffcf84; }
+  .b-niz { background: rgba(47,224,166,.16); color: #7df0cb; }
+  .cause .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+  .tag { font-size: 11.5px; border: 1px solid var(--line-2); border-radius: 8px; padding: 4px 8px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+  .tag b { color: var(--fg); font-family: var(--f-mono); font-weight: 500; }
+  .cause .how { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+  .cause .how b { color: var(--fg); }
+
+  .hitnost-opasno { border-left-color: var(--danger); }
+  .hitnost-hitno  { border-left-color: var(--warn); }
+  .hitnost-ok     { border-left-color: var(--ok); }
+
+  /* danger banner */
+  .danger-banner {
+    border: 1px solid rgba(255,59,82,.5); background: rgba(255,59,82,.12);
+    border-radius: 14px; padding: 13px 15px; display: flex; gap: 11px; align-items: flex-start;
+  }
+  .danger-banner svg { width: 22px; height: 22px; color: var(--danger); flex: none; margin-top: 1px; }
+  .danger-banner b { color: #ffb3bc; }
+
+  /* ---------- gauges ---------- */
+  .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gauge { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 13px 13px 10px; text-align: center; }
+  .gauge .lbl { font-size: 11.5px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
+  .gauge svg { width: 100%; height: 76px; display: block; margin: 2px 0 0; }
+  .gauge .val { font-family: var(--f-mono); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: -6px; }
+  .gauge .val small { font-size: 11px; color: var(--muted); font-family: var(--f-body); }
+  .gauge.alert { border-color: rgba(255,59,82,.5); }
+  .gauge.alert .val { color: var(--bad); }
+
+  .scen { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin: 0 -2px; scrollbar-width: thin; }
+  .scen .chip { flex: none; }
+
+  .gasbtn {
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+
+  /* ---------- code lookup ---------- */
+  .codehit { font-family: var(--f-mono); font-weight: 600; }
+
+  /* ---------- knowledge base list ---------- */
+  .kb { display: flex; flex-direction: column; gap: 10px; }
+  .kb button {
+    display: flex; gap: 13px; align-items: center; text-align: left; width: 100%;
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+    color: var(--fg); padding: 13px; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .kb button:hover { border-color: var(--line-2); background: var(--panel-hi); }
+  .kb .ic { width: 40px; height: 40px; border-radius: 11px; background: var(--grad-soft); border: 1px solid var(--line-2); display: grid; place-items: center; flex: none; font-size: 20px; }
+  .kb b { font-family: var(--f-display); font-size: 15px; display: block; }
+  .kb span { font-size: 12.5px; color: var(--muted); }
+  .sev { margin-left: auto; align-self: flex-start; }
+  .s-opasno { color: var(--danger); } .s-visok { color: var(--bad); }
+  .s-srednji { color: var(--warn); } .s-nizak { color: var(--ok); }
+
+  /* ---------- sheet (modal) ---------- */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(2,6,16,.66); backdrop-filter: blur(3px); z-index: 80; display: none; }
+  .sheet-bg.open { display: block; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 81;
+    max-width: var(--maxw); margin: 0 auto;
+    background: var(--bg-2); border: 1px solid var(--line-2); border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    padding: 8px 0 calc(16px + env(safe-area-inset-bottom,0px));
+    transform: translateY(100%); transition: transform .28s cubic-bezier(.2,.7,.2,1);
+    max-height: 88vh; display: flex; flex-direction: column;
+  }
+  .sheet.open { transform: none; }
+  .sheet .grab { width: 42px; height: 4px; border-radius: 4px; background: var(--line-2); margin: 6px auto 4px; flex: none; }
+  .sheet .sbody { overflow-y: auto; padding: 8px max(16px, env(safe-area-inset-left,0px)) 4px; }
+  .sheet h2 { font-size: 20px; margin-bottom: 4px; }
+
+  /* AI answer text */
+  .ai {
+    font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;
+  }
+  .ai.md h3 { font-size: 15.5px; margin: 14px 0 4px; color: var(--cyan); }
+  .ai.md ul { padding-left: 18px; margin: 6px 0; }
+  .ai.md li { margin: 3px 0; }
+  .ai.md strong { color: #fff; }
+  .ai.md p { margin: 7px 0; }
+  .ai.md code { font-family: var(--f-mono); background: var(--panel-2); padding: 1px 5px; border-radius: 6px; font-size: 13px; }
+
+  .thinking { display: inline-flex; gap: 5px; align-items: center; color: var(--muted); font-size: 14px; }
+  .thinking i { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: blink 1.2s infinite; }
+  .thinking i:nth-child(2){ animation-delay:.2s } .thinking i:nth-child(3){ animation-delay:.4s }
+  @keyframes blink { 0%,100%{opacity:.25} 50%{opacity:1} }
+
+  .notice { font-size: 12px; color: var(--muted-2); line-height: 1.5; }
+  .divider { height: 1px; background: var(--line); margin: 4px 0; }
+
+  /* follow-up chat */
+  .chat { display: flex; flex-direction: column; gap: 10px; }
+  .bubble { padding: 11px 13px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 92%; }
+  .bubble.me { align-self: flex-end; background: var(--grad); color: #041024; border-bottom-right-radius: 4px; }
+  .bubble.ai { align-self: flex-start; background: var(--panel-hi); border: 1px solid var(--line); border-bottom-left-radius: 4px; white-space: pre-wrap; }
+
+  /* ---------- bottom nav ---------- */
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    max-width: var(--maxw); margin: 0 auto;
+    background: rgba(9,15,31,.94); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(5,1fr);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  nav.tabs button {
+    background: none; border: 0; cursor: pointer; color: var(--muted-2);
+    padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 700; font-family: var(--f-display); letter-spacing: .2px;
+    transition: color .15s ease;
+  }
+  nav.tabs button svg { width: 22px; height: 22px; }
+  nav.tabs button.on { color: var(--cyan); }
+  nav.tabs button.on svg { filter: drop-shadow(0 0 6px rgba(39,229,255,.6)); }
+
+  .finenote { text-align: center; color: var(--muted-2); font-size: 11px; padding: 18px 0 2px; }
+  a { color: var(--cyan); }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#041024" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-5h8l2 5h3"/><path d="M5 12v4h14v-4"/><circle cx="8" cy="16" r="1.4" fill="#041024" stroke="none"/><circle cx="16" cy="16" r="1.4" fill="#041024" stroke="none"/></svg>
+    </div>
+    <div class="brand">
+      <b>Dizel Doktor</b>
+      <span>Renault Mégane 1.5 dCi · 2004</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="pill-live" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusTxt">Nije povezano</span></div>
+  </header>
+
+  <main>
+    <!-- =================== POČETAK =================== -->
+    <section class="screen active" id="s-home">
+      <div class="hero">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5"><path d="M4 4l8 8-8 8M12 4l8 8-8 8"/></svg>
+        <div class="eyebrow">Tvoj auto, objašnjen ljudski</div>
+        <h1>Šta <span class="g">fali</span> tvom autu?</h1>
+        <p>Opiši problem svojim rečima. Aplikacija ti kaže šta je najverovatnije pokvareno, kako da proveriš i koliko to otprilike košta — bez komplikovanih reči.</p>
+        <div style="margin-top:18px" class="stack">
+          <button class="btn" onclick="go('diag')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/></svg>
+            Opiši problem
+          </button>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="quick">
+        <button onclick="go('live')">
+          <div class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 14a6 6 0 1 0-6-6"/><path d="M12 14l3-3"/><path d="M3 20h18"/></svg></div>
+          <div><b>Uživo</b><br><span>Vidi rad motora (test režim)</span></div>
+        </button>
+        <button onclick="go('codes')">
+          <div class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/><path d="M8 12h8"/></svg></div>
+          <div><b>Kod greške</b><br><span>Imaš šifru (npr. P0401)? Upiši je</span></div>
+        </button>
+        <button onclick="go('faults')">
+          <div class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 7 3 3"/><path d="M5 19l9-9 3 3-9 9H5v-3z"/><path d="M14.5 5.5 18 2l4 4-3.5 3.5"/></svg></div>
+          <div><b>Česti kvarovi</b><br><span>Slabe tačke ovog motora</span></div>
+        </button>
+        <button onclick="go('history')">
+          <div class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></div>
+          <div><b>Istorija</b><br><span>Tvoje ranije provere</span></div>
+        </button>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="card">
+        <div class="carstrip">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5H3z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/></svg></div>
+          <div style="flex:1">
+            <b style="font-family:var(--f-display)">Renault Mégane II 1.5 dCi</b>
+            <div class="small muted">Dizel · motor K9K · 2004. godina</div>
+          </div>
+          <button class="btn ghost sm" onclick="openCar()">Izmeni</button>
+        </div>
+        <div class="divider" style="margin:13px 0"></div>
+        <div class="notice">Aplikacija <b style="color:var(--fg)">ništa ne menja</b> u autu — samo pomaže da razumeš kvar. Saveti su informativni i ne menjaju majstora.</div>
+      </div>
+
+      <div class="finenote">Dizel Doktor · pravljeno za tvoj auto</div>
+    </section>
+
+    <!-- =================== DIJAGNOZA =================== -->
+    <section class="screen" id="s-diag">
+      <div class="eyebrow">Korak 1 — opiši</div>
+      <h1 style="font-size:26px;margin:4px 0 14px">Šta primećuješ?</h1>
+
+      <div class="stack">
+        <div class="card">
+          <div class="small muted" style="font-weight:700;margin-bottom:10px">Izaberi sve što važi:</div>
+          <div class="chips" id="symChips"></div>
+        </div>
+
+        <label class="fld">Dopuni svojim rečima (nije obavezno)
+          <textarea id="symText" rows="3" placeholder="npr. gubi snagu na uzbrdici, puši crno kad dam gas, teško pali ujutru…"></textarea>
+        </label>
+
+        <div class="card">
+          <div class="small muted" style="font-weight:700;margin-bottom:10px">Dodaj sliku (nije obavezno) — table, dima iz auspuha, curenja…</div>
+          <div class="photo-row">
+            <label class="btn ghost sm" style="width:auto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Slikaj / izaberi
+              <input type="file" id="photo" accept="image/*" hidden>
+            </label>
+            <div id="photoPrev" class="photo-row"></div>
+          </div>
+          <div class="tiny muted" id="photoNote" style="margin-top:8px;display:none">Slika se šalje veštačkoj inteligenciji samo kad pokreneš proveru.</div>
+        </div>
+
+        <button class="btn" id="diagBtn" onclick="runDiag()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>
+          Pronađi kvar
+        </button>
+        <div class="notice center" id="diagHint">Aplikacija će ti dati najverovatnije uzroke, poređane po verovatnoći.</div>
+      </div>
+
+      <div id="diagResult" style="margin-top:6px"></div>
+    </section>
+
+    <!-- =================== UŽIVO / SIMULATOR =================== -->
+    <section class="screen" id="s-live">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div><div class="eyebrow">Rad motora</div><h1 style="font-size:26px;margin:4px 0">Uživo</h1></div>
+        <div class="pill-live"><span class="dot sim" id="liveDot"></span><span id="liveMode">Test režim</span></div>
+      </div>
+
+      <div class="small muted" style="margin:2px 0 12px">Ovo je <b style="color:var(--fg)">test režim</b> (virtuelni auto) da vidiš kako aplikacija radi. Za prave brojeve iz auta treba mali adapter u OBD utičnicu.</div>
+
+      <div class="scen" id="scenRow"></div>
+
+      <div style="height:12px"></div>
+      <div class="gauges" id="gauges"></div>
+
+      <div style="height:14px"></div>
+      <div class="row" style="gap:10px">
+        <button class="btn ghost gasbtn" id="gasBtn" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Drži za gas
+        </button>
+        <button class="btn sm" style="flex:1" onclick="analyzeLive()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2"/></svg>
+          Analiziraj
+        </button>
+      </div>
+
+      <div style="height:14px"></div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div><b style="font-family:var(--f-display)">Poveži pravi auto</b><div class="tiny muted">Preko Bluetooth adaptera (eksperimentalno)</div></div>
+          <button class="btn ghost sm" style="width:auto" onclick="connectBT()">Poveži</button>
+        </div>
+        <div class="tiny muted" id="btNote" style="margin-top:10px"></div>
+      </div>
+
+      <div id="liveResult" style="margin-top:14px"></div>
+    </section>
+
+    <!-- =================== KODOVI =================== -->
+    <section class="screen" id="s-codes">
+      <div class="eyebrow">Šifra kvara</div>
+      <h1 style="font-size:26px;margin:4px 0 6px">Kod greške</h1>
+      <p class="small muted" style="margin:0 0 14px">Ako ti je neko očitao kod (npr. na dijagnostici), upiši ga ovde pa ti objasnim šta znači baš za ovaj motor.</p>
+
+      <div class="row" style="gap:10px">
+        <input type="text" id="codeInput" placeholder="npr. P0401 ili DF038" style="flex:1" autocomplete="off" spellcheck="false">
+        <button class="btn sm" style="width:auto" onclick="lookupCode()">Objasni</button>
+      </div>
+
+      <div class="small muted" style="margin:16px 0 8px;font-weight:700">Česti kodovi na ovom motoru:</div>
+      <div class="chips" id="commonCodes"></div>
+
+      <div id="codeResult" style="margin-top:16px"></div>
+    </section>
+
+    <!-- =================== ČESTI KVAROVI =================== -->
+    <section class="screen" id="s-faults">
+      <div class="eyebrow">Slabe tačke</div>
+      <h1 style="font-size:26px;margin:4px 0 6px">Česti kvarovi</h1>
+      <p class="small muted" style="margin:0 0 14px">Ovo su delovi koji najčešće otkažu baš na Mégane 1.5 dCi. Dodirni za detalje i savet.</p>
+      <div class="kb" id="kbList"></div>
+    </section>
+
+    <!-- =================== ISTORIJA =================== -->
+    <section class="screen" id="s-history">
+      <div class="eyebrow">Ranije provere</div>
+      <h1 style="font-size:26px;margin:4px 0 14px">Istorija</h1>
+      <div id="histList"></div>
+    </section>
+  </main>
+
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<!-- bottom sheet -->
+<div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <div class="sbody" id="sheetBody"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+
+// Vehicle profile (editable by user, saved in localStorage)
+const defaultCar = {
+  model: "Renault Mégane II 1.5 dCi",
+  godina: "2004",
+  motor: "K9K",
+  snaga: "nepoznato (najčešće 80 ili 100 KS)",
+  ecu: "nepoznato (Delphi DDCR ili Siemens SID301)",
+  km: "",
+};
+let car = loadJSON("dd_car", defaultCar);
+
+// Common symptoms (plain Serbian)
+const SYMPTOMS = [
+  "Gubi snagu", "Teško pali", "Ne pali uopšte", "Trese / neravnomerno radi u leru",
+  "Crn dim", "Beo dim", "Plav dim", "Upaljena lampica motora",
+  "Trepće lampica grejača", "Veća potrošnja", "Kuca / lupa",
+  "Zvižduk / fijuk", "Curi ulje/tečnost", "Pregreva se",
+  "Havarijski režim (nema gasa)", "Neobičan miris",
+];
+
+// Dangerous symptoms -> show "do not drive"
+const DANGER_SYMS = ["Kuca / lupa", "Pregreva se"];
+
+// Knowledge base of K9K weak points (concise; AI expands on tap)
+const KB = [
+  { id:"brizgaljke", emoji:"💉", ime:"Brizgaljke (injektori)", kratko:"Delphi brizgaljke vole da propuste ili se zaprljaju.",
+    sev:"visok", sevTxt:"Čest",
+    znaci:"teško paljenje (posebno ujutru), trzanje u leru, crn dim, gubitak snage, kuckanje.",
+    cena:"regeneracija ~40–70 € po komadu; nova ~150–250 € po komadu" },
+  { id:"turbina", emoji:"🌀", ime:"Turbina", kratko:"Slabi ili zamažnjava zbog ulja i aktuatora.",
+    sev:"srednji", sevTxt:"Srednje",
+    znaci:"gubitak snage, plav/crn dim, fijuk, havarijski režim.",
+    cena:"regeneracija ~150–300 €; nova ~350–600 €" },
+  { id:"egr", emoji:"♻️", ime:"EGR ventil", kratko:"Zapuši se čađu, pa motor gubi snagu i dimi.",
+    sev:"srednji", sevTxt:"Srednje",
+    znaci:"gubitak snage, crn dim, nemiran ler, upaljena lampica.",
+    cena:"čišćenje ~20–50 €; nov ventil ~80–200 €" },
+  { id:"posteljica", emoji:"⚠️", ime:"Ležajevi radilice („posteljica“)", kratko:"Najozbiljniji kvar — od lošeg ulja/intervala.",
+    sev:"opasno", sevTxt:"Opasno",
+    znaci:"metalno kucanje iz motora, pali se lampica za ulje. Ako kuca — NE VOZI.",
+    cena:"popravka motora ~500–1200 €; polovan motor ~400–800 €" },
+  { id:"grejaci", emoji:"🔥", ime:"Grejači (za paljenje)", kratko:"Troše se i otežavaju paljenje na hladno.",
+    sev:"nizak", sevTxt:"Sitno",
+    znaci:"teško paljenje ujutru, trepće lampica grejača (spirala).",
+    cena:"komplet grejača ~30–70 €; relej grejača ~30–80 €" },
+  { id:"maf", emoji:"🌬️", ime:"Merač protoka vazduha (MAF)", kratko:"Vremenom „laže“, pa motor slabi.",
+    sev:"srednji", sevTxt:"Srednje",
+    znaci:"gubitak snage, veća potrošnja, havarijski režim, lampica.",
+    cena:"nov ~50–130 €" },
+  { id:"pumpa", emoji:"⛽", ime:"Pumpa visokog pritiska (Delphi)", kratko:"Osetljiva na vodu i lošu naftu.",
+    sev:"visok", sevTxt:"Skupo",
+    znaci:"teško paljenje, gašenje, metalne opiljke u sistemu (može uništiti i brizgaljke).",
+    cena:"regeneracija ~150–300 €; nova ~400–700 €" },
+  { id:"rail", emoji:"📟", ime:"Senzor pritiska goriva (rail)", kratko:"Daje pogrešan pritisak, motor radi čudno.",
+    sev:"srednji", sevTxt:"Srednje",
+    znaci:"nestabilan rad, gašenje, havarijski režim.",
+    cena:"nov ~40–90 €" },
+  { id:"crevo", emoji:"🔗", ime:"Crevo turbine / intercooler", kratko:"Pukne ili spadne crevo — nagli gubitak snage.",
+    sev:"nizak", sevTxt:"Jeftino",
+    znaci:"iznenadni gubitak snage, fijuk/šištanje, dim.",
+    cena:"crevo ~15–60 €" },
+  { id:"kartica", emoji:"🔑", ime:"Kartica / imobilajzer (UCH)", kratko:"Auto ne prepoznaje karticu, pa neće da upali.",
+    sev:"srednji", sevTxt:"Srednje",
+    znaci:"„kartica nije prepoznata“, auto ne pali, problem sa čitačem kartice.",
+    cena:"baterija kartice ~2 €; čitač/UCH ~100–300 € + kodiranje" },
+  { id:"kais", emoji:"⏱️", ime:"Kaiš razvoda", kratko:"Ako pukne — lom motora. Menja se na vreme!",
+    sev:"visok", sevTxt:"Preventiva",
+    znaci:"nema simptoma dok ne pukne. Menjati po preporuci (otprilike 5 god. / 120.000 km — proveri).",
+    cena:"komplet + rad ~120–250 €" },
+];
+
+// Common fault codes (offline hint; AI gives full answer)
+const CODES = [
+  { k:"P0401", t:"Slab protok EGR-a (zapušen EGR)" },
+  { k:"P0403", t:"Greška u upravljanju EGR ventilom" },
+  { k:"P0101", t:"Merač protoka vazduha (MAF) van opsega" },
+  { k:"P0190", t:"Senzor pritiska goriva (rail)" },
+  { k:"P0087", t:"Premali pritisak goriva" },
+  { k:"P0088", t:"Previsok pritisak goriva" },
+  { k:"P0234", t:"Previsok pritisak turbine (overboost)" },
+  { k:"P0299", t:"Premali pritisak turbine (underboost)" },
+  { k:"P0380", t:"Grejači za paljenje" },
+  { k:"P0201", t:"Brizgaljka 1" },
+  { k:"P0335", t:"Senzor položaja radilice" },
+  { k:"P0340", t:"Senzor bregaste osovine" },
+];
+
+// Live-data model: typical K9K ranges used by the simulator & AI context
+// (approximate, clearly labeled; for illustration/teaching)
+const PARAMS = {
+  rpm:   { lbl:"Obrtaji", unit:"o/min", min:0, max:5000, idle:830 },
+  temp:  { lbl:"Temp. motora", unit:"°C", min:0, max:120, idle:88 },
+  rail:  { lbl:"Pritisak goriva", unit:"bar", min:0, max:1600, idle:280 },
+  boost: { lbl:"Pritisak turbine", unit:"mbar", min:900, max:2300, idle:1010 },
+  maf:   { lbl:"Protok vazduha", unit:"kg/h", min:0, max:90, idle:14 },
+  volt:  { lbl:"Akumulator", unit:"V", min:8, max:15, idle:14.1 },
+};
+
+// Simulator scenarios
+const SCEN = {
+  zdrav:   { ime:"Zdrav auto", note:null },
+  turbina: { ime:"Slaba turbina", note:"boost nizak" },
+  brizg:   { ime:"Problem brizgaljke", note:"nemiran ler" },
+  egr:     { ime:"Zapušen EGR", note:"slaba snaga" },
+  rail:    { ime:"Pad pritiska goriva", note:"rail oscilira" },
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function loadJSON(k, fb){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):structuredCloneSafe(fb);}catch(e){ return structuredCloneSafe(fb);} }
+function saveJSON(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function structuredCloneSafe(o){ try{return JSON.parse(JSON.stringify(o));}catch(e){return o;} }
+const $ = s => document.querySelector(s);
+const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+
+function renderMD(text){
+  try{ return DOMPurify.sanitize(marked.parse(text||"", {breaks:true})); }
+  catch(e){ return (text||"").replace(/</g,"&lt;"); }
+}
+
+// Sample (ask Claude) — resolved once
+let _sampleP = null;
+function getSample(){ if(!_sampleP) _sampleP = (window.claude?.use ? window.claude.use("sample") : Promise.resolve(null)).catch(()=>null); return _sampleP; }
+
+// Friendly message per sample error code
+function sampleErrMsg(code){
+  const m = {
+    not_granted:"Da bi radila pomoć veštačke inteligencije, treba da je dozvoliš kad te pita. Osveži stranicu i dozvoli.",
+    sampling_disabled:"Pomoć veštačke inteligencije nije dostupna na ovom nalogu.",
+    rate_limited:"Previše pitanja odjednom. Sačekaj malo pa probaj ponovo.",
+    invalid_json:"Nešto je pošlo naopako u odgovoru. Probaj ponovo.",
+    refused:"Ne mogu da odgovorim na ovo. Preformuliši pitanje.",
+    empty_completion:"Nema odgovora. Probaj da dodaš više detalja.",
+    prompt_too_large:"Previše teksta. Skrati opis.",
+    upstream_error:"Trenutni problem sa vezom. Probaj ponovo.",
+    session_expired:"Potrebna je ponovna prijava.",
+  };
+  return m[code] || "Nešto nije u redu. Probaj ponovo.";
+}
+
+const AI_RULES = `Ti si iskusan auto-mehaničar specijalista za Renault dizel motore, posebno 1.5 dCi (K9K). Govoriš isključivo na srpskom jeziku (latinica), najjednostavnijim mogućim rečima, kao da objašnjavaš čoveku koji ne zna ništa o autima. Kratke rečenice. Bez stranih fraza. Kad moraš da pomeneš tehnički izraz, odmah ga objasni u zagradi. Uvek napomeni kad nešto može biti opasno. Nikad ne tvrdiš 100% — daješ najverovatnije. Podsećaš da konačnu reč ima majstor.`;
+
+function carContext(){
+  return `AUTO: ${car.model}, ${car.godina}. Motor: ${car.motor}. Snaga: ${car.snaga}. Računar motora (ECU): ${car.ecu}.${car.km?` Pređeno: ${car.km} km.`:""}`;
+}
+const KB_CONTEXT = "POZNATE SLABE TAČKE OVOG MOTORA: " + KB.map(k=>`${k.ime} (${k.znaci})`).join("; ");
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const TABS = [
+  { id:"home",   lbl:"Početak", svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>' },
+  { id:"diag",   lbl:"Problem", svg:'<path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/>' },
+  { id:"live",   lbl:"Uživo",   svg:'<circle cx="12" cy="12" r="9"/><path d="M12 12l4-2.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>' },
+  { id:"codes",  lbl:"Kodovi",  svg:'<path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/>' },
+  { id:"faults", lbl:"Kvarovi", svg:'<path d="M5 19l9-9 3 3-9 9H5z"/><path d="M14.5 5.5 18 2l4 4-3.5 3.5"/>' },
+];
+let current = "home";
+function buildTabs(){
+  const nav = $("#tabs"); nav.innerHTML="";
+  TABS.forEach(t=>{
+    const b = el("button", t.id===current?"on":"", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg><span>${t.lbl}</span>`);
+    b.onclick = ()=>go(t.id);
+    nav.appendChild(b);
+  });
+}
+function go(id){
+  current = id;
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  const target = id==="history" ? "s-history" : "s-"+id;
+  const scr = $("#"+target); if(scr) scr.classList.add("active");
+  // highlight nav (history has no tab -> none highlighted)
+  document.querySelectorAll("#tabs button").forEach((b,i)=>b.classList.toggle("on", TABS[i] && TABS[i].id===id));
+  if(id==="history") renderHistory();
+  if(id==="live") startSim(); else stopSim();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+/* ============================================================
+   DIJAGNOZA (symptoms -> AI)
+   ============================================================ */
+let selectedSyms = new Set();
+let photoBlob = null;
+
+function buildSymptoms(){
+  const w = $("#symChips"); w.innerHTML="";
+  SYMPTOMS.forEach(s=>{
+    const c = el("button","chip",s);
+    c.onclick = ()=>{ if(selectedSyms.has(s)){selectedSyms.delete(s);c.classList.remove("on");} else {selectedSyms.add(s);c.classList.add("on");} };
+    w.appendChild(c);
+  });
+}
+$("#photo")?.addEventListener("change", e=>{
+  const f = e.target.files && e.target.files[0];
+  const prev = $("#photoPrev"); prev.innerHTML="";
+  if(!f){ photoBlob=null; $("#photoNote").style.display="none"; return; }
+  photoBlob = f;
+  const img = el("img","thumb"); img.src = URL.createObjectURL(f); prev.appendChild(img);
+  const rm = el("button","chip","✕ ukloni"); rm.onclick=()=>{ photoBlob=null; prev.innerHTML=""; $("#photo").value=""; $("#photoNote").style.display="none"; };
+  prev.appendChild(rm);
+  $("#photoNote").style.display="block";
+});
+
+async function runDiag(){
+  const syms = [...selectedSyms];
+  const free = $("#symText").value.trim();
+  if(syms.length===0 && !free && !photoBlob){
+    $("#diagHint").textContent = "Izaberi bar jedan simptom, napiši nešto ili dodaj sliku.";
+    return;
+  }
+  const sample = await getSample();
+  const box = $("#diagResult");
+  if(!sample){ box.innerHTML = aiUnavailable(); return; }
+
+  const btn = $("#diagBtn"); btn.disabled=true;
+  box.innerHTML = thinkingHTML("Tražim najverovatnije uzroke…");
+
+  // danger pre-check from symptoms
+  const danger = syms.some(s=>DANGER_SYMS.includes(s));
+
+  const prompt = `${AI_RULES}
+
+${carContext()}
+${KB_CONTEXT}
+
+VOZAČ PRIJAVLJUJE:
+- Simptomi: ${syms.length?syms.join(", "):"(nije izabrano)"}
+- Opis: ${free||"(nema)"}
+${photoBlob?"- Priložena je slika (pogledaj je: tabla, dim, curenje ili deo).":""}
+
+Daj najverovatnije uzroke baš za ovaj motor. Odgovori ISKLJUČIVO kao JSON ovog oblika (bez teksta okolo):
+{"uzroci":[{"naziv":"kratak naziv","verovatnoca":"visoka|srednja|niska","objasnjenje":"1-2 jednostavne rečenice","kako_proveriti":"konkretan korak, po mogućstvu bez dijagnostike","tezina":"lako|srednje|teško","cena_min_eur":0,"cena_max_eur":0,"hitnost":"nije hitno|može da čeka|uskoro kod majstora|opasno - ne vozi"}],"sazetak":"jedna rečenica šta prvo da uradi","upozorenje":"prazno ili kratko upozorenje ako je opasno"}
+Poređaj uzroke od najverovatnijeg. Najviše 5. Primer jednog uzroka: {"naziv":"Zapušen EGR ventil","verovatnoca":"visoka","objasnjenje":"EGR se zaprlja čađu pa motor gubi snagu.","kako_proveriti":"Majstor skine i očisti EGR; ili se vidi na dijagnostici.","tezina":"srednje","cena_min_eur":20,"cena_max_eur":200,"hitnost":"može da čeka"}`;
+
+  try{
+    const opts = { modelTier:"default" };
+    if(photoBlob) opts.images = [photoBlob];
+    const data = await sample.json(prompt, opts);
+    renderDiag(data, {syms, free, danger});
+  }catch(e){
+    box.innerHTML = `<div class="card"><div class="small">${sampleErrMsg(e.code)}</div><button class="btn ghost sm" style="margin-top:12px" onclick="runDiag()">Probaj ponovo</button></div>`;
+  }finally{ btn.disabled=false; }
+}
+
+function hitnostClass(h){ h=(h||"").toLowerCase(); if(h.includes("opasno"))return "hitnost-opasno"; if(h.includes("uskoro")||h.includes("hitno"))return "hitnost-hitno"; return "hitnost-ok"; }
+function verBadge(v){ v=(v||"").toLowerCase(); if(v.includes("vis"))return '<span class="badge b-vis">VISOKA</span>'; if(v.includes("sre"))return '<span class="badge b-sre">SREDNJA</span>'; return '<span class="badge b-niz">NISKA</span>'; }
+
+function renderDiag(data, ctx){
+  const box = $("#diagResult");
+  const list = (data && data.uzroci) || [];
+  let html = "";
+
+  const needDanger = ctx.danger || (data.upozorenje && data.upozorenje.trim()) || list.some(u=>(u.hitnost||"").toLowerCase().includes("opasno"));
+  if(needDanger){
+    html += `<div class="danger-banner" style="margin:14px 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div><b>Pažnja — možda je ozbiljno.</b><div class="small" style="color:#ffc9cf;margin-top:3px">${data.upozorenje && data.upozorenje.trim() ? data.upozorenje : "Ako auto kuca, pregreva se ili gubi pritisak ulja — ne vozi ga i pozovi majstora/šlep."}</div></div></div>`;
+  }
+
+  if(data.sazetak) html += `<div class="card hi" style="margin:14px 0 4px"><div class="eyebrow">Prvo uradi</div><div style="margin-top:6px">${esc(data.sazetak)}</div></div>`;
+
+  list.forEach(u=>{
+    const cena = (u.cena_min_eur||u.cena_max_eur) ? `${u.cena_min_eur||"?"}–${u.cena_max_eur||"?"} €` : "zavisi";
+    html += `<div class="cause ${hitnostClass(u.hitnost)}">
+      <h3>${esc(u.naziv||"Mogući uzrok")} ${verBadge(u.verovatnoca)}</h3>
+      <div class="small" style="margin-top:6px">${esc(u.objasnjenje||"")}</div>
+      <div class="how"><b>Kako proveriti:</b> ${esc(u.kako_proveriti||"—")}</div>
+      <div class="meta">
+        <span class="tag">Težina: <b>${esc(u.tezina||"—")}</b></span>
+        <span class="tag">Cena: <b>${cena}</b></span>
+        <span class="tag">${esc(u.hitnost||"—")}</span>
+      </div>
+    </div>`;
+  });
+
+  if(!list.length) html += `<div class="card">Nisam uspeo da izdvojim uzroke. Dodaj još opisa pa probaj ponovo.</div>`;
+
+  // follow-up
+  html += `<div class="card" style="margin-top:16px">
+    <b style="font-family:var(--f-display)">Imaš pitanje?</b>
+    <div class="tiny muted" style="margin:4px 0 10px">Pitaj bilo šta o ovom nalazu, svojim rečima.</div>
+    <div class="chat" id="diagChat"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <input type="text" id="diagQ" placeholder="npr. smem li da vozim do kuće?" style="flex:1">
+      <button class="btn sm" style="width:auto" onclick="askFollow()">Pitaj</button>
+    </div>
+  </div>
+  <div class="notice center" style="margin-top:14px">Ovo je procena, ne konačna dijagnoza. Za siguran nalaz treba dijagnostika ili majstor.</div>`;
+
+  box.innerHTML = html;
+
+  // save to history
+  addHistory({
+    tip:"Dijagnoza po opisu",
+    kad: Date.now(),
+    ulaz: [ctx.syms.join(", "), ctx.free].filter(Boolean).join(" · ") || "slika",
+    rez: list.slice(0,3).map(u=>`${u.naziv} (${u.verovatnoca})`).join(", ")
+  });
+
+  // seed follow-up context
+  followContext = `Prethodni nalaz za ${car.model}: ${list.map(u=>u.naziv+" ("+u.verovatnoca+")").join(", ")}. Simptomi: ${ctx.syms.join(", ")||ctx.free}.`;
+  followTurns = [];
+}
+
+let followContext = "", followTurns = [];
+async function askFollow(){
+  const inp = $("#diagQ"); const q = inp.value.trim(); if(!q) return;
+  const sample = await getSample(); if(!sample) return;
+  const chat = $("#diagChat");
+  chat.appendChild(el("div","bubble me", esc(q)));
+  inp.value="";
+  const ans = el("div","bubble ai"); ans.innerHTML='<span class="thinking"><i></i><i></i><i></i></span>'; chat.appendChild(ans);
+  chat.scrollIntoView({block:"nearest"});
+
+  followTurns.push({role:"user", content:q});
+  const msgs = [{role:"user", content:`${AI_RULES}\n\n${carContext()}\n${followContext}\n\nOdgovaraj kratko i jednostavno.`}, ...followTurns];
+  try{
+    let full="";
+    const r = await sample(msgs, { cache:false, onText:({text})=>{ ans.textContent=text; full=text; } });
+    ans.textContent = r.text; followTurns.push({role:"assistant", content:r.text});
+  }catch(e){ ans.textContent = sampleErrMsg(e.code); }
+}
+
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function thinkingHTML(t){ return `<div class="card"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted" style="margin-left:6px">${t}</span></div>`; }
+function aiUnavailable(){ return `<div class="card"><b style="font-family:var(--f-display)">Pomoć veštačke inteligencije nije dostupna</b><div class="small muted" style="margin-top:8px">Otvori ovu stranicu u Claude aplikaciji i dozvoli korišćenje, da bi radila automatska dijagnoza. U međuvremenu možeš da koristiš „Česti kvarovi“.</div><button class="btn ghost sm" style="margin-top:12px;width:auto" onclick="go('faults')">Vidi česte kvarove</button></div>`; }
+
+/* ============================================================
+   KODOVI
+   ============================================================ */
+function buildCommonCodes(){
+  const w = $("#commonCodes"); w.innerHTML="";
+  CODES.forEach(c=>{
+    const b = el("button","chip",`<span class="codehit">${c.k}</span>`);
+    b.onclick = ()=>{ $("#codeInput").value=c.k; lookupCode(); };
+    w.appendChild(b);
+  });
+}
+async function lookupCode(){
+  const code = $("#codeInput").value.trim().toUpperCase();
+  if(!code) return;
+  const box = $("#codeResult");
+  const known = CODES.find(c=>c.k===code);
+  const sample = await getSample();
+
+  let head = `<div class="card hi"><div class="row" style="justify-content:space-between;align-items:center"><div class="codehit" style="font-size:22px;color:var(--cyan)">${esc(code)}</div>${known?`<span class="badge b-sre">čest kod</span>`:""}</div>${known?`<div class="small" style="margin-top:6px">${esc(known.t)}</div>`:""}</div>`;
+
+  if(!sample){ box.innerHTML = head + aiUnavailable(); go('codes'); return; }
+
+  box.innerHTML = head + thinkingHTML("Objašnjavam kod…");
+  const prompt = `${AI_RULES}
+
+${carContext()}
+
+Objasni kod greške "${code}" za ovaj motor, jednostavno. Koristi ove naslove (markdown):
+### Šta znači
+### Najčešći uzrok baš na ovom motoru
+### Kako da proveriš
+### Koliko je hitno
+### Okvirna cena (u evrima)
+Kratko i jasno.`;
+  try{
+    const ans = el("div","ai md");
+    box.innerHTML = head; box.appendChild(ans);
+    ans.innerHTML='<span class="thinking"><i></i><i></i><i></i></span>';
+    let full="";
+    const r = await sample(prompt,{ modelTier:"default", onText:({text})=>{ full=text; ans.innerHTML=renderMD(text); } });
+    ans.innerHTML = renderMD(r.text);
+    addHistory({tip:"Kod greške", kad:Date.now(), ulaz:code, rez:(known?known.t:"objašnjen")});
+  }catch(e){ box.innerHTML = head + `<div class="card"><div class="small">${sampleErrMsg(e.code)}</div></div>`; }
+}
+
+/* ============================================================
+   ČESTI KVAROVI
+   ============================================================ */
+function buildKB(){
+  const w = $("#kbList"); w.innerHTML="";
+  KB.forEach(k=>{
+    const b = el("button","", `<div class="ic">${k.emoji}</div><div style="flex:1"><b>${k.ime}</b><span>${k.kratko}</span></div><span class="sev small s-${k.sev}" style="font-weight:700">${k.sevTxt}</span>`);
+    b.onclick = ()=>openKB(k);
+    w.appendChild(b);
+  });
+}
+async function openKB(k){
+  openSheet(`<h2>${k.emoji} ${esc(k.ime)}</h2>
+    <div class="small muted">${esc(k.kratko)}</div>
+    <div class="card" style="margin:14px 0"><div class="eyebrow">Znaci</div><div class="small" style="margin-top:6px">${esc(k.znaci)}</div>
+    <div class="divider" style="margin:12px 0"></div><div class="eyebrow">Okvirna cena</div><div class="small" style="margin-top:6px">${esc(k.cena)}</div></div>
+    <div id="kbAI"></div>`);
+  const sample = await getSample();
+  const holder = $("#kbAI");
+  if(!sample){ holder.innerHTML = `<div class="notice">Za detaljnije objašnjenje otvori stranicu u Claude aplikaciji i dozvoli pomoć veštačke inteligencije.</div>`; return; }
+  holder.innerHTML = thinkingHTML("Pišem savet…");
+  const prompt = `${AI_RULES}
+
+${carContext()}
+
+Objasni jednostavno temu "${k.ime}" na ovom motoru. Naslovi (markdown):
+### Šta je to (jednostavno)
+### Kako da prepoznaš da je to
+### Šta možeš sam da proveriš
+### Da li smeš da voziš
+### Savet pre majstora
+Kratko.`;
+  try{
+    const ans = el("div","ai md"); holder.innerHTML=""; holder.appendChild(ans);
+    const r = await sample(prompt,{ modelTier:"default", onText:({text})=>{ ans.innerHTML=renderMD(text); } });
+    ans.innerHTML = renderMD(r.text);
+  }catch(e){ holder.innerHTML = `<div class="small">${sampleErrMsg(e.code)}</div>`; }
+}
+
+/* ============================================================
+   UŽIVO / SIMULATOR
+   ============================================================ */
+let sim = { on:false, scen:"zdrav", gas:0, t:0, vals:{}, timer:null, bt:false };
+function initSimVals(){ for(const k in PARAMS) sim.vals[k]=PARAMS[k].idle; }
+function buildScen(){
+  const w = $("#scenRow"); w.innerHTML="";
+  Object.entries(SCEN).forEach(([id,s])=>{
+    const c = el("button","chip"+(id===sim.scen?" on":""),s.ime);
+    c.onclick = ()=>{ sim.scen=id; buildScen(); };
+    w.appendChild(c);
+  });
+}
+function buildGauges(){
+  const w = $("#gauges"); w.innerHTML="";
+  for(const k in PARAMS){
+    const p = PARAMS[k];
+    const g = el("div","gauge");
+    g.id = "g-"+k;
+    g.innerHTML = `<div class="lbl">${p.lbl}</div>${gaugeSVG(0)}<div class="val" id="v-${k}">–</div>`;
+    w.appendChild(g);
+  }
+}
+function gaugeSVG(frac){
+  // semicircle gauge: track + value arc (length = pi*r)
+  const r=42, cx=50, cy=48, len=Math.PI*r;
+  const off = len*(1-Math.max(0,Math.min(1,frac)));
+  return `<svg viewBox="0 0 100 54" preserveAspectRatio="xMidYMid meet">
+    <path d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="rgba(120,165,255,.16)" stroke-width="7" stroke-linecap="round"/>
+    <path class="arc" d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="url(#gg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+    <defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#2f52ff"/><stop offset="1" stop-color="#27e5ff"/></linearGradient></defs>
+  </svg>`;
+}
+function startSim(){
+  if(sim.timer) return;
+  if(!sim.vals.rpm) initSimVals();
+  buildScen(); buildGauges();
+  sim.on=true;
+  sim.timer = setInterval(simTick, 280);
+  simTick();
+}
+function stopSim(){ if(sim.timer){ clearInterval(sim.timer); sim.timer=null; } }
+
+function simTick(){
+  if(sim.bt) return; // real data path drives gauges itself
+  sim.t++;
+  const g = sim.gas; // 0..1
+  const noise = (a)=> (Math.random()-.5)*a;
+
+  // targets by scenario
+  let rpm = PARAMS.rpm.idle + g*(4200-PARAMS.rpm.idle);
+  let rail = 280 + g*(1250-280);
+  let boost = 1010 + g*(2050-1010);
+  let maf = 14 + g*(62-14);
+  let temp = sim.vals.temp + (88 - sim.vals.temp)*0.05; // warms toward 88
+  let volt = 14.1;
+
+  const s = sim.scen;
+  if(s==="turbina"){ boost = 1010 + g*(1250-1010); maf *= .8; rpm = PARAMS.rpm.idle + g*(3400-PARAMS.rpm.idle); }
+  if(s==="brizg"){ if(g<0.15){ rpm += noise(260); } rail += noise(90); }
+  if(s==="egr"){ maf *= .7; boost = 1010 + g*(1500-1010); }
+  if(s==="rail"){ rail += Math.sin(sim.t/2)*140 + noise(80); if(g>.5) rail*=.8; }
+
+  // ease current -> target
+  const ease=(cur,tgt,k=.25)=> cur + (tgt-cur)*k;
+  sim.vals.rpm   = Math.max(0, ease(sim.vals.rpm, rpm) + noise(18));
+  sim.vals.rail  = Math.max(0, ease(sim.vals.rail, rail));
+  sim.vals.boost = Math.max(900, ease(sim.vals.boost, boost));
+  sim.vals.maf   = Math.max(0, ease(sim.vals.maf, maf) + noise(.6));
+  sim.vals.temp  = temp + noise(.3);
+  sim.vals.volt  = volt + noise(.08) - (sim.vals.rpm<400?1.6:0);
+
+  // gas decays when not holding
+  sim.gas = Math.max(0, sim.gas - 0.08);
+
+  paintGauges();
+}
+function paintGauges(){
+  for(const k in PARAMS){
+    const p=PARAMS[k], v=sim.vals[k];
+    const frac=(v-p.min)/(p.max-p.min);
+    const g=$("#g-"+k); if(!g) continue;
+    const arc=g.querySelector(".arc");
+    if(arc){ const r=42,len=Math.PI*r; arc.setAttribute("stroke-dashoffset",(len*(1-Math.max(0,Math.min(1,frac)))).toFixed(1)); }
+    const dec = (k==="volt")?1:0;
+    $("#v-"+k).innerHTML = `${v.toFixed(dec)} <small>${p.unit}</small>`;
+    // simple alerts
+    let alert=false;
+    if(k==="temp" && v>104) alert=true;
+    if(k==="boost" && sim.scen==="turbina" && sim.gas>.4 && v<1300) alert=true;
+    if(k==="volt" && v<11.8 && sim.vals.rpm>400) alert=true;
+    g.classList.toggle("alert", alert);
+  }
+}
+// gas button (press & hold)
+function bindGas(){
+  const b=$("#gasBtn");
+  const down=e=>{ e.preventDefault(); sim._hold=setInterval(()=>{ sim.gas=Math.min(1,sim.gas+0.14); }, 90); };
+  const up=()=>{ clearInterval(sim._hold); };
+  b.addEventListener("pointerdown",down); b.addEventListener("pointerup",up);
+  b.addEventListener("pointerleave",up); b.addEventListener("pointercancel",up);
+}
+
+async function analyzeLive(){
+  const sample = await getSample();
+  const box = $("#liveResult");
+  if(!sample){ box.innerHTML = aiUnavailable(); return; }
+  const snap = Object.entries(PARAMS).map(([k,p])=>`${p.lbl}: ${sim.vals[k].toFixed(k==="volt"?1:0)} ${p.unit}`).join("; ");
+  box.innerHTML = thinkingHTML("Gledam brojeve…");
+  const prompt = `${AI_RULES}
+
+${carContext()}
+
+Ovo su trenutni brojevi iz ${sim.bt?"auta":"test režima"} (motor ${sim.vals.rpm>400?"radi":"ne radi"}):
+${snap}
+Za poređenje, normalno za ovaj motor: ler ~830 o/min; temp 85–95°C; pritisak goriva u leru ~250–300 bar, pod gasom do ~1400 bar; pritisak turbine u leru ~1000 mbar, pod gasom ~1800–2100 mbar; akumulator 14 V dok radi.
+
+Reci jednostavno: da li nešto odskače i šta to može da znači. Markdown naslovi:
+### Kako izgleda
+### Da li nešto nije u redu
+### Šta dalje
+Kratko.`;
+  try{
+    const ans=el("div","ai md"); box.innerHTML=""; box.appendChild(ans);
+    ans.innerHTML='<span class="thinking"><i></i><i></i><i></i></span>';
+    const r=await sample(prompt,{ modelTier:"default", cache:false, onText:({text})=>{ ans.innerHTML=renderMD(text); } });
+    ans.innerHTML=renderMD(r.text);
+  }catch(e){ box.innerHTML=`<div class="card"><div class="small">${sampleErrMsg(e.code)}</div></div>`; }
+}
+
+/* ---------- Bluetooth (experimental, honest) ---------- */
+async function connectBT(){
+  const note=$("#btNote");
+  if(!("bluetooth" in navigator)){
+    note.innerHTML = `Ovaj telefon/pregledač ne dozvoljava Bluetooth iz aplikacije. Na <b>Android telefonu u Chrome pregledaču</b> ovo može da radi. Na iPhone-u ne radi iz pregledača. Test režim radi svuda.`;
+    return;
+  }
+  note.textContent = "Tražim adapter… izaberi svoj ELM327 iz liste.";
+  try{
+    const dev = await navigator.bluetooth.requestDevice({
+      acceptAllDevices:true,
+      optionalServices:[0xFFF0,0xFFE0,0xFFE5,"0000fff0-0000-1000-8000-00805f9b34fb","6e400001-b5a3-f393-e0a9-e50e24dcca9e"]
+    });
+    note.textContent = `Povezujem se sa „${dev.name||'adapter'}“…`;
+    const srv = await dev.gatt.connect();
+    note.innerHTML = `Povezano sa <b>${esc(dev.name||'adapter')}</b>. Čitanje pravih podataka sa ELM327 adaptera je još u pripremi (eksperimentalno) — mnogi jeftini adapteri rade samo preko klasičnog Bluetooth-a koji pregledač ne podržava. Za sada koristi test režim, a pun rad sa adapterom stiže u sledećoj verziji.`;
+    setStatus("bt");
+  }catch(e){
+    note.innerHTML = `Nije povezano (${esc(e.name||'otkazano')}). To je uredu — najčešće zato što adapter koristi stari Bluetooth koji pregledač ne ume da otvori. Test režim radi normalno.`;
+  }
+}
+
+/* ============================================================
+   ISTORIJA
+   ============================================================ */
+function addHistory(entry){ const h=loadJSON("dd_hist",[]); h.unshift(entry); saveJSON("dd_hist", h.slice(0,50)); }
+function renderHistory(){
+  const h=loadJSON("dd_hist",[]); const w=$("#histList");
+  if(!h.length){ w.innerHTML = `<div class="card center"><div style="font-size:30px">🗂️</div><div class="small muted" style="margin-top:8px">Još nema sačuvanih provera.<br>Kad uradiš dijagnozu, ovde se čuva.</div><button class="btn sm" style="width:auto;margin:14px auto 0" onclick="go('diag')">Uradi prvu proveru</button></div>`; return; }
+  w.innerHTML="";
+  h.forEach((e,i)=>{
+    const d=new Date(e.kad);
+    const c=el("div","card");
+    c.style.marginBottom="10px";
+    c.innerHTML = `<div class="row" style="justify-content:space-between"><b style="font-family:var(--f-display);font-size:14px">${esc(e.tip)}</b><span class="tiny muted">${d.toLocaleDateString('sr-RS')} ${d.toLocaleTimeString('sr-RS',{hour:'2-digit',minute:'2-digit'})}</span></div>
+      <div class="small" style="margin-top:6px"><span class="muted">Uneto:</span> ${esc(e.ulaz||"—")}</div>
+      ${e.rez?`<div class="small" style="margin-top:3px"><span class="muted">Nalaz:</span> ${esc(e.rez)}</div>`:""}`;
+    w.appendChild(c);
+  });
+  const clr=el("button","btn ghost sm","Obriši istoriju"); clr.style.margin="6px auto 0"; clr.onclick=()=>{ saveJSON("dd_hist",[]); renderHistory(); };
+  w.appendChild(clr);
+}
+
+/* ============================================================
+   CAR PROFILE SHEET
+   ============================================================ */
+function openCar(){
+  openSheet(`<h2>Tvoj auto</h2><div class="small muted">Što tačnije uneseš, to je savet precizniji. Ako ne znaš — ostavi kako jeste.</div>
+    <div class="stack" style="margin-top:16px">
+      <label class="fld">Model<input type="text" id="c-model" value="${esc(car.model)}"></label>
+      <label class="fld">Godina<input type="text" id="c-god" value="${esc(car.godina)}"></label>
+      <label class="fld">Snaga (KS) — ako znaš<input type="text" id="c-snaga" value="${esc(car.snaga)}" placeholder="npr. 80 KS ili 100 KS"></label>
+      <label class="fld">Računar motora (ECU) — piše na nalepnici<input type="text" id="c-ecu" value="${esc(car.ecu)}" placeholder="Delphi DDCR ili Siemens SID301"></label>
+      <label class="fld">Kilometraža (nije obavezno)<input type="text" id="c-km" value="${esc(car.km)}" placeholder="npr. 230000"></label>
+      <button class="btn" onclick="saveCar()">Sačuvaj</button>
+    </div>`);
+}
+function saveCar(){
+  car = { model:$("#c-model").value||defaultCar.model, godina:$("#c-god").value||"2004", motor:"K9K",
+    snaga:$("#c-snaga").value||defaultCar.snaga, ecu:$("#c-ecu").value||defaultCar.ecu, km:$("#c-km").value||"" };
+  saveJSON("dd_car", car); closeSheet();
+}
+
+/* ============================================================
+   SHEET + STATUS
+   ============================================================ */
+function openSheet(html){ $("#sheetBody").innerHTML=html; $("#sheetBg").classList.add("open"); $("#sheet").classList.add("open"); }
+function closeSheet(){ $("#sheetBg").classList.remove("open"); $("#sheet").classList.remove("open"); }
+function setStatus(mode){
+  const dot=$("#statusDot"), txt=$("#statusTxt");
+  if(mode==="bt"){ dot.className="dot on"; txt.textContent="Auto povezan"; }
+  else if(mode==="ai"){ dot.className="dot sim"; txt.textContent="AI spreman"; }
+  else { dot.className="dot"; txt.textContent="Test režim"; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildTabs(); buildSymptoms(); buildCommonCodes(); buildKB(); initSimVals(); bindGas();
+// probe AI availability (no prompt shown by use())
+getSample().then(s=>{ if(s) setStatus("ai"); else setStatus("sim"); });
+// code input: enter key
+$("#codeInput").addEventListener("keydown",e=>{ if(e.key==="Enter") lookupCode(); });
+$("#diagQ")?.addEventListener?.("keydown",e=>{}); // (created dynamically; safe no-op)
+document.addEventListener("keydown",e=>{ if(e.key==="Enter" && e.target && e.target.id==="diagQ") askFollow(); });
+</script>
