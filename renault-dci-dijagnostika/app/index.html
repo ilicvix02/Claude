@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b16">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<title>Dizel Doktor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Dijagnostika za Renault Mégane 1.5 dCi za auto-mehaničare: poveži, pokreni proveru, čuj rezultat.">
+<style>
+  /* Dizel Doktor v4 — za auto-mehaničare. Tri koraka, krupno, sa glasom. */
+  :root{
+    color-scheme:dark;
+    --bg:#070b16; --bg-2:#0b1226; --panel:#101a33; --panel-2:#0e1830; --panel-hi:#16233f;
+    --line:rgba(120,165,255,.16); --line-2:rgba(120,165,255,.30);
+    --fg:#f0f5ff; --muted:#a3b4d8; --muted-2:#7488b3;
+    --royal:#2f52ff; --cyan:#27e5ff; --cyan-2:#00bfe6;
+    --grad:linear-gradient(100deg,var(--royal) 0%,var(--cyan) 100%);
+    --grad-soft:linear-gradient(100deg,rgba(47,82,255,.18),rgba(39,229,255,.18));
+    --ok:#2fe0a6; --warn:#ffba45; --bad:#ff6b78; --danger:#ff3b52;
+    --f-display:"Sora",system-ui,sans-serif; --f-body:"Manrope",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+    --maxw:680px; --nav-h:72px; --radius:20px;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(60% 40% at 82% -5%,rgba(39,229,255,.12),transparent 60%),radial-gradient(70% 45% at 0% 0%,rgba(47,82,255,.16),transparent 55%)}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg-2);z-index:60}
+  .app{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;min-height:100%;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px)}
+
+  header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:linear-gradient(var(--bg-2),rgba(11,18,38,.9));backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:10px}
+  .logo{width:40px;height:40px;border-radius:12px;flex:none;background:var(--grad);display:grid;place-items:center;box-shadow:0 0 18px rgba(39,229,255,.5)}
+  .logo svg{width:23px;height:23px}
+  .brand{display:flex;flex-direction:column;line-height:1.12;min-width:0;flex:1}
+  .brand b{font-family:var(--f-display);font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spacer{display:none}
+  .pill{font-size:13px;font-weight:800;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:8px 12px;display:flex;align-items:center;gap:7px;white-space:nowrap;font-family:var(--f-display)}
+  .pill.on{color:#9ff5d6;border-color:rgba(47,224,166,.5);background:rgba(47,224,166,.08)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted-2);flex:none}
+  .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.wait{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .iconbtn{width:46px;height:46px;border-radius:14px;border:1px solid var(--line-2);background:var(--panel);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}
+  .iconbtn svg{width:23px;height:23px} .iconbtn.on{border-color:var(--cyan-2);color:var(--cyan)}
+
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:16px}
+  .screen{display:none} .screen.active{display:block}
+  h1,h2,h3{font-family:var(--f-display);font-weight:800;text-wrap:balance;margin:0}
+  h1.pg{font-size:28px;margin:4px 0 16px}
+  h3{font-size:18px}
+  .eyebrow{font-size:12px;letter-spacing:1.3px;text-transform:uppercase;color:var(--cyan-2);font-weight:800}
+  .muted{color:var(--muted)} .small{font-size:15px} .tiny{font-size:13px} .center{text-align:center}
+  .stack{display:flex;flex-direction:column;gap:14px} .row{display:flex;gap:10px;align-items:center} .wrap{flex-wrap:wrap}
+  .gap{height:16px}
+
+  .btn{appearance:none;border:0;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:18px;border-radius:999px;padding:19px 22px;min-height:62px;display:inline-flex;align-items:center;justify-content:center;gap:11px;color:#041024;background:var(--grad);box-shadow:0 8px 26px rgba(39,120,255,.35);width:100%;transition:transform .12s ease}
+  .btn:active{transform:translateY(1px) scale(.995)} .btn svg{width:23px;height:23px;flex:none}
+  .btn.ghost{background:transparent;color:var(--fg);border:1.5px solid var(--line-2);box-shadow:none} .btn.ghost svg{color:var(--cyan)}
+  .btn.sm{width:auto;min-height:50px;padding:13px 18px;font-size:16px}
+  .btn.big{font-size:22px;min-height:84px;letter-spacing:.6px;border-radius:24px}
+  .btn.danger{background:linear-gradient(100deg,#ff3b52,#ff7a5a);color:#1a0208;box-shadow:0 8px 24px rgba(255,59,82,.28)}
+  .btn[disabled]{opacity:.45;cursor:default}
+  button:focus-visible,.btn:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+  .linkbtn{background:none;border:0;color:var(--cyan);font-family:var(--f-display);font-weight:800;font-size:15.5px;cursor:pointer;padding:8px 0}
+
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:18px}
+  .card.hi{background:var(--panel-hi)}
+  .stepcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:18px}
+  .stephead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .num{width:38px;height:38px;border-radius:50%;background:var(--grad);color:#041024;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:19px;flex:none}
+  .num.done{background:var(--ok)}
+  .stephead h3{font-size:19px} .stephead .opt{font-size:13px;color:var(--muted);font-weight:600}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{border:1.5px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:14px;padding:13px 16px;font-size:16px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:7px;min-height:50px}
+  .chip.on{background:var(--grad);color:#041024;border-color:transparent}
+  .chip.mono{font-family:var(--f-mono)}
+  textarea,input[type=text],input[type=number],input[type=password]{width:100%;background:var(--panel-2);color:var(--fg);border:1.5px solid var(--line-2);border-radius:16px;padding:15px;font-family:var(--f-body);font-size:18px;resize:vertical}
+  textarea:focus,input:focus{outline:3px solid var(--cyan-2);outline-offset:1px;border-color:transparent}
+  label.fld{display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--muted);font-weight:700}
+  .microw{display:flex;gap:10px;align-items:stretch}
+  .mic{width:62px;flex:none;border-radius:16px;border:1.5px solid var(--line-2);background:var(--panel-2);color:var(--cyan);display:grid;place-items:center;cursor:pointer}
+  .mic svg{width:26px;height:26px} .mic.rec{background:rgba(255,59,82,.15);border-color:var(--danger);color:var(--danger);animation:pulse 1s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(255,59,82,.18)}}
+
+  .badge{font-size:11.5px;font-weight:800;letter-spacing:.3px;padding:5px 10px;border-radius:999px;white-space:nowrap}
+  .b-vis{background:rgba(255,59,82,.16);color:#ff93a0} .b-sre{background:rgba(255,186,69,.16);color:#ffcf84} .b-niz{background:rgba(47,224,166,.16);color:#7df0cb}
+  .b-real{background:rgba(47,224,166,.16);color:#7df0cb;border:1px solid rgba(47,224,166,.4)}
+  .b-demo{background:rgba(255,186,69,.14);color:#ffcf84;border:1px solid rgba(255,186,69,.4)}
+  .cause{border:1px solid var(--line);border-left-width:5px;border-radius:16px;background:var(--panel);padding:16px;margin-top:12px}
+  .cause h3{font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .h-opasno{border-left-color:var(--danger)} .h-hitno{border-left-color:var(--warn)} .h-ok{border-left-color:var(--ok)}
+  .tag{font-size:13px;border:1px solid var(--line-2);border-radius:9px;padding:6px 10px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+  .tag b{color:var(--fg)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+  .banner{border-radius:16px;padding:15px 16px;display:flex;gap:12px;align-items:flex-start}
+  .banner svg{width:26px;height:26px;flex:none;margin-top:1px}
+  .banner.danger{border:1px solid rgba(255,59,82,.5);background:rgba(255,59,82,.12)} .banner.danger svg{color:var(--danger)} .banner.danger b{color:#ffb3bc}
+  .banner.warn{border:1px solid rgba(255,186,69,.5);background:rgba(255,186,69,.12)} .banner.warn svg{color:var(--warn)} .banner.warn b{color:#ffd591}
+  .banner.ok{border:1px solid rgba(47,224,166,.45);background:rgba(47,224,166,.10)} .banner.ok svg{color:var(--ok)} .banner.ok b{color:#9ff5d6}
+  .moneynote{margin-top:15px;border:1px dashed var(--line-2);border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted)}
+  .moneynote svg{width:20px;height:20px;color:var(--warn);flex:none;margin-top:1px} .moneynote b{color:var(--fg)}
+
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .gauge{border:1px solid var(--line);border-radius:18px;background:var(--panel-2);padding:13px 12px 10px;text-align:center;min-width:0}
+  .gauge .lbl{font-size:13.5px;color:var(--muted);font-weight:800}
+  .gauge svg{width:100%;height:72px;display:block}
+  .gauge .val{font-family:var(--f-mono);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:-6px}
+  .gauge .val small{font-size:12px;color:var(--muted);font-family:var(--f-body)}
+  .gauge .norm{font-size:11.5px;color:var(--muted-2);margin-top:2px}
+  .gauge.alert{border-color:rgba(255,59,82,.55)} .gauge.alert .val{color:var(--bad)}
+  .gauge.warnv{border-color:rgba(255,186,69,.5)} .gauge.warnv .val{color:var(--warn)}
+
+  .list{display:flex;flex-direction:column;gap:10px}
+  .list>button{display:flex;gap:14px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--fg);padding:16px;cursor:pointer;min-height:70px}
+  .list>button:hover{border-color:var(--line-2);background:var(--panel-hi)}
+  .ic{width:46px;height:46px;border-radius:13px;background:var(--grad-soft);border:1px solid var(--line-2);display:grid;place-items:center;flex:none;font-size:23px}
+  .list b{font-family:var(--f-display);font-size:17px;display:block} .list span.s{font-size:14px;color:var(--muted)}
+  .sev{margin-left:auto;align-self:center;font-weight:800;font-size:13.5px;white-space:nowrap}
+  .s-opasno{color:var(--danger)} .s-visok{color:var(--bad)} .s-srednji{color:var(--warn)} .s-nizak{color:var(--ok)}
+  .chev{margin-left:auto;color:var(--muted-2);font-size:22px}
+
+  details.card>summary{cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:17px;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:30px}
+  details.card>summary::after{content:"▾";color:var(--muted)} details.card[open]>summary::after{content:"▴"}
+  details.card>summary::-webkit-details-marker{display:none}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--line-2);border-radius:999px;background:var(--panel-2)}
+  .seg button{border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-weight:800;font-size:15px;padding:13px;border-radius:999px;cursor:pointer}
+  .seg button.on{background:var(--grad);color:#041024}
+  .kv{width:100%;border-collapse:collapse;font-size:15px}
+  .kv td{padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .kv td:first-child{color:var(--muted);width:55%} .kv td:last-child{font-family:var(--f-mono);font-size:14px}
+  .codebox{font-family:var(--f-mono);font-size:13px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+  .dtc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:14px;padding:13px;background:var(--panel)}
+  .dtc .c{font-family:var(--f-mono);font-weight:700;color:var(--cyan);font-size:17px;min-width:66px}
+  .checkrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .checkrow input{width:24px;height:24px;margin-top:1px;accent-color:#27e5ff;flex:none}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+
+  .sheet-bg{position:fixed;inset:0;background:rgba(2,6,16,.66);backdrop-filter:blur(3px);z-index:80;display:none}
+  .sheet-bg.open{display:block}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:81;max-width:var(--maxw);margin:0 auto;background:var(--bg-2);border:1px solid var(--line-2);border-bottom:0;border-radius:24px 24px 0 0;padding:8px 0 calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);max-height:90vh;display:flex;flex-direction:column}
+  .sheet.open{transform:none}
+  .sheet .grab{width:46px;height:5px;border-radius:5px;background:var(--line-2);margin:6px auto 4px;flex:none}
+  .sheet .sbody{overflow-y:auto;padding:8px max(16px,env(safe-area-inset-left,0px)) 4px}
+  .sheet h2{font-size:22px;margin-bottom:6px}
+  .ai{font-size:16.5px;line-height:1.6;word-wrap:break-word}
+  .ai h3{font-size:18px;margin:16px 0 4px;color:var(--cyan)} .ai ul,.ai ol{padding-left:20px;margin:6px 0} .ai li{margin:4px 0}
+  .ai strong{color:#fff} .ai p{margin:7px 0} .ai code{font-family:var(--f-mono);background:var(--panel-2);padding:1px 5px;border-radius:6px;font-size:14px}
+  .thinking{display:inline-flex;gap:5px;align-items:center;color:var(--muted);font-size:16px}
+  .thinking i{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:blink 1.2s infinite}
+  .thinking i:nth-child(2){animation-delay:.2s} .thinking i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.thinking i,.mic.rec{animation:none}}
+  .notice{font-size:14px;color:var(--muted-2);line-height:1.5}
+
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:var(--maxw);margin:0 auto;background:rgba(9,15,31,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  nav.tabs button{background:none;border:0;cursor:pointer;color:var(--muted-2);padding:11px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px;font-weight:800;font-family:var(--f-display)}
+  nav.tabs button svg{width:27px;height:27px}
+  nav.tabs button.on{color:var(--cyan)} nav.tabs button.on svg{filter:drop-shadow(0 0 6px rgba(39,229,255,.6))}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:90;background:var(--panel-hi);border:1px solid var(--line-2);color:var(--fg);padding:13px 18px;border-radius:999px;font-size:15.5px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:calc(100% - 32px)}
+  a{color:var(--cyan)}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap">
+
+<div class="app">
+  <header class="top">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#041024" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-5h8l2 5h3"/><path d="M5 12v4h14v-4"/><circle cx="8" cy="16" r="1.4" fill="#041024" stroke="none"/><circle cx="16" cy="16" r="1.4" fill="#041024" stroke="none"/></svg></div>
+    <div class="brand"><b>Dizel Doktor</b><span id="hdrCar">Mégane 1.5 dCi · 2004</span></div>
+    <div class="spacer"></div>
+    <div class="pill" id="carPill"><span class="dot" id="carDot"></span><span id="carTxt">Nije povezan</span></div>
+    <button class="iconbtn" id="voiceBtn" onclick="toggleVoice()" aria-label="Glas uključen/isključen"></button>
+  </header>
+
+  <main>
+    <!-- ============ PROVERA (glavni ekran) ============ -->
+    <section class="screen active" id="s-car">
+      <div id="connCard"></div>
+      <div class="gap"></div>
+      <div class="stepcard">
+        <div class="stephead"><div class="num" id="num2">2</div><div><h3>Šta kaže mušterija?</h3><div class="opt">Nije obavezno — dodirni ili izgovori</div></div></div>
+        <div class="chips" id="symChips"></div>
+        <div class="microw" style="margin-top:12px">
+          <textarea id="symText" rows="2" placeholder="npr. gubi snagu na uzbrdici…"></textarea>
+          <button class="mic" id="micBtn" onclick="dictate()" aria-label="Izgovori"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg></button>
+        </div>
+      </div>
+      <div class="gap"></div>
+      <div class="stephead" style="margin:4px 0 10px"><div class="num">3</div><h3>Pokreni</h3></div>
+      <button class="btn big" id="checkBtn" onclick="runCheck()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg><span id="checkLbl">POKRENI PROVERU</span></button>
+      <div class="notice center" id="checkHint" style="margin-top:10px">Sa povezanim autom: AI sam pita auto i kaže ti rezultat naglas.</div>
+      <div id="result" style="margin-top:8px"></div>
+      <div id="afterActions" hidden>
+        <div class="gap"></div>
+        <div class="row wrap" style="gap:10px">
+          <button class="btn ghost sm" style="flex:1" onclick="repeatVoice()">🔊 Ponovi naglas</button>
+          <button class="btn ghost sm" style="flex:1" onclick="openReport()">📄 Izveštaj</button>
+        </div>
+        <div class="row wrap" style="gap:10px;margin-top:10px">
+          <button class="btn ghost sm" style="flex:1" id="clearBtn" onclick="askClear()">🧹 Obriši greške</button>
+          <button class="btn ghost sm" style="flex:1" onclick="runCheck()">🔁 Proveri ponovo</button>
+        </div>
+        <div class="notice center" style="margin-top:8px">Posle popravke: obriši greške, provozaj auto, pa „Proveri ponovo“ — aplikacija pokaže šta je nestalo.</div>
+      </div>
+      <div id="scanPane" hidden>
+        <div class="gap"></div>
+        <details class="card"><summary>Rad motora uživo</summary>
+          <div style="margin-top:14px" class="gauges" id="realGauges"></div>
+          <div class="row wrap" style="gap:8px;margin-top:14px"><button class="btn sm" id="liveBtn" onclick="toggleLive()">Pokreni praćenje</button><button class="btn ghost sm" onclick="saveBaseline()">Zapamti „zdravo“</button><button class="btn ghost sm" onclick="analyzeReal()">AI analiza</button></div>
+          <div class="notice" id="baselineNote" style="margin-top:10px"></div>
+          <div id="realResult" style="margin-top:12px"></div>
+        </details>
+        <div class="gap"></div>
+        <details class="card"><summary>Ručno (za iskusne)</summary>
+          <div style="margin-top:12px" id="dtcBox"><div class="small muted">Još nije očitano.</div></div>
+          <div class="row wrap" style="margin-top:12px;gap:8px"><button class="btn sm" onclick="readDTCs()">Očitaj greške</button><button class="btn ghost sm" onclick="readRenault()">Renault očitavanje (beta)</button></div>
+          <details style="margin-top:12px"><summary class="tiny muted" style="cursor:pointer">Komunikacija sa adapterom</summary><div class="codebox" id="obdLog" style="margin-top:8px"></div></details>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ ŠIFRE ============ -->
+    <section class="screen" id="s-faults">
+      <h1 class="pg">Šifre i lampice</h1>
+      <div class="card" id="codeCard">
+        <h3>Upiši šifru greške</h3>
+        <div class="row" style="margin-top:12px"><input type="text" id="codeInput" placeholder="P0089 ili DF053" style="flex:1;font-family:var(--f-mono)" autocomplete="off" spellcheck="false"><button class="btn sm" onclick="lookupCode()">Objasni</button></div>
+        <div class="chips" id="commonCodes" style="margin-top:12px"></div>
+        <div id="codeResult" style="margin-top:14px"></div>
+      </div>
+      <div class="gap"></div>
+      <div class="card" id="lampCard"><h3>Lampica na tabli</h3><div class="tiny muted" style="margin:4px 0 12px">Dodirni lampicu koja svetli.</div><div class="list" id="lampList"></div></div>
+    </section>
+
+    <!-- ============ VIŠE ============ -->
+    <section class="screen" id="s-more">
+      <h1 class="pg">Više</h1>
+      <div class="list">
+        <button onclick="openCar()"><div class="ic">🚗</div><div style="flex:1;min-width:0"><b id="carName">Renault Mégane II 1.5 dCi</b><span class="s" id="carSub">K9K · 2004</span></div><span class="chev">›</span></button>
+        <button onclick="go('history')"><div class="ic">🗂️</div><div style="flex:1"><b>Istorija provera</b><span class="s">Sve ranije provere</span></div><span class="chev">›</span></button>
+        <button onclick="openReport()"><div class="ic">📄</div><div style="flex:1"><b>Izveštaj</b><span class="s">Za mušteriju ili kolegu</span></div><span class="chev">›</span></button>
+        <button onclick="openSettings()"><div class="ic">⚙️</div><div style="flex:1"><b>Podešavanja</b><span class="s">Glas, AI ključ, USB brzina</span></div><span class="chev">›</span></button>
+        <button onclick="openHelp()"><div class="ic">❓</div><div style="flex:1"><b>Kako se koristi</b><span class="s">Uputstvo u 4 koraka</span></div><span class="chev">›</span></button>
+      </div>
+      <div class="gap"></div>
+      <details class="card"><summary>Fabričke vrednosti (Renault)</summary><div style="overflow-x:auto;margin-top:10px"><table class="kv" id="normTable"></table></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Slabe tačke K9K motora</summary><div class="list" id="kbList" style="margin-top:12px"></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Servisni intervali</summary><div id="intervalList" style="margin-top:10px"></div></details>
+      <div class="gap"></div>
+      <details class="card"><summary>Fabričke akcije (opozivi) 2004</summary><div id="recallList" style="margin-top:10px"></div></details>
+    </section>
+
+    <section class="screen" id="s-history">
+      <button class="linkbtn" onclick="go('more')">‹ Nazad</button>
+      <h1 class="pg">Istorija</h1>
+      <div id="histList"></div>
+    </section>
+  </main>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="sbody" id="sheetBody"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>
+/* =====================================================================
+   DATA — sourced from Renault workshop manuals (MR 364/372, DDCR chapter),
+   owner/club sources and Serbian price research (Oct 2026). See repo notes.
+   ===================================================================== */
+const PUBLIC_URL = "https://ilicvix02.github.io/Claude/renault-dci-dijagnostika/app/";
+const EUR = 117.5; // RSD per EUR (NBS, Oct 2026)
+const LABOR = 3000; // RSD per hour, typical Serbian workshop rate
+
+const defaultCar = { model:"Renault Mégane II 1.5 dCi", godina:"2004", variant:"", motor:"K9K", kw:"", ecu:"Delphi DDCR (najverovatnije)", vin:"" };
+let car = loadJSON("dd_car", defaultCar);
+
+const VARIANTS = {
+  "60": { name:"dCi 80 (82 KS)", code:"K9K 722", turbo:"fiksna turbina (BorgWarner KP35)", rail:"do 1400 bar", ecu:"Delphi DDCR", torque:"185 Nm na 2000 o/min" },
+  "74": { name:"dCi 100 (101 KS)", code:"K9K 728", turbo:"turbina sa promenljivom geometrijom (VGT)", rail:"do 1600 bar", ecu:"Delphi DDCR", torque:"200 Nm na 1900 o/min" },
+};
+
+const SYMPTOMS = ["Gubi snagu","Teško pali","Ne pali uopšte","Trese u leru","Gasi se","Crn dim","Beo dim","Plav dim",
+  "Upaljena lampica motora","Ponovo se upali lampica grejača","Crvena STOP lampica","Veća potrošnja","Kuca / lupa",
+  "Zvižduk / fijuk","Šištanje pod gasom","Curi ulje/tečnost","Pregreva se","Havarijski režim (nema gasa)","Miris nafte","Kartica nije prepoznata"];
+const DANGER_SYMS = ["Kuca / lupa","Pregreva se","Crvena STOP lampica"];
+
+// Renault DF -> P code table for the Delphi DDCR ECU (Renault MR, Vdiag 44)
+const DF = {
+  DF001:["P0115","Senzor temperature motora (rashladne tečnosti)","Ventilator se pali na nisku brzinu kao zaštita. Proveri senzor i kablove (oko 2250 Ω na 25 °C)."],
+  DF003:["P2226","Senzor atmosferskog pritiska (u računaru)","Kvar unutar računara — za stručni servis."],
+  DF005:["P0335","Senzor obrtaja radilice","Motor može da se ugasi i ne upali. Senzor ~760 Ω; proveri zupčanik i konektor."],
+  DF007:["P0190","Senzor pritiska goriva (rail)","Motor se gasi i ne pali. Prvo reši DF113 ako postoji."],
+  DF008:["P0225","Papučica gasa — staza 1","Motor drži više od 1000 o/min (zaštitni režim)."],
+  DF009:["P2120","Papučica gasa — staza 2","Sa DF008 zajedno motor drži 1300 o/min."],
+  DF010:["P0409","Senzor položaja EGR ventila","Proveri konektor EGR-a i kablove."],
+  DF014:["P0500","Brzina vozila (sa ABS-a preko mreže)","Proveri ABS i mrežu (CAN)."],
+  DF015:["P0685","Glavni relej (u kutiji osigurača UPC)","Proveri osigurač 30 A."],
+  DF016:["P0403","Upravljanje EGR ventilom","Nemiran rad, gašenje, teško paljenje na hladno."],
+  DF017:["P0382","Upravljanje grejačima","Grejači mogu ostati stalno uključeni."],
+  DF024:["P0231","Ventil dovoda goriva na pumpi (IMV)","Ventil ~5,3 Ω. Može da ugasi motor."],
+  DF025:["P0380","Veza sa kutijom grejača","Proveri grejače (manje od 1 Ω svaki)."],
+  DF026:["P0201","Brizgaljka 1 — strujno kolo","Kablovi/konektor brizgaljke 1, ili brizgaljka."],
+  DF027:["P0202","Brizgaljka 2 — strujno kolo","Kablovi/konektor brizgaljke 2, ili brizgaljka."],
+  DF028:["P0203","Brizgaljka 3 — strujno kolo","Kablovi/konektor brizgaljke 3, ili brizgaljka."],
+  DF029:["P0204","Brizgaljka 4 — strujno kolo","Kablovi/konektor brizgaljke 4, ili brizgaljka."],
+  DF037:["P0513","Imobilajzer (kartica)","Problem kartice/UCH — auto možda neće da upali."],
+  DF038:["P0606","Računar motora","Može značiti da kodovi brizgaljki (C2I) nisu upisani, ili smetnje na kablovima brizgaljki."],
+  DF039:["P0110","Senzor temperature usisnog vazduha","Proveri senzor i konektor."],
+  DF047:["P0560","Napon napajanja računara","Napuni/proveri akumulator (ispod 10 V)."],
+  DF049:["P0530","Senzor pritiska klime","Javlja se samo kad radi klima."],
+  DF050:["P0571","Prekidač kočnice","Proveri prekidač na papučici kočnice."],
+  DF051:["P0575","Tempomat / limiter","Proveri komande tempomata."],
+  DF052:["P0200","Upravljanje brizgaljkama (zajedničko)","Motor se gasi. Majstor isključuje brizgaljke jednu po jednu."],
+  DF053:["P0089","Regulacija pritiska goriva u railu","Najčešće: pumpa/IMV ventil, prljav filter, vazduh u gorivu, malo goriva. Ozbiljno — pogledaj test pumpe."],
+  DF057:["P2264","Senzor vode u nafti","Proveri/ispusti vodu iz filtera goriva."],
+  DF059:["P0301","Loše sagorevanje — cilindar 1","Brizgaljka, kompresija, ventili."],
+  DF060:["P0302","Loše sagorevanje — cilindar 2","Brizgaljka, kompresija, ventili."],
+  DF061:["P0303","Loše sagorevanje — cilindar 3","Brizgaljka, kompresija, ventili."],
+  DF062:["P0304","Loše sagorevanje — cilindar 4","Brizgaljka, kompresija, ventili."],
+  DF089:["P0235","Senzor pritiska turbine (u usisnoj grani)","Proveri senzor, konektor i creva."],
+  DF098:["P0180","Senzor temperature goriva","Proveri senzor i konektor."],
+  DF107:["P0604","Memorija računara","Za stručni servis."],
+  DF112:["P0340","Senzor bregaste osovine","Proveri senzor i konektor."],
+  DF113:["P0608","Napajanje senzora","Rešava se PRE DF007/DF008 — zajednički kabl senzora."],
+  DF114:["P0400","EGR elektroventil — kolo","Proveri EGR i kablove."],
+  DF116:["C001","Mreža (CAN)","Komunikacija između računara."],
+  DF121:["P0325","Senzor detonacije (akcelerometar)","Proveri senzor i konektor."],
+  DF122:["P0609","Napajanje papučice gasa (staza 2)","Proveri kablove papučice."],
+  DF130:["P0087","Premali pritisak goriva","Pumpa ne daje dovoljno: filter, vazduh, IMV ventil, pumpa."],
+};
+// Common generic codes not covered above
+const PEXTRA = {
+  P0088:"Previsok pritisak goriva", P0093:"Curenje goriva (veliko)", P0101:"Merač protoka vazduha van opsega",
+  P0234:"Previsok pritisak turbine", P0299:"Premali pritisak turbine", P0401:"Slab protok EGR-a (zapušen EGR)",
+  P0045:"Aktuator turbine — kolo (DCM1.2)", P2263:"Komanda turbine (DCM1.2)", P0670:"Grejači — kolo upravljanja",
+};
+const P2DF = {}; for(const k in DF){ P2DF[DF[k][0]] = k; }
+
+const KB = [
+  { emoji:"⚠️", ime:"Ležajevi radilice („posteljica“)", kratko:"Najozbiljniji kvar ovog motora.", sev:"opasno", sevTxt:"Opasno",
+    znaci:"Metalno kucanje iz motora, pali se lampica za ulje. Najčešće između 90.000 i 200.000 km. Ako kuca — NE VOZI.",
+    uzrok:"Staro ili pogrešno ulje i predugi intervali zamene (fabrički 20–30.000 km).",
+    prevencija:"Menjaj ulje na 10.000 km, specifikacija Renault RN0710 (5W-40).",
+    cena:"Popravka ~41.000–50.000 din (350–430 €); polovan motor od ~23.500 din (200 €).", rad:"10–14 h" },
+  { emoji:"⛽", ime:"Pumpa visokog pritiska (Delphi)", kratko:"Troši se i baca metalne opiljke.", sev:"visok", sevTxt:"Skupo",
+    znaci:"Teško paljenje, gašenje, pad snage, šifra DF053/DF130. Pumpe 2001–2005 su posebno sklone kvaru.",
+    uzrok:"Habanje; voda i prljavština u gorivu. Opiljci uništavaju i brizgaljke („pumpa je uzrok, a ne dizne“).",
+    prevencija:"Filter goriva na 30.000 km, kvalitetna nafta.",
+    cena:"Remont ~42.000 din (~360 €); polovna 7.000–17.500 din (60–150 €). Ako ima opiljaka — menja se ceo sistem.", rad:"3–5 h" },
+  { emoji:"💉", ime:"Brizgaljke (Delphi)", kratko:"Propuštaju ili se zaprljaju.", sev:"visok", sevTxt:"Čest",
+    znaci:"Teško paljenje ujutru, trzanje u leru, crn dim, kuckanje, crne naslage oko brizgaljke (pukla podloška).",
+    uzrok:"Habanje, prljavo gorivo, opiljci iz pumpe.",
+    prevencija:"Filter goriva na vreme; nove bakarne podloške pri svakom skidanju.",
+    cena:"Popravka/test od 4.000 din po komadu; nova ~22.000–23.500 din (190–200 €); polovan set 3.000–8.000 din.", rad:"1–3 h" },
+  { emoji:"♻️", ime:"EGR ventil", kratko:"Zapuši se čađu (gradska vožnja).", sev:"srednji", sevTxt:"Srednje",
+    znaci:"Gubitak snage, crn dim, nemiran ler, šifre DF016/DF010/P0401.",
+    uzrok:"Čađ, kratke gradske vožnje.", prevencija:"Povremeno duža vožnja autoputem.",
+    cena:"Čišćenje ~3.000–6.000 din; polovan ~2.500 din; nov (Pierburg) ~53.000 din.", rad:"1–2 h" },
+  { emoji:"🌀", ime:"Turbina", kratko:"Troši se zbog ulja.", sev:"srednji", sevTxt:"Srednje",
+    znaci:"Gubitak snage, plav/crn dim, fijuk, havarijski režim.",
+    uzrok:"Staro ulje, nedostatak podmazivanja, kvar aktuatora.", prevencija:"Redovno ulje; ne gasi motor odmah posle jake vožnje.",
+    cena:"Popravka od ~26.000 din (220 €); regenerisana ~21.000 din; polovna 7.000–16.500 din.", rad:"3–4 h" },
+  { emoji:"🔗", ime:"Crevo turbine / interkuler", kratko:"Pukne ili spadne — nagli gubitak snage.", sev:"nizak", sevTxt:"Jeftino",
+    znaci:"Iznenadni gubitak snage, šištanje pod gasom, ulje oko spojeva.", uzrok:"Starost gume, stezaljke.", prevencija:"Pogledaj creva pri svakom servisu.",
+    cena:"Crevo 2.800–6.000 din.", rad:"0,5–1 h" },
+  { emoji:"🔥", ime:"Grejači", kratko:"Otežavaju paljenje na hladno.", sev:"nizak", sevTxt:"Sitno",
+    znaci:"Teško paljenje ujutru, beo dim na hladno, šifre DF017/DF025.", uzrok:"Habanje.", prevencija:"Zamena celog kompleta odjednom.",
+    cena:"~1.050 din po komadu (4 kom ≈ 4.200 din).", rad:"1 h" },
+  { emoji:"📟", ime:"Senzor pritiska goriva", kratko:"Pogrešno javlja pritisak.", sev:"srednji", sevTxt:"Srednje",
+    znaci:"Gašenje, ne pali, šifra DF007.", uzrok:"Kvar senzora ili napajanja (DF113).", prevencija:"—",
+    cena:"~5.000–9.500 din.", rad:"0,5–1 h" },
+  { emoji:"🔑", ime:"Kartica / čitač / brava volana", kratko:"Auto ne prepoznaje karticu.", sev:"srednji", sevTxt:"Srednje",
+    znaci:"„Kartica nije prepoznata“, auto neće da upali, volan ostaje zaključan.",
+    uzrok:"Najčešće pukao lem na kalemu u samoj kartici; ređe čitač ili brava volana.", prevencija:"Čuvaj karticu od savijanja.",
+    cena:"Popravka kartice ~4.700–5.900 din (40–50 €); nova kartica sa kodiranjem ~6.500 din (55 €).", rad:"—" },
+  { emoji:"⚙️", ime:"Kvačilo i zamajac", kratko:"Dvomaseni zamajac može da lupka.", sev:"srednji", sevTxt:"Srednje",
+    znaci:"Lupkanje pri paljenju/gašenju, vibracije u leru, kvačilo „hvata visoko“.", uzrok:"Habanje.", prevencija:"Ne vozi u previsokoj brzini na niskim obrtajima.",
+    cena:"Komplet kvačila 7.800–16.300 din; dvomaseni zamajac ~21.200 din.", rad:"4–6 h" },
+  { emoji:"⏱️", ime:"Kaiš razvoda", kratko:"Ako pukne — lom motora.", sev:"visok", sevTxt:"Preventiva",
+    znaci:"Nema znakova dok ne pukne. Menja se po kilometraži/godinama.", uzrok:"Starost.", prevencija:"Komplet + vodena pumpa na 120.000 km ili 5 godina.",
+    cena:"Komplet Bosch ~8.800 din; sa pumpom ~10.000 din.", rad:"3–4 h" },
+];
+
+const LAMPS = [
+  { emoji:"🟠", ime:"Lampica grejača (spirala)", txt:"Normalno: upali se kad okreneš kontakt i ugasi pre paljenja. Ako se <b>ponovo upali tokom vožnje</b>, to je manji kvar u sistemu ubrizgavanja — možeš polako do majstora i očitavanja grešaka.", sev:"srednji" },
+  { emoji:"🔴", ime:"Crvena STOP lampica", txt:"<b>Ozbiljan kvar.</b> Stani na bezbedno mesto i ugasi motor. Kod ovog motora ubrizgavanje može samo da se isključi posle par sekundi.", sev:"opasno" },
+  { emoji:"🛢️", ime:"Lampica ulja (crvena kantica)", txt:"<b>Stani odmah i ugasi motor.</b> Proveri nivo ulja. Kod 1.5 dCi pad pritiska ulja može značiti kvar ležajeva — dalja vožnja uništava motor. Normalno: 1,2 bar u leru, 3,5 bar na 3000 o/min.", sev:"opasno" },
+  { emoji:"🌡️", ime:"Temperatura motora", txt:"<b>Pregrevanje — stani i ugasi motor.</b> Ne otvaraj čep hladnjaka dok je vruće. Ventilator treba da se pali oko 96 °C (brzo na 104 °C).", sev:"opasno" },
+  { emoji:"🟧", ime:"Lampica motora / „Check injection“", txt:"Kvar u ubrizgavanju ili izduvu. Vozi mirno i očitaj greške što pre. Ako je i snaga slaba — auto je u havarijskom režimu.", sev:"srednji" },
+  { emoji:"🔋", ime:"Akumulator / „Batterie à recharger“", txt:"Napon pao ispod ~12,1 V. Proveri akumulator, kleme i alternator. Slab napon izaziva čudne električne greške.", sev:"srednji" },
+  { emoji:"💺", ime:"Airbag", txt:"Najčešće: sat-opruga u volanu ili konektori ispod prednjih sedišta. Vazdušni jastuci možda neće raditi — popravi što pre.", sev:"srednji" },
+  { emoji:"🅰️", ime:"ABS / ESP", txt:"Najčešće senzor točka (razmak 0,1–1,2 mm) ili konektor zadnjih senzora ispod levog prednjeg sedišta. Kočnice rade, ali bez ABS-a.", sev:"srednji" },
+  { emoji:"🔑", ime:"„Kartica nije prepoznata“", txt:"Najčešće pukao lem na kalemu u kartici (popravka 40–50 €). Probaj rezervnu karticu i zameni bateriju.", sev:"nizak" },
+  { emoji:"🎡", ime:"Servo volana", txt:"Električni servo — volan može postati težak. Proveri akumulator; ako ostane, servis.", sev:"srednji" },
+];
+
+const NORMS = [
+  ["Obrtaji u leru (topao motor)","~805 o/min (hladan ~900)"],
+  ["Pritisak goriva u leru (topao)","~230 bar (hladan ~260)"],
+  ["Ciljni pritisak pri paljenju","~375 bar"],
+  ["Minimalni obrtaji elektropokretača","200 o/min"],
+  ["Test pumpe (brizgaljke isključene, 5 s vrćenja)","više od 1050 bar"],
+  ["Povratno curenje brizgaljke (toplo)","najviše 35 ml"],
+  ["Pritisak ulja (topao motor)","1,2 bar u leru · 3,5 bar na 3000"],
+  ["Pritisak u usisu u leru","jednak atmosferskom (~1000 mbar)"],
+  ["EGR u leru","~20 % otvoren"],
+  ["Ventilator hladnjaka","~96 °C (sporo) · ~104 °C (brzo)"],
+  ["Napon dok motor radi","13–14,5 V"],
+  ["Ulje","Renault RN0710, 5W-40, ~4,5 L"],
+  ["Ulje menjača JR5","Tranself TRJ 75W-80, ~2,5 L"],
+];
+
+const MAINT = [
+  { id:"oil", ime:"Ulje i filter ulja", km:10000, god:1, txt:"Najvažnije za ovaj motor (štiti ležajeve i turbinu). Fabrički je bilo 20.000 km — preporuka je 10.000.", cena:"ulje ~4.300–5.000 din + filter" },
+  { id:"fuel", ime:"Filter goriva", km:30000, god:2, txt:"Štiti Delphi pumpu i brizgaljke od vode i prljavštine.", cena:"~1.000–2.000 din" },
+  { id:"air", ime:"Filter vazduha", km:30000, god:2, txt:"Prljav filter = slabija snaga i više dima.", cena:"~800–1.500 din" },
+  { id:"cabin", ime:"Filter kabine (polen)", km:15000, god:1, txt:"Za čist vazduh i rad ventilacije.", cena:"~700–1.200 din" },
+  { id:"belt", ime:"Kaiš razvoda + vodena pumpa", km:120000, god:5, txt:"Ako pukne — lom motora. Kasnije je Renault produžio na 160.000 km / 6 god., ali sigurnije je ranije.", cena:"komplet ~10.000 din + rad 3–4 h" },
+  { id:"aux", ime:"Pomoćni kaiš (alternator)", km:120000, god:4, txt:"Pogoni alternator i klimu.", cena:"~2.000–4.000 din" },
+  { id:"coolant", ime:"Antifriz (Renault tip D)", km:0, god:4, txt:"Štiti od korozije i smrzavanja.", cena:"~1.500–3.000 din" },
+  { id:"brake", ime:"Kočiona tečnost (DOT 4)", km:0, god:2, txt:"Upija vlagu — slabije kočenje.", cena:"~1.000–2.000 din" },
+  { id:"glow", ime:"Grejači (provera)", km:100000, god:0, txt:"Proveri ako auto teško pali ujutru.", cena:"~4.200 din komplet" },
+];
+
+const CHECKS = [
+  { emoji:"💨", ime:"Boja dima iz auspuha", steps:["Zagrej motor.","Neko neka da gas do ~3000 o/min dok ti gledaš auspuh sa strane (ne stoj iza).","Uporedi boju sa listom ispod."],
+    res:[["Crn dim","Previše goriva ili malo vazduha: zapušen EGR, puklo crevo turbine, prljav filter vazduha, brizgaljke."],["Plav dim","Gori ulje: turbina (zaptivke) ili habanje motora."],["Beo dim samo na hladno","Grejači ili brizgaljke — obično ne mnogo ozbiljno."],["Beo dim i na toplo, sladak miris","Antifriz u cilindru (dihtung glave) — ozbiljno, ne vozi."],["Nema vidljivog dima","Dobro."]] },
+  { emoji:"🛢️", ime:"Ulje na šipki", steps:["Auto na ravnom, motor ugašen 5 minuta.","Izvuci šipku, obriši, vrati, izvuci ponovo.","Pogledaj nivo, boju i pomiriši."],
+    res:[["Između MIN i MAX, smeđe/crno","Normalno."],["Ispod MIN","Dolij ulje (RN0710 5W-40) i prati potrošnju."],["Iznad MAX i miriše na naftu","Nafta u ulju — brizgaljka/sistem. Ne vozi daleko; ulje gubi zaštitu."],["Metalni sjaj / opiljci","Moguć kvar ležajeva. NE VOZI — šlep do majstora."],["Bela pena kao majonez","Voda/antifriz u ulju — ozbiljno."]] },
+  { emoji:"🔗", ime:"Creva turbine", steps:["Ugasi motor i sačekaj da se ohladi.","Pogledaj debela creva od turbine do interkulera i usisa.","Opipaj spojeve — da li je nešto masno, pukli ili labavo."],
+    res:[["Ulje/masno oko spoja","Curenje vazduha pod pritiskom — gubitak snage, dim."],["Pukotina ili spalo crevo","Uzrok naglog gubitka snage. Jeftina popravka."],["Sve suvo i čvrsto","Dobro."]] },
+  { emoji:"🔋", ime:"Akumulator (multimetar)", steps:["Multimetar na 20 V DC.","Merenje na klemama kad je motor ugašen (bar 1 h).","Pa merenje dok motor radi."],
+    res:[["Ugašen: 12,4 V ili više","Akumulator dobar."],["Ugašen: 12,0–12,4 V","Slab — napuni ga."],["Ugašen: ispod 12,0 V","Prazan ili pokvaren."],["Radi: 13,5–14,5 V","Alternator dobar."],["Radi: ispod 13 V ili preko 14,8 V","Problem sa punjenjem (alternator)."]] },
+  { emoji:"🔧", ime:"Testovi za majstora (pokaži mu)", steps:["Povratno curenje brizgaljki (toplo): najviše 35 ml po brizgaljci.","Test pumpe: sa isključenim brizgaljkama, 5 s vrćenja treba da da više od 1050 bar.","Ako ima metalnih opiljaka u filteru goriva — Renault propisuje zamenu celog sistema ubrizgavanja.","Pritisak ulja: 1,2 bar u leru, 3,5 bar na 3000 o/min (topao motor)."],
+    res:[] },
+];
+
+const RECALLS = [
+  ["Kočiona papučica (sistem za sklapanje)","proizvedeni 1. 9. 2002 – 12. 2. 2004"],
+  ["Prednja kočiona creva preblizu diska","proizvedeni 20. 3. 2003 – 20. 4. 2004"],
+  ["Varovi naslona prednjih sedišta","proizvedeni septembar–oktobar 2003"],
+  ["Napuknut nosač prednjeg desnog točka","proizvedeni 14. 4. – 5. 5. 2004"],
+  ["Zadnji spojler (Grand Tour)","proizvedeni 2003–2009"],
+];
+
+/* ===================================================================== HELPERS */
+function loadJSON(k,fb){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):clone(fb);}catch(e){ return clone(fb);} }
+function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function md(t){ try{ return DOMPurify.sanitize(marked.parse(t||"",{breaks:true})); }catch(e){ return esc(t); } }
+function rsd(n){ return Math.round(n).toLocaleString('sr-RS')+" din"; }
+function toast(t){ const d=el("div","toast",esc(t)); document.body.appendChild(d); setTimeout(()=>d.remove(),2600); }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const SVG_WARN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+const SVG_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const MONEY_NOTE=`<div class="moneynote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><div>Ovo je <b>procena</b> — ne konačna dijagnoza. <b>Pre nego što kupiš deo ili platiš popravku, neka majstor potvrdi.</b></div></div>`;
+function thinking(t){ return `<div class="card"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted" style="margin-left:6px">${t}</span></div>`; }
+
+/* ===================================================================== AI
+   Two backends: (1) the viewer's Claude account via the artifact `sample`
+   capability; (2) standalone: the user's own Anthropic API key, raw HTTP
+   from the browser (no build step, so no SDK bundle). */
+const AI = {
+  mode:null, s:null,
+  async init(){
+    let s=null; try{ s = window.claude?.use ? await window.claude.use("sample") : null; }catch(e){}
+    if(s){ this.mode="claude"; this.s=s; }
+    else if(getKey()){ this.mode="api"; }
+    else this.mode=null;
+    setAIPill();
+  },
+  ready(){ return !!this.mode; },
+  async text(input,{images,onText,chat}={}){
+    if(this.mode==="claude"){
+      const opts={ modelTier:"default" }; if(images&&images.length) opts.images=images; if(onText) opts.onText=({text})=>onText(text); if(chat) opts.cache=false;
+      const r=await this.s(input,opts); return r.text;
+    }
+    if(this.mode==="api") return apiCall(input,images,onText);
+    throw {code:"no_ai"};
+  },
+  async json(prompt,{images}={}){
+    if(this.mode==="claude"){ const opts={modelTier:"default"}; if(images&&images.length) opts.images=images; return await this.s.json(prompt,opts); }
+    const t=await this.text(prompt+"\n\nOdgovori SAMO JSON-om.",{images});
+    return parseLooseJSON(t);
+  }
+};
+function getKey(){ try{ return localStorage.getItem("dd_key")||""; }catch(e){ return ""; } }
+function parseLooseJSON(t){
+  try{ return JSON.parse(t); }catch(e){}
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(f){ try{ return JSON.parse(f[1]); }catch(e){} }
+  const a=t.indexOf("{"), b=t.lastIndexOf("}"); if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)); }catch(e){} }
+  throw {code:"invalid_json"};
+}
+async function blobToB64(b){ return await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(b); }); }
+async function apiCall(input,images,onText){
+  const msgs = typeof input==="string" ? [{role:"user",content:input}] : input;
+  const messages = [];
+  for(let i=0;i<msgs.length;i++){
+    const m=msgs[i]; const last = i===msgs.length-1;
+    if(last && m.role==="user" && images && images.length){
+      const content=[];
+      for(const im of images){ content.push({type:"image",source:{type:"base64",media_type:im.type||"image/jpeg",data:await blobToB64(im)}}); }
+      content.push({type:"text",text:m.content}); messages.push({role:"user",content});
+    } else messages.push({role:m.role,content:m.content});
+  }
+  // merge consecutive same-role turns
+  const merged=[]; for(const m of messages){ const p=merged[merged.length-1]; if(p&&p.role===m.role&&typeof p.content==="string"&&typeof m.content==="string"){ p.content+="\n\n"+m.content; } else merged.push(m); }
+  const res = await fetch("https://api.anthropic.com/v1/messages",{ method:"POST",
+    headers:{ "content-type":"application/json","x-api-key":getKey(),"anthropic-version":"2026-10-21",
+      "anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true" },
+    body: JSON.stringify({ model:"claude-opus-5-5", max_tokens:16000, output_config:{effort:"medium"}, fallbacks:"default", messages:merged }) });
+  if(!res.ok){ const code = res.status===401?"bad_key":res.status===429?"rate_limited":"upstream_error"; throw {code}; }
+  const data = await res.json();
+  if(data.stop_reason==="refusal") throw {code:"refused"};
+  const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  if(!text) throw {code:"empty_completion"};
+  if(onText) onText(text);
+  return text;
+}
+function aiErr(code){
+  const m={ not_granted:"Da bi radila veštačka inteligencija, dozvoli je kad te pita (osveži stranicu).", sampling_disabled:"AI nije dostupan na ovom nalogu.",
+    rate_limited:"Previše pitanja odjednom. Sačekaj malo pa probaj ponovo.", invalid_json:"Odgovor nije stigao u dobrom obliku. Probaj ponovo.",
+    refused:"Ne mogu da odgovorim na ovo. Preformuliši.", empty_completion:"Nema odgovora. Dodaj više detalja.", prompt_too_large:"Previše teksta. Skrati.",
+    bad_key:"API ključ nije ispravan. Proveri ga u Podešavanjima.", no_ai:"AI nije uključen. Otvori u Claude aplikaciji ili unesi API ključ u Podešavanjima.",
+    upstream_error:"Trenutni problem sa vezom. Probaj ponovo." };
+  return m[code]||"Nešto nije u redu. Probaj ponovo.";
+}
+function aiOff(){ return `<div class="card"><h3>Veštačka inteligencija nije uključena</h3><div class="small muted" style="margin-top:8px">U Claude aplikaciji: dozvoli je kad te pita. Van nje: unesi svoj API ključ u Podešavanjima. Sve ostalo (šifre, lampice, servis, očitavanje) radi i bez nje.</div><button class="btn ghost sm" style="margin-top:12px" onclick="openSettings()">Podešavanja</button></div>`; }
+
+function carCtx(){
+  const v=VARIANTS[car.kw];
+  return `AUTO: ${car.model}, ${car.godina}. ${v?`Verzija ${v.name}, motor ${v.code}, ${v.turbo}, ubrizgavanje ${v.rail}, ${v.ecu}.`:"Verzija nepoznata (dCi 80 K9K 722 ili dCi 100 K9K 728)."} ${car.ecu?`Računar: ${car.ecu}.`:""} ${getMaint().km?`Kilometraža: ${getMaint().km} km.`:""}`;
+}
+const KB_CTX = "SLABE TAČKE: " + KB.map(k=>`${k.ime}: ${k.znaci}`).join(" | ");
+const NORM_CTX = "FABRIČKE VREDNOSTI (Renault, Delphi): " + NORMS.map(n=>`${n[0]}: ${n[1]}`).join("; ");
+function scanCtx(){
+  const s=loadJSON("dd_scan",null); if(!s) return "";
+  return `POSLEDNJE PRAVO OČITAVANJE IZ AUTA (${new Date(s.kad).toLocaleDateString('sr-RS')}): kodovi: ${s.codes&&s.codes.length?s.codes.join(", "):"nema"}; na čekanju: ${s.pending&&s.pending.length?s.pending.join(", "):"nema"}${s.mil!=null?`; lampica motora: ${s.mil?"upaljena":"ugašena"}`:""}.`;
+}
+
+
+/* ===================================================================== v4: mechanic tone + Serbian voice */
+const AI_RULES = `Pričaš sa auto-mehaničarom u Srbiji, kao iskusan kolega specijalista za Renault 1.5 dCi (K9K, Delphi). Srpski, latinica. Kratko i praktično: konkretni koraci provere, vrednosti i redosled od najjeftinijeg. Stručni izrazi su OK (rail, IMV, EGR, DF kodovi, povratno curenje), bez objašnjavanja osnova. Rečenice kratke jer se tekst čita naglas. Nikad ne tvrdiš 100% — daj najverovatnije. Upozori ako je opasno. Cene u dinarima (1 € = 117,5 din; norma sat ~3.000 din). Koristi samo podatke koje dobiješ, ne izmišljaj vrednosti.`;
+function setAIPill(){}
+const MECH_SYMPTOMS=["Gubi snagu","Teško pali","Ne pali","Trese u leru","Gasi se","Crn dim","Beo dim","Plav dim","Lampica motora","Kuca","Zviždi turbina","Havarijski režim"];
+let selected=new Set(), lastSpoken="";
+
+// Text-to-speech (works inside the artifact) + speech-to-text (needs a page with mic access)
+const Voice={
+  on:loadJSON("dd_voice",true), voice:null,
+  pick(){ try{ const vs=speechSynthesis.getVoices(); this.voice=vs.find(v=>/^sr/i.test(v.lang))||vs.find(v=>/^hr/i.test(v.lang))||vs.find(v=>/^bs/i.test(v.lang))||null; }catch(e){} },
+  say(t){
+    return new Promise(res=>{
+      if(!this.on||!("speechSynthesis" in window)) return res();
+      const clean=plain(t).slice(0,700); if(!clean) return res();
+      try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(clean); u.lang=this.voice?this.voice.lang:"sr-RS"; if(this.voice) u.voice=this.voice; u.rate=1;
+        u.onend=()=>res(); u.onerror=()=>res(); speechSynthesis.speak(u); setTimeout(res,Math.min(30000,clean.length*90)); }catch(e){ res(); }
+    });
+  },
+  stop(){ try{ speechSynthesis.cancel(); }catch(e){} }
+};
+if("speechSynthesis" in window){ Voice.pick(); try{ speechSynthesis.onvoiceschanged=()=>Voice.pick(); }catch(e){} }
+function plain(t){ return String(t||"").replace(/<[^>]+>/g," ").replace(/[#*_`>|]/g," ")
+  .replace(/\b([PCBU])(\d)(\d)(\d)(\d)\b/g,"$1 $2 $3 $4 $5").replace(/\bDF0*(\d+)/g,"D F $1")
+  .replace(/o\/min/g,"obrtaja").replace(/°C/g," stepeni").replace(/\bbar\b/g,"bara").replace(/\bdin\b/g,"dinara").replace(/±/g,"plus minus ")
+  .replace(/\s+/g," ").trim(); }
+function renderVoiceBtn(){ const b=$("#voiceBtn"); if(!b) return; b.classList.toggle("on",Voice.on);
+  b.innerHTML=Voice.on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>'; }
+function toggleVoice(){ Voice.on=!Voice.on; saveJSON("dd_voice",Voice.on); renderVoiceBtn(); if(Voice.on) Voice.say("Glas je uključen."); else Voice.stop(); toast(Voice.on?"Glas uključen":"Glas isključen"); }
+function repeatVoice(){ if(!Voice.on){ Voice.on=true; saveJSON("dd_voice",true); renderVoiceBtn(); } Voice.say(lastSpoken||"Nema rezultata za čitanje."); }
+function listen(){ return new Promise((res,rej)=>{ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR) return rej({code:"nosr"});
+  let r; try{ r=new SR(); }catch(e){ return rej({code:"nosr"}); } r.lang="sr-RS"; r.interimResults=false; r.maxAlternatives=1;
+  let got=false; r.onresult=e=>{ got=true; res(e.results[0][0].transcript); }; r.onerror=e=>rej({code:e.error||"err"}); r.onend=()=>{ if(!got) rej({code:"no-speech"}); };
+  try{ r.start(); }catch(e){ rej({code:"start"}); } }); }
+async function dictate(){
+  const b=$("#micBtn"); if(b.classList.contains("rec")) return; Voice.stop(); b.classList.add("rec");
+  try{ const t=await listen(); const ta=$("#symText"); ta.value=(ta.value?ta.value+" ":"")+t; toast("Zapisano: "+t); }
+  catch(e){ toast(e.code==="not-allowed"||e.code==="service-not-allowed"?"Mikrofon nije dozvoljen ovde. Radi u samostalnoj verziji u Chrome-u.":e.code==="nosr"?"Ovaj pregledač ne podržava diktiranje.":"Nisam čuo. Dodirni i pričaj odmah."); }
+  finally{ b.classList.remove("rec"); }
+}
+// Agent asks the mechanic out loud; the mechanic may answer by voice ("gotovo" / "ne mogu")
+async function voicePrompt(card,text,kind){
+  await Voice.say(kind==="clear"?"Agent traži dozvolu da obriše greške. Potvrdi na ekranu.":text+". Reci gotovo kad uradiš.");
+  if(kind==="clear"||!Voice.on) return;
+  try{ const t=(await listen()).toLowerCase(); if(!card.isConnected) return;
+    if(/ne mogu|nemoguće|\bne\b/.test(t)) card.querySelector(".no")?.click();
+    else if(/gotov|urađen|uradio|uradila|može|spreman|spremno|\bda\b|\bok\b|okej/.test(t)) card.querySelector(".yes")?.click();
+  }catch(e){}
+}
+
+/* ===================================================================== OBD — clean-room ELM327 / STN client
+   Transports: Web Bluetooth (BLE GATT serial) and Web Serial (USB).
+   Read-only by default. Clearing DTCs (mode 04) only after explicit confirmation. */
+const BLE_SERVICES=[0xFFF0,0xFFE0,0x18F0,0xFFE5,"e7810a71-73ae-499d-8c15-faa9aef0c3f2","6e400001-b5a3-f393-e0a9-e50e24dcca9e"];
+const OBD={
+  connected:false, link:null, buf:"", pending:null, q:Promise.resolve(), proto:"", protoName:"", isCAN:false, supported:new Set(), voltage:null, vin:"", log:[],
+  addLog(dir,t){ this.log.push((dir==="tx"?"→ ":"← ")+t.replace(/\r/g," ").trim()); if(this.log.length>200) this.log.shift(); const b=$("#obdLog"); if(b){ b.textContent=this.log.join("\n"); b.scrollTop=b.scrollHeight; } },
+  feed(chunk){ this.buf+=chunk; const i=this.buf.indexOf(">"); if(i>=0&&this.pending){ const out=this.buf.slice(0,i); this.buf=this.buf.slice(i+1); const p=this.pending; this.pending=null; clearTimeout(p.t); this.addLog("rx",out); p.res(out); } },
+  send(cmd,timeout=3000){
+    const run=()=>new Promise(res=>{ if(!this.link) return res("NOLINK"); this.buf=""; const t=setTimeout(()=>{ this.pending=null; this.addLog("rx","(isteklo vreme)"); res("TIMEOUT"); },timeout); this.pending={res,t}; this.addLog("tx",cmd); this.link.write(cmd+"\r").catch(()=>{ clearTimeout(t); this.pending=null; res("WRITEFAIL"); }); });
+    const p=this.q.then(run,run); this.q=p.catch(()=>{}); return p;
+  },
+};
+function lines(resp){ return String(resp).replace(/\r/g,"\n").split("\n").map(s=>s.trim()).filter(s=>s&&s!==">"&&!/^SEARCHING/i.test(s)&&!/^BUS INIT/i.test(s)); }
+function hexOf(resp){ return lines(resp).filter(l=>!/^[0-9A-F]{3}$/i.test(l.replace(/\s/g,""))).map(l=>l.replace(/^[0-9A-F]{1,2}:\s*/i,"").replace(/\s/g,"")).join("").toUpperCase(); }
+function bad(resp){ return /NO DATA|UNABLE|ERROR|\?|TIMEOUT|STOPPED|NOLINK|WRITEFAIL|BUS BUSY/i.test(resp); }
+
+async function connectBLE(){
+  if(!("bluetooth" in navigator)) return connFail("Ovaj pregledač nema Bluetooth podršku. Na Android telefonu koristi Chrome. iPhone ne podržava Bluetooth u pregledaču.");
+  let dev; try{ dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:BLE_SERVICES}); }
+  catch(e){ if(e.name==="NotFoundError") return connFail("Nisi izabrao adapter."); if(e.name==="SecurityError"||e.name==="NotAllowedError") return connFail(frameMsg()); return connFail("Greška: "+e.message); }
+  setConn("wait","Povezujem se sa „"+(dev.name||"adapter")+"“…");
+  try{
+    const gatt=await dev.gatt.connect(); let tx=null, rx=null;
+    for(const uuid of BLE_SERVICES){ let svc; try{ svc=await gatt.getPrimaryService(uuid); }catch(e){ continue; }
+      const chars=await svc.getCharacteristics();
+      for(const c of chars){ if(!rx&&(c.properties.notify||c.properties.indicate)) rx=c; if(!tx&&(c.properties.write||c.properties.writeWithoutResponse)) tx=c; }
+      if(tx&&rx) break; }
+    if(!tx||!rx) return connFail("Adapter je pronađen, ali ne liči na OBD adapter (nema serijski kanal). Proveri da li je to ELM327/OBDLink BLE.");
+    const dec=new TextDecoder();
+    await rx.startNotifications(); rx.addEventListener("characteristicvaluechanged",ev=>OBD.feed(dec.decode(ev.target.value)));
+    const enc=new TextEncoder();
+    OBD.link={ kind:"Bluetooth", name:dev.name||"adapter",
+      async write(s){ const b=enc.encode(s); for(let i=0;i<b.length;i+=20){ const part=b.slice(i,i+20); if(tx.properties.writeWithoutResponse) await tx.writeValueWithoutResponse(part); else await tx.writeValue(part); } },
+      async close(){ try{ gatt.disconnect(); }catch(e){} } };
+    dev.addEventListener("gattserverdisconnected",()=>onDisconnected());
+    await initELM();
+  }catch(e){ connFail("Veza nije uspela: "+(e.message||e.name)); }
+}
+async function connectSerial(){
+  if(!("serial" in navigator)) return connFail("USB povezivanje radi samo u Chrome/Edge pregledaču na računaru (ili Androidu sa OTG).");
+  let port; try{ port=await navigator.serial.requestPort(); }catch(e){ if(e.name==="SecurityError"||e.name==="NotAllowedError") return connFail(frameMsg()); return connFail("Nisi izabrao uređaj."); }
+  const baud=Number(loadJSON("dd_baud",38400))||38400;
+  try{ await port.open({baudRate:baud}); }catch(e){ return connFail("Ne mogu da otvorim port: "+e.message); }
+  const writer=port.writable.getWriter(); const enc=new TextEncoder(); const dec=new TextDecoder(); let reading=true;
+  (async()=>{ while(reading&&port.readable){ const r=port.readable.getReader(); try{ while(true){ const {value,done}=await r.read(); if(done) break; OBD.feed(dec.decode(value)); } }catch(e){} finally{ r.releaseLock(); } break; } onDisconnected(); })();
+  OBD.link={ kind:"USB", name:"USB adapter", async write(s){ await writer.write(enc.encode(s)); }, async close(){ reading=false; try{ writer.releaseLock(); await port.close(); }catch(e){} } };
+  await initELM();
+}
+function frameMsg(){ return "U ovom prikazu (unutar Claude-a) pregledač ne dozvoljava povezivanje sa uređajima. Otvori aplikaciju u Chrome-u na Android telefonu: "+PUBLIC_URL; }
+const PROTO={ "1":"SAE J1850 PWM","2":"SAE J1850 VPW","3":"ISO 9141-2 (K-linija)","4":"KWP2000 5-baud (K-linija)","5":"KWP2000 brzi start (K-linija)","6":"CAN 11-bit 500k","7":"CAN 29-bit 500k","8":"CAN 11-bit 250k","9":"CAN 29-bit 250k" };
+async function initELM(){
+  setConn("wait","Budim adapter…");
+  let r=await OBD.send("ATZ",4000); await sleep(400);
+  for(const c of ["ATE0","ATL0","ATS0","ATH0","ATAT1"]) await OBD.send(c,1500);
+  const id=lines(await OBD.send("ATI",1500)).join(" ");
+  setConn("wait","Tražim jezik auta (može da traje 15 s)…");
+  let ok=false;
+  for(const sp of ["ATSP0","ATSP5","ATSP6","ATSP4"]){
+    await OBD.send(sp,1500); r=await OBD.send("0100",15000);
+    if(!bad(r)&&hexOf(r).includes("4100")){ ok=true; parseSupported(r,0); break; }
+  }
+  if(!ok){ setConn("fail","Adapter radi, ali auto ne odgovara. Proveri: kontakt uključen (ili motor upaljen), adapter dobro utaknut. Neki jeftini adapteri ne podržavaju K-liniju koju ovaj auto možda koristi."); OBD.connected=true; showScanPane(); return; }
+  const dp=lines(await OBD.send("ATDPN",1500)).join("").replace(/^A/,"");
+  OBD.proto=dp.slice(-1); OBD.protoName=PROTO[OBD.proto]||("protokol "+dp); OBD.isCAN=["6","7","8","9"].includes(OBD.proto);
+  // more supported-PID pages
+  if(OBD.supported.has("20")){ const r2=await OBD.send("0120",4000); parseSupported(r2,0x20); }
+  OBD.voltage=parseFloat(lines(await OBD.send("ATRV",1500)).join("").replace(/[^0-9.]/g,""))||null;
+  // VIN (often unsupported on 2004 cars)
+  const v=await OBD.send("0902",5000); if(!bad(v)) OBD.vin=vinFrom(hexOf(v));
+  if(OBD.vin){ car.vin=OBD.vin; saveJSON("dd_car",car); }
+  OBD.connected=true; OBD.adapterId=id;
+  setConn("ok",`Povezano: ${OBD.link.name} · ${OBD.protoName}`); setDataBadges();
+  showScanPane(); buildRealGauges(); updateHeader();
+  await readDTCs(true);
+}
+function parseSupported(resp,base){ const h=hexOf(resp); const i=h.indexOf("41"+(base===0?"00":"20")); if(i<0) return; const bits=parseInt(h.substr(i+4,8),16); if(isNaN(bits)) return; for(let n=0;n<32;n++){ if(bits&(1<<(31-n))) OBD.supported.add((base+n+1).toString(16).toUpperCase().padStart(2,"0")); } }
+function vinFrom(h){ let s=""; for(let i=0;i<h.length;i+=2){ const c=parseInt(h.substr(i,2),16); s+= (c>=48&&c<=90)?String.fromCharCode(c):"|"; } const m=s.match(/[A-HJ-NPR-Z0-9]{17}/); return m?m[0]:""; }
+function decodeDTC(h4){ const n=parseInt(h4[0],16); return "PCBU"[n>>2]+(n&3)+h4.substr(1,3); }
+function parseDTCs(resp,svc){
+  const h=hexOf(resp); const out=[];
+  if(OBD.isCAN){ let i=h.indexOf(svc); while(i>=0){ const cnt=parseInt(h.substr(i+2,2),16); const data=h.substr(i+4,cnt*4); for(let k=0;k+4<=data.length;k+=4){ const c=data.substr(k,4); if(c!=="0000") out.push(decodeDTC(c)); } i=h.indexOf(svc,i+4+cnt*4); if(isNaN(cnt)) break; } }
+  else { h.split(svc).slice(1).forEach(fr=>{ const d=fr.substr(0,12); for(let k=0;k+4<=d.length;k+=4){ const c=d.substr(k,4); if(c!=="0000") out.push(decodeDTC(c)); } }); }
+  return [...new Set(out)];
+}
+async function readDTCs(silent){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  $("#dtcBox").innerHTML=thinking("Čitam memoriju grešaka…");
+  let mil=null, count=null;
+  const m=await OBD.send("0101",4000); const mh=hexOf(m); const mi=mh.indexOf("4101"); if(mi>=0){ const a=parseInt(mh.substr(mi+4,2),16); mil=!!(a&0x80); count=a&0x7F; }
+  const r3=await OBD.send("03",6000); const codes=bad(r3)&&!/NO DATA/i.test(r3)?null:parseDTCs(r3,"43");
+  const r7=await OBD.send("07",6000); const pend=bad(r7)?[]:parseDTCs(r7,"47");
+  if(codes===null){ $("#dtcBox").innerHTML=`<div class="small muted">Auto nije odgovorio na čitanje grešaka. Probaj ponovo sa uključenim kontaktom.</div>`; return; }
+  const scan={kad:Date.now(),codes,pending:pend,mil,count,proto:OBD.protoName,vin:OBD.vin};
+  persist("dd_scan",scan); OBD.lastScan=scan;
+  renderDTCs(scan);
+  addHistory({tip:"Očitavanje iz auta",kad:Date.now(),ulaz:OBD.protoName,rez:codes.length?codes.join(", "):"bez grešaka"});
+  if(!silent) toast("Očitano.");
+}
+function codeInfo(c){ const df=P2DF[c]; if(df) return {df,txt:DF[df][1],tip:DF[df][2]}; if(PEXTRA[c]) return {txt:PEXTRA[c],tip:""}; return {txt:"Nije u ugrađenoj tabeli — dodirni za AI objašnjenje.",tip:""}; }
+function renderDTCs(s){
+  let h=`<div class="row wrap" style="gap:8px;margin-bottom:12px">${s.mil!=null?`<span class="tag">Lampica motora: <b style="color:${s.mil?"var(--bad)":"var(--ok)"}">${s.mil?"UPALJENA":"ugašena"}</b></span>`:""}<span class="tag">Protokol: <b>${esc(s.proto||"—")}</b></span>${s.vin?`<span class="tag">VIN: <b>${esc(s.vin)}</b></span>`:""}</div>`;
+  if(!s.codes.length&&!s.pending.length) h+=`<div class="banner ok">${SVG_OK}<div><b>Nema sačuvanih grešaka.</b><div class="small" style="margin-top:3px">Standardna memorija je čista. (Renault-ove posebne greške se vide u „Renault očitavanju“.)</div></div></div>`;
+  s.codes.forEach(c=>{ const i=codeInfo(c); h+=`<div class="dtc" style="margin-top:8px"><div class="c">${esc(c)}</div><div style="flex:1"><b>${esc(i.txt)}</b>${i.df?` <span class="tiny muted">(Renault ${i.df})</span>`:""}${i.tip?`<div class="small muted" style="margin-top:3px">${esc(i.tip)}</div>`:""}<button class="linkbtn" onclick="goCode();$('#codeInput').value='${esc(c)}';lookupCode()">Objasni detaljno →</button></div></div>`; });
+  s.pending.forEach(c=>{ const i=codeInfo(c); h+=`<div class="dtc" style="margin-top:8px;border-left-color:var(--muted-2)"><div class="c" style="color:var(--muted)">${esc(c)}</div><div style="flex:1"><b>${esc(i.txt)}</b> <span class="tiny muted">(na čekanju — javlja se povremeno)</span></div></div>`; });
+  $("#dtcBox").innerHTML=h;
+}
+function askClear(){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  openSheet(`<h2>Brisanje grešaka</h2><div class="banner warn" style="margin:12px 0">${SVG_WARN}<div class="small"><b>Brisanje NE popravlja kvar.</b> Ako kvar postoji, greška se vraća. Briši tek posle popravke, da proveriš da li je rešeno.</div></div>
+  <label class="checkrow"><input type="checkbox" id="cc1"><span class="small">Greške su sačuvane u istoriji (aplikacija ih je zapisala).</span></label>
+  <label class="checkrow"><input type="checkbox" id="cc2"><span class="small">Motor je <b>ugašen</b>, kontakt je uključen.</span></label>
+  <label class="checkrow"><input type="checkbox" id="cc3"><span class="small">Razumem da se brišu i podaci „zamrznutog okvira“ koji pomažu majstoru.</span></label>
+  <div class="row" style="margin-top:16px"><button class="btn ghost" onclick="closeSheet()">Odustani</button><button class="btn danger" id="ccGo" onclick="doClear()">Obriši</button></div>`);
+}
+async function doClear(){
+  if(!($("#cc1").checked&&$("#cc2").checked&&$("#cc3").checked)) return toast("Označi sve tri stavke.");
+  closeSheet(); const r=await OBD.send("04",6000);
+  if(bad(r)) toast("Auto nije prihvatio brisanje (motor mora biti ugašen)."); else { toast("Obrisano. Ponovo čitam…"); addHistory({tip:"Brisanje grešaka",kad:Date.now(),ulaz:"mod 04",rez:"poslato"}); }
+  await readDTCs(true);
+}
+// Renault manufacturer read (beta, read-only): KWP2000 over ISO-TP to engine ECU 7E0/7E8
+async function readRenault(){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  const box=$("#dtcBox");
+  if(!OBD.isCAN){ box.insertAdjacentHTML("beforeend",`<div class="banner warn" style="margin-top:12px">${SVG_WARN}<div class="small">Tvoj auto koristi K-liniju (${esc(OBD.protoName)}). Renault očitavanje preko K-linije još nije u aplikaciji — standardno očitavanje radi. Za pune Renault podatke majstor koristi CLIP ili DDT4All.</div></div>`); return; }
+  box.insertAdjacentHTML("beforeend",`<div id="rnBox" style="margin-top:12px">${thinking("Pričam sa računarom motora na Renault jeziku…")}</div>`);
+  const out=[]; const step=async c=>{ const r=await OBD.send(c,4000); out.push(c+" → "+lines(r).join(" ")); return r; };
+  for(const c of ["ATH0","ATSH7E0","ATCRA7E8","ATFCSH7E0","ATFCSD300000","ATFCSM1"]) await step(c);
+  const s=await step("10C0"); const id=await step("2180"); const d=await step("17FF00");
+  await step("ATCRA"); await step("ATFCSM0"); await step("ATD"); await step("ATE0"); await step("ATSP"+OBD.proto);
+  let h="";
+  if(!hexOf(s).startsWith("50")){ h=`<div class="small muted">Računar nije otvorio Renault sesiju. Ovo je beta funkcija i ne radi na svim autima/adapterima.</div>`; }
+  else{
+    const dh=hexOf(d); const i=dh.indexOf("57"); const codes=[];
+    if(i>=0){ const n=parseInt(dh.substr(i+2,2),16); for(let k=0;k<n;k++){ const raw=dh.substr(i+4+k*6,6); if(raw.length===6) codes.push(raw); } }
+    h=`<div class="banner ok">${SVG_OK}<div class="small"><b>Renault sesija otvorena.</b> Identifikacija računara: <span style="font-family:var(--f-mono)">${esc(hexOf(id).slice(0,40))}</span></div></div>`;
+    h+= codes.length ? `<div class="small" style="margin-top:10px"><b>Renault zapisi grešaka (${codes.length}):</b></div>`+codes.map(r=>{ const p=decodeDTC(r.substr(0,4)); const inf=codeInfo(p); return `<div class="dtc" style="margin-top:8px"><div class="c">${esc(p)}</div><div style="flex:1"><b>${esc(inf.txt)}</b>${inf.df?` <span class="tiny muted">(${inf.df})</span>`:""}<div class="tiny muted">sirovo: ${esc(r)}</div></div></div>`; }).join("") : `<div class="small" style="margin-top:10px">Renault memorija ne javlja greške (ili ih ovaj računar čuva drugačije).</div>`;
+    h+=`<div class="notice" style="margin-top:8px">Beta: Renault zapis se ovde tumači kao standardna šifra; majstor sa CLIP-om može videti tačan DF opis.</div>`;
+  }
+  h+=`<details style="margin-top:8px"><summary class="tiny muted" style="cursor:pointer">Komunikacija</summary><div class="codebox">${esc(out.join("\n"))}</div></details>`;
+  $("#rnBox").innerHTML=h;
+}
+function onDisconnected(){ if(!OBD.connected&&!OBD.link) return; OBD.connected=false; OBD.link=null; live.on=false; setConn("fail","Veza sa adapterom je prekinuta."); updateHeader(); }
+async function disconnect(){ live.on=false; if(OBD.link) await OBD.link.close(); OBD.connected=false; OBD.link=null; OBD.demo=false; OBD.supported=new Set(); setDataBadges(); renderCar(); updateHeader(); }
+
+/* ---- connection UI ---- */
+let connState={kind:"idle",msg:""};
+function setConn(kind,msg){ connState={kind,msg}; renderConn(); updateHeader(); }
+function connFail(msg){ setConn("fail",msg); }
+function showScanPane(){ $("#scanPane").hidden=false; renderConn(); const s=loadJSON("dd_scan",null); if(s) renderDTCs(s); updateBaselineNote(); }
+
+/* ---- live data (real) ---- */
+const LIVE_PIDS=[
+  {pid:"0C",k:"rpm",lbl:"Obrtaji",unit:"o/min",min:0,max:5000,dec:0,f:(a,b)=>(a*256+b)/4,norm:"ler ~805"},
+  {pid:"05",k:"temp",lbl:"Temp. motora",unit:"°C",min:-20,max:120,dec:0,f:a=>a-40,norm:"85–95 °C"},
+  {pid:"23",k:"rail",lbl:"Pritisak goriva",unit:"bar",min:0,max:1600,dec:0,f:(a,b)=>(a*256+b)*10/100,norm:"ler ~230 bar"},
+  {pid:"0B",k:"boost",lbl:"Pritisak u usisu",unit:"mbar",min:800,max:2400,dec:0,f:a=>a*10,norm:"ler ~1000"},
+  {pid:"10",k:"maf",lbl:"Protok vazduha",unit:"kg/h",min:0,max:300,dec:1,f:(a,b)=>(a*256+b)/100*3.6,norm:""},
+  {pid:"0D",k:"speed",lbl:"Brzina",unit:"km/h",min:0,max:200,dec:0,f:a=>a,norm:""},
+  {pid:"04",k:"load",lbl:"Opterećenje",unit:"%",min:0,max:100,dec:0,f:a=>a*100/255,norm:""},
+  {pid:"0F",k:"iat",lbl:"Temp. usisa",unit:"°C",min:-20,max:80,dec:0,f:a=>a-40,norm:""},
+];
+let live={on:false,vals:{}};
+function buildRealGauges(){
+  const w=$("#realGauges"); w.innerHTML="";
+  const list=LIVE_PIDS.filter(p=>OBD.supported.has(p.pid));
+  list.forEach(p=>{ const g=el("div","gauge"); g.id="rg-"+p.k; g.innerHTML=`<div class="lbl">${p.lbl}</div>${gaugeSVG(0)}<div class="val" id="rv-${p.k}">–</div><div class="norm">${p.norm?"normalno: "+p.norm:"&nbsp;"}</div>`; w.appendChild(g); });
+  const g=el("div","gauge"); g.id="rg-volt"; g.innerHTML=`<div class="lbl">Akumulator</div>${gaugeSVG(0)}<div class="val" id="rv-volt">${OBD.voltage?OBD.voltage.toFixed(1)+' <small>V</small>':"–"}</div><div class="norm">radi: 13–14,5 V</div>`; w.appendChild(g);
+  if(!list.length) w.insertAdjacentHTML("afterbegin",`<div class="small muted" style="grid-column:1/-1">Auto ne javlja standardne podatke uživo preko ovog protokola. Greške i napon i dalje rade.</div>`);
+}
+async function toggleLive(){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  live.on=!live.on; $("#liveBtn").textContent=live.on?"Zaustavi praćenje":"Pokreni praćenje";
+  while(live.on&&OBD.connected&&current==="car"){
+    for(const p of LIVE_PIDS){ if(!live.on) break; if(!OBD.supported.has(p.pid)) continue;
+      const r=await OBD.send("01"+p.pid,2500); const h=hexOf(r); const i=h.indexOf("41"+p.pid);
+      if(i>=0){ const a=parseInt(h.substr(i+4,2),16), b=parseInt(h.substr(i+6,2),16); const v=p.f(a,isNaN(b)?0:b); live.vals[p.k]=v; paintReal(p,v); } }
+    const vr=parseFloat(lines(await OBD.send("ATRV",1500)).join("").replace(/[^0-9.]/g,"")); if(!isNaN(vr)){ live.vals.volt=vr; paintReal({k:"volt",min:8,max:15,dec:1,unit:"V"},vr); }
+    await sleep(150);
+  }
+  live.on=false; const b=$("#liveBtn"); if(b) b.textContent="Pokreni praćenje";
+}
+function realAlert(k,v){
+  const rpm=live.vals.rpm||0, warm=(live.vals.temp||0)>=80;
+  if(k==="temp"&&v>=104) return "alert"; if(k==="temp"&&v>=99) return "warnv";
+  if(k==="volt"&&rpm>400&&(v<13||v>14.8)) return "warnv"; if(k==="volt"&&rpm<100&&v<12) return "warnv";
+  if(k==="rpm"&&warm&&rpm>300&&rpm<1100&&(v<700||v>1000)) return "warnv";
+  if(k==="rail"&&warm&&rpm>600&&rpm<1000&&(v<170||v>320)) return "warnv";
+  return "";
+}
+function paintReal(p,v){
+  const g=$("#rg-"+p.k); if(!g) return; const frac=(v-p.min)/(p.max-p.min);
+  const arc=g.querySelector(".arc"); if(arc){ const len=Math.PI*42; arc.setAttribute("stroke-dashoffset",(len*(1-Math.max(0,Math.min(1,frac)))).toFixed(1)); }
+  const base=loadJSON("dd_base",null); let delta="";
+  if(base&&base.vals&&base.vals[p.k]!=null&&p.k!=="speed"){ const d=v-base.vals[p.k]; if(Math.abs(d)>0.5) delta=` <small style="color:${Math.abs(d)/(Math.abs(base.vals[p.k])||1)>0.15?"var(--warn)":"var(--muted)"}">${d>0?"+":""}${d.toFixed(p.dec)}</small>`; }
+  $("#rv-"+p.k).innerHTML=`${v.toFixed(p.dec)} <small>${p.unit}</small>${delta}`;
+  g.classList.remove("alert","warnv"); const a=realAlert(p.k,v); if(a) g.classList.add(a);
+}
+function saveBaseline(){
+  if(!OBD.connected||!Object.keys(live.vals).length) return toast("Prvo pokreni praćenje dok motor radi u leru, topao.");
+  persist("dd_base",{kad:Date.now(),vals:{...live.vals}}); updateBaselineNote(); toast("Zapamćeno „zdravo stanje“.");
+}
+function updateBaselineNote(){ const b=loadJSON("dd_base",null); const n=$("#baselineNote"); if(n) n.innerHTML=b?`Zdravo stanje zapamćeno ${esc(new Date(b.kad).toLocaleDateString('sr-RS'))}. Mali brojevi pored vrednosti pokazuju razliku od tada — najbolji način da uočiš promenu.`:"Savet: kad auto radi dobro, topao i u leru, dodirni „Zapamti zdravo stanje“. Kasnije ćeš videti šta se promenilo."; }
+async function analyzeReal(){
+  const box=$("#realResult"); if(!AI.ready()){ box.innerHTML=aiOff(); return; }
+  const s=loadJSON("dd_scan",null), base=loadJSON("dd_base",null);
+  const vals=Object.entries(live.vals).map(([k,v])=>{ const p=LIVE_PIDS.find(x=>x.k===k); return `${p?p.lbl:k}: ${v.toFixed(1)} ${p?p.unit:(k==="volt"?"V":"")}`; }).join("; ");
+  box.innerHTML=thinking("Analiziram prave podatke iz tvog auta…");
+  const prompt=`${AI_RULES}
+
+${carCtx()}
+${NORM_CTX}
+OVO SU PRAVI PODACI IZ VOZAČEVOG AUTA (preko OBD adaptera, ${OBD.protoName}):
+- Greške: ${s&&s.codes.length?s.codes.map(c=>c+" ("+codeInfo(c).txt+")").join(", "):"nema"}; na čekanju: ${s&&s.pending.length?s.pending.join(", "):"nema"}; lampica motora: ${s&&s.mil!=null?(s.mil?"upaljena":"ugašena"):"nepoznato"}
+- Trenutne vrednosti: ${vals||"(praćenje nije pokrenuto)"}
+${base?"- Zapamćeno zdravo stanje: "+Object.entries(base.vals).map(([k,v])=>k+"="+Number(v).toFixed(1)).join(", "):""}
+Napomena: standardni OBD na ovom autu daje ograničene podatke; pritisak u usisu je apsolutni (mbar).
+
+Objasni jednostavno, markdown naslovi:
+### Ukratko
+### Šta je u redu
+### Šta odskače (ako išta)
+### Šta da uradiš sledeće
+Kratko i konkretno.`;
+  try{ const a=el("div","ai"); box.innerHTML=`<div class="row" style="margin-bottom:8px"><span class="badge b-real">ANALIZA PRAVIH PODATAKA</span></div>`; box.appendChild(a);
+    const t=await AI.text(prompt,{onText:t=>{a.innerHTML=md(t);}}); a.innerHTML=md(t); box.insertAdjacentHTML("beforeend",MONEY_NOTE);
+    addHistory({tip:"AI analiza pravih podataka",kad:Date.now(),ulaz:vals.slice(0,120),rez:"urađena"}); }
+  catch(e){ box.innerHTML=`<div class="card small">${aiErr(e.code)}</div>`; }
+}
+
+/* =====================================================================
+   AGENT — the AI talks to the car's ECU through page tools.
+   Read-only tools run freely; anything that changes the car (DTC clear)
+   or needs the driver goes through an in-page confirmation card.
+   ===================================================================== */
+function persist(k,v){ if(!OBD.demo) saveJSON(k,v); }
+function srcBadge(){ return OBD.demo?'<span class="badge b-demo srcbadge">PRIMER AUTO</span>':'<span class="badge b-real srcbadge">PRAVI PODACI</span>'; }
+function setDataBadges(){ document.querySelectorAll(".srcbadge").forEach(b=>{ b.className="badge srcbadge "+(OBD.demo?"b-demo":"b-real"); b.textContent=OBD.demo?"PRIMER AUTO":"PRAVI PODACI"; }); }
+
+// Practice car: an in-page ELM327 that answers like a 2004 K9K with a rail-pressure + EGR fault
+function connectDemo(){
+  let codes=["0089","0401"]; const t0=Date.now();
+  const hx=(n,b=2)=>Math.max(0,Math.round(n)).toString(16).toUpperCase().padStart(b,"0").replace(/(..)(?=.)/g,"$1 ");
+  const resp=c=>{
+    const t=(Date.now()-t0)/1000, rpm=805+Math.sin(t*1.7)*55+(Math.random()-.5)*20, rail=230+Math.sin(t*2.3)*70;
+    if(c==="ATZ") return "ELM327 v1.5 (primer)"; if(c==="ATI") return "ELM327 v1.5 (primer)"; if(c==="ATDPN") return "A6"; if(c==="ATRV") return (14.1+(Math.random()-.5)*.1).toFixed(1)+"V";
+    if(c.startsWith("AT")) return "OK";
+    if(c==="04"){ codes=[]; return "44"; }
+    const M={ "0100":"41 00 98 3B 80 13","0120":"41 20 20 00 00 00","0902":"014\r0: 49 02 01 56 46 31\r1: 42 4D 30 46 30 50 52\r2: 49 4D 45 52 30 30 31",
+      "0101":`41 01 ${codes.length?"82":"00"} 07 E5 00`, "03":`43 ${hx(codes.length)} ${codes.map(x=>x.slice(0,2)+" "+x.slice(2)).join(" ")}`.trim(), "07":"47 00",
+      "010C":"41 0C "+hx(rpm*4,4), "0105":"41 05 "+hx(88+40), "0123":"41 23 "+hx(rail*10,4), "010B":"41 0B 64", "0110":"41 10 "+hx(1000+Math.random()*50,4),
+      "010D":"41 0D 00", "0104":"41 04 "+hx(20*2.55), "010F":"41 0F "+hx(25+40),
+      "020200":"42 02 00 00 89","020C00":"42 0C 00 "+hx(2100*4,4),"020500":"42 05 00 "+hx(90+40),"020D00":"42 0D 00 "+hx(62),"020400":"42 04 00 "+hx(78*2.55),"022300":"42 23 00 "+hx(1480*10/10,4),
+      "10C0":"50 C0","2180":"61 80 82 00 47 31 30 30 44 44 43 52","17FF00":"57 01 00 89 E0" };
+    return M[c]||"NO DATA";
+  };
+  OBD.link={ kind:"Primer", name:"PRIMER auto", async write(s){ const c=s.trim().toUpperCase(); setTimeout(()=>OBD.feed(resp(c)+"\r\r>"),25); }, async close(){} };
+  OBD.demo=true; initELM();
+}
+
+// ---- shared OBD helpers used by the agent ----
+async function scanDTCs(){
+  let mil=null,count=null; const mh=hexOf(await OBD.send("0101",4000)); const mi=mh.indexOf("4101"); if(mi>=0){ const a=parseInt(mh.substr(mi+4,2),16); mil=!!(a&0x80); count=a&0x7F; }
+  const r3=await OBD.send("03",6000); const codes=bad(r3)&&!/NO DATA/i.test(r3)?[]:parseDTCs(r3,"43");
+  const r7=await OBD.send("07",6000); const pending=bad(r7)?[]:parseDTCs(r7,"47");
+  const scan={kad:Date.now(),codes,pending,mil,count,proto:OBD.protoName,vin:OBD.vin};
+  persist("dd_scan",scan); OBD.lastScan=scan; renderDTCs(scan); return scan;
+}
+async function sampleLive(keys,seconds){
+  const want=LIVE_PIDS.filter(p=>keys.includes(p.k)); const S={}; keys.forEach(k=>S[k]=[]); const t0=Date.now(); const unsupported=want.filter(p=>!OBD.supported.has(p.pid)).map(p=>p.k);
+  do{ for(const p of want){ if(!OBD.supported.has(p.pid)) continue; const h=hexOf(await OBD.send("01"+p.pid,2500)); const i=h.indexOf("41"+p.pid); if(i>=0){ const a=parseInt(h.substr(i+4,2),16),b=parseInt(h.substr(i+6,2),16); const v=p.f(a,isNaN(b)?0:b); S[p.k].push(v); live.vals[p.k]=v; paintReal(p,v); } }
+    if(keys.includes("volt")){ const vr=parseFloat(lines(await OBD.send("ATRV",1500)).join("").replace(/[^0-9.]/g,"")); if(!isNaN(vr)){ S.volt.push(vr); live.vals.volt=vr; } }
+  } while(Date.now()-t0<seconds*1000&&OBD.connected);
+  const out={}; for(const k of keys){ const st=stats(S[k]||[]); if(st){ const p=LIVE_PIDS.find(x=>x.k===k); out[k]={jedinica:p?p.unit:"V",prosek:+st.avg.toFixed(1),min:+st.min.toFixed(1),max:+st.max.toFixed(1),kolebanje:+st.sd.toFixed(1),merenja:st.n}; } }
+  return {vrednosti:out,nepodrzano:unsupported};
+}
+async function readFreeze(){
+  const h=hexOf(await OBD.send("020200",4000)); const i=h.indexOf("420200"); if(i<0) return {dostupno:false};
+  const dtc=decodeDTC(h.substr(i+6,4)); const out={dostupno:true,greska_koja_je_snimila:dtc};
+  const P={ "0C":["obrtaji","o/min",(a,b)=>(a*256+b)/4], "05":["temp_motora","°C",a=>a-40], "0D":["brzina","km/h",a=>a], "04":["opterecenje","%",a=>a*100/255], "23":["pritisak_goriva","bar",(a,b)=>(a*256+b)*10/100] };
+  for(const pid in P){ const r=hexOf(await OBD.send("02"+pid+"00",3000)); const j=r.indexOf("42"+pid+"00"); if(j>=0){ const a=parseInt(r.substr(j+6,2),16),b=parseInt(r.substr(j+8,2),16); out[P[pid][0]]=+P[pid][2](a,isNaN(b)?0:b).toFixed(1)+" "+P[pid][1]; } }
+  return out;
+}
+async function renaultRead(){
+  if(!OBD.isCAN) return {ok:false,razlog:"Auto koristi K-liniju; Renault očitavanje radi samo na CAN vezi."};
+  for(const c of ["ATH0","ATSH7E0","ATCRA7E8","ATFCSH7E0","ATFCSD300000","ATFCSM1"]) await OBD.send(c,3000);
+  const s=hexOf(await OBD.send("10C0",4000)), id=hexOf(await OBD.send("2180",4000)), d=hexOf(await OBD.send("17FF00",4000));
+  for(const c of ["ATCRA","ATFCSM0","ATD","ATE0","ATSP"+OBD.proto]) await OBD.send(c,3000);
+  if(!s.startsWith("50")) return {ok:false,razlog:"Računar nije otvorio Renault sesiju."};
+  const i=d.indexOf("57"), codes=[]; if(i>=0){ const n=parseInt(d.substr(i+2,2),16); for(let k=0;k<n;k++){ const r=d.substr(i+4+k*6,6); if(r.length===6){ const p=decodeDTC(r.substr(0,4)); const inf=codeInfo(p); codes.push({kod:p,renault:inf.df||null,znacenje:inf.txt,sirovo:r}); } } }
+  return {ok:true,identifikacija:id.slice(4,40),greske:codes};
+}
+
+// ---- agent transcript UI ----
+let agentCtl=null;
+function aLog(icon,who,txt,cls){ const o=$("#agentLog"); if(!o) return; const d=el("div","row",`<span style="flex:none;width:22px;text-align:center">${icon}</span><div class="small" style="flex:1;min-width:0"><b style="color:${cls||"var(--fg)"}">${esc(who)}</b> <span class="muted">${esc(txt)}</span></div>`); d.style.cssText="align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)"; o.appendChild(d); d.scrollIntoView({block:"nearest"}); return d; }
+function askDriver(text,kind){
+  return new Promise(res=>{
+    const o=$("#agentLog"); const card=el("div","card",""); card.style.margin="10px 0"; card.style.borderColor="var(--cyan-2)";
+    if(kind==="clear"){
+      card.innerHTML=`<div class="eyebrow">Agent traži dozvolu</div><div style="margin:6px 0 10px"><b>Brisanje grešaka</b></div><div class="small muted">${esc(text)}</div><label class="checkrow"><input type="checkbox" class="cl1"><span class="small">Motor je <b>ugašen</b>, kontakt uključen. Razumem da brisanje ne popravlja kvar.</span></label><div class="row" style="margin-top:10px"><button class="btn ghost sm no">Ne</button><button class="btn danger sm yes">Dozvoli brisanje</button></div>`;
+      card.querySelector(".yes").onclick=()=>{ if(!card.querySelector(".cl1").checked) return toast("Označi potvrdu."); card.innerHTML=`<div class="small">✅ Dozvolio si brisanje.</div>`; res(true); };
+      card.querySelector(".no").onclick=()=>{ card.innerHTML=`<div class="small">❌ Odbio si brisanje.</div>`; res(false); };
+    } else {
+      card.innerHTML=`<div class="eyebrow">Agent te moli</div><div style="margin:6px 0 12px;font-size:16px"><b>${esc(text)}</b></div><div class="row"><button class="btn sm yes">Urađeno</button><button class="btn ghost sm no">Ne mogu</button></div>`;
+      card.querySelector(".yes").onclick=()=>{ card.innerHTML=`<div class="small">✅ ${esc(text)} — urađeno.</div>`; res("urađeno"); };
+      card.querySelector(".no").onclick=()=>{ card.innerHTML=`<div class="small">❌ ${esc(text)} — vozač ne može.</div>`; res("vozač ne može"); };
+    }
+    o.appendChild(card); card.scrollIntoView({behavior:"smooth",block:"center"}); voicePrompt(card,text,kind);
+    agentCtl&&agentCtl.signal.addEventListener("abort",()=>res("prekinuto"));
+  });
+}
+const LIVE_KEYS=["rpm","temp","rail","boost","maf","speed","load","iat","volt"];
+function agentTools(){
+  const wrap=(name,icon,label,fn,describe)=>async(input,ctx)=>{ aLog(icon,"Agent → auto:",label(input||{})); const r=await fn(input||{},ctx); aLog("🚗","Auto → agent:",describe(r),"var(--cyan)"); return r; };
+  return [
+    { name:"procitaj_greske", description:"Čita iz računara motora: da li svetli lampica motora, sačuvane greške i greške na čekanju, sa značenjem iz Renault tabele. Prvi korak svake dijagnoze.",
+      execute:wrap("g","🤖",()=>"Koje greške imaš u memoriji?",async()=>{ const s=await scanDTCs(); return {lampica_motora:s.mil==null?"nepoznato":(s.mil?"upaljena":"ugašena"),sacuvane:s.codes.map(c=>({kod:c,renault:P2DF[c]||null,znacenje:codeInfo(c).txt,savet:codeInfo(c).tip})),na_cekanju:s.pending,primer_auto:!!OBD.demo}; },
+        r=>`lampica ${r.lampica_motora}; greške: ${r.sacuvane.map(x=>x.kod).join(", ")||"nema"}`) },
+    { name:"citaj_uzivo", description:"Prati vrednosti motora uživo N sekundi i vraća prosek, min, max i kolebanje. Parametri: rpm, temp, rail (pritisak goriva, bar), boost (pritisak u usisu, apsolutni mbar), maf (kg/h), speed, load, iat, volt. Neki nisu podržani na ovom autu.",
+      inputSchema:{type:"object",properties:{parametri:{type:"array",items:{type:"string",enum:LIVE_KEYS}},sekunde:{type:"number",description:"1-20"}},required:["parametri"]},
+      execute:wrap("l","🤖",i=>`Javi mi ${(i.parametri||[]).join(", ")} tokom ${Math.min(20,Math.max(1,Number(i.sekunde)||8))} s`,async i=>sampleLive((Array.isArray(i.parametri)?i.parametri:["rpm"]).map(String).filter(k=>LIVE_KEYS.includes(k)),Math.min(20,Math.max(1,Number(i.sekunde)||8))),
+        r=>Object.entries(r.vrednosti).map(([k,v])=>`${k} ${v.prosek} ±${v.kolebanje}`).join(", ")||"nema podataka") },
+    { name:"zamrznuti_okvir", description:"Čita 'zamrznuti okvir': stanje motora (obrtaji, temperatura, brzina, opterećenje, pritisak goriva) u trenutku kad je greška snimljena. Korisno da se vidi pod kojim uslovima se kvar desio.",
+      execute:wrap("f","🤖",()=>"Kakvo je bilo stanje kad se greška snimila?",async()=>readFreeze(),r=>r.dostupno?Object.entries(r).filter(([k])=>k!=="dostupno").map(([k,v])=>k+": "+v).join(", "):"nema zamrznutog okvira") },
+    { name:"renault_ocitavanje", description:"Renault-ov poseban jezik (samo čitanje): identifikacija računara i Renault memorija grešaka. Koristi kad standardne greške nisu dovoljne ili lampica svetli bez standardnih grešaka.",
+      execute:wrap("r","🤖",()=>"Renault sesija: identifikuj se i javi Renault greške",async()=>renaultRead(),r=>r.ok?`ID ${r.identifikacija}; greške: ${r.greske.map(g=>g.kod+(g.renault?"/"+g.renault:"")).join(", ")||"nema"}`:r.razlog) },
+    { name:"fabricke_vrednosti", description:"Renault fabričke referentne vrednosti za ovaj motor i podaci o verziji auta, kilometraži, servisu koji je na redu i zapamćenom 'zdravom stanju'.",
+      execute:async()=>{ aLog("📖","Agent:","gleda fabričke vrednosti i podatke o autu"); const b=loadJSON("dd_base",null); return {auto:carCtx(),fabricke:NORMS,zdravo_stanje:b?b.vals:null,servis_na_redu:maintDue().filter(x=>x.state==="late"||x.state==="soon").map(x=>x.ime+" ("+x.txt+")")}; } },
+    { name:"zamoli_vozaca", description:"Traži od vozača da uradi nešto i čeka odgovor ('urađeno' ili 'vozač ne može'). SAMO dok auto STOJI: npr. 'Drži gas na 2500 o/min', 'Uključi klimu', 'Ugasi motor i uključi kontakt'. Nikad tokom vožnje. Posle zahteva za gas, odmah pozovi citaj_uzivo.",
+      inputSchema:{type:"object",properties:{uputstvo:{type:"string",description:"kratko, jasno uputstvo na srpskom"}},required:["uputstvo"]},
+      execute:async i=>{ const spd=live.vals.speed; if(spd&&spd>2) throw new Error("Auto se kreće — uputstva samo dok stoji."); aLog("🙋","Agent → tebi:",String(i.uputstvo)); const r=await askDriver(String(i.uputstvo).slice(0,200)); aLog("👤","Ti:",r); return r; } },
+    { name:"obrisi_greske", description:"Briše greške iz memorije (mod 04). Vozač MORA da potvrdi u aplikaciji. Koristi SAMO ako vozač izričito traži, ili posle potvrđene popravke da se proveri da li se greška vraća. Nikad kao 'popravka'.",
+      inputSchema:{type:"object",properties:{razlog:{type:"string"}},required:["razlog"]},
+      execute:async i=>{ aLog("🤖","Agent:","traži dozvolu da obriše greške"); const ok=await askDriver(String(i.razlog||"Brisanje posle popravke").slice(0,240),"clear"); if(ok!==true) return {obrisano:false,razlog:"vozač nije dozvolio"};
+        const r=await OBD.send("04",6000); const done=!bad(r); aLog("🚗","Auto → agent:",done?"greške obrisane":"auto odbio brisanje","var(--cyan)"); if(done) addHistory({tip:"Brisanje grešaka (agent)",kad:Date.now(),ulaz:String(i.razlog||""),rez:"obrisano"}); return {obrisano:done}; } },
+  ];
+}
+const AGENT_RULES=`${AI_RULES}
+Ti si DIJAGNOSTIČKI AGENT povezan sa računarom motora ovog auta preko OBD adaptera. Imaš alate kojima pitaš auto. Radi kao dobar majstor:
+1. Uvek počni sa procitaj_greske i fabricke_vrednosti.
+2. Zatim citaj_uzivo (8-15 s) za ono što je bitno za cilj; ako ima grešaka, pogledaj zamrznuti_okvir.
+3. Ako je potrebno opterećenje, zamoli_vozaca (samo dok auto stoji, npr. "Drži gas na 2500 o/min 10 sekundi"), pa odmah citaj_uzivo.
+4. Renault_ocitavanje kad standardni podaci nisu dovoljni.
+5. Ne izmišljaj brojeve — koristi samo ono što alati vrate. Ako alat kaže da je PRIMER auto, jasno reci da je ovo vežba.
+6. Nikad ne briši greške osim ako vozač to izričito traži ili posle potvrđene popravke.
+7. Najviše 8 poziva alata. Između koraka napiši jednu kratku rečenicu šta radiš.
+Na kraju napiši (markdown): ### Ukratko (2 kratke rečenice) ### Šta sam našao ### Šta prvo da uradiš (od najjeftinijeg, cene u dinarima) ### Sme li da se vozi`;
+AI.agent=async function(prompt,tools,{onText,signal}){
+  if(this.mode==="claude"){
+    const lim=await this.s.limits().catch(()=>null); if(!lim||!lim.tools) throw {code:"tools_unavailable"};
+    const r=await this.s(prompt,{modelTier:"default",tools:tools.map(t=>({name:t.name,description:t.description,inputSchema:t.inputSchema,execute:t.execute})),signal,onText:onText?({text})=>onText(text):undefined});
+    return r.text;
+  }
+  if(this.mode==="api"){
+    const defs=tools.map(t=>({name:t.name,description:t.description,input_schema:t.inputSchema||{type:"object",properties:{}}}));
+    const messages=[{role:"user",content:prompt}]; let shown="";
+    for(let round=0;round<12;round++){
+      if(signal.aborted) throw {code:"cancelled"};
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal,headers:{"content-type":"application/json","x-api-key":getKey(),"anthropic-version":"2026-10-21","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-opus-5-5",max_tokens:16000,output_config:{effort:"medium"},fallbacks:"default",tools:defs,tool_choice:{type:"auto"},messages})});
+      if(!res.ok) throw {code:res.status===401?"bad_key":res.status===429?"rate_limited":"upstream_error"};
+      const data=await res.json(); if(data.stop_reason==="refusal") throw {code:"refused"};
+      messages.push({role:"assistant",content:data.content});
+      const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join(""); if(txt){ shown+=(shown?"\n\n":"")+txt; onText&&onText(shown); }
+      if(data.stop_reason!=="tool_use") return shown;
+      const results=[];
+      for(const b of data.content.filter(b=>b.type==="tool_use")){ const t=tools.find(x=>x.name===b.name);
+        try{ const out=t?await t.execute(b.input||{},{signal}):{greska:"nepoznat alat"}; results.push({type:"tool_result",tool_use_id:b.id,content:JSON.stringify(out).slice(0,30000)}); }
+        catch(e){ results.push({type:"tool_result",tool_use_id:b.id,content:"Error: "+(e.message||String(e)),is_error:true}); } }
+      messages.push({role:"user",content:results});
+    }
+    return shown;
+  }
+  throw {code:"no_ai"};
+};
+/* ---- one-button full check + before/after repair comparison ---- */
+function stats(a){ if(!a.length) return null; const avg=a.reduce((s,x)=>s+x,0)/a.length; const sd=Math.sqrt(a.reduce((s,x)=>s+(x-avg)**2,0)/a.length); return {avg,min:Math.min(...a),max:Math.max(...a),sd,n:a.length}; }
+function fcStep(steps,i,state,txt){ steps[i].state=state; if(txt) steps[i].txt=txt;
+  $("#fcSteps").innerHTML=steps.map(s=>`<div class="row" style="align-items:flex-start;padding:7px 0"><span style="width:22px;flex:none;text-align:center">${s.state==="done"?"✅":s.state==="run"?'<span class="thinking"><i></i></span>':s.state==="warn"?"⚠️":"⏳"}</span><div class="small"><b>${esc(s.name)}</b>${s.txt?`<div class="muted">${esc(s.txt)}</div>`:""}</div></div>`).join(""); }
+async function runFullCheck(){
+  if(!OBD.connected) return toast("Prvo poveži auto.");
+  if(live.on){ live.on=false; await sleep(400); }
+  const btn=$("#checkBtn"); btn.disabled=true;
+  const prev=OBD.demo?OBD.demoCheck:loadJSON("dd_check",null);
+  const steps=[{name:"Čitam greške i lampicu motora"},{name:"Pratim rad motora 20 sekundi"},{name:"Poredim sa Renault fabričkim vrednostima"},{name:"Pravim zaključak"}];
+  $("#result").innerHTML=`<div id="fcSteps"></div><div id="fcRes"></div>`; fcStep(steps,0,"run");
+  await readDTCs(true); const scan=OBD.lastScan||{codes:[],pending:[]};
+  fcStep(steps,0,scan.codes.length?"warn":"done",scan.codes.length?`${scan.codes.length} grešk${scan.codes.length===1?"a":"e"}: ${scan.codes.join(", ")}`:"Bez sačuvanih grešaka"+(scan.mil?" (ali lampica svetli)":""));
+  fcStep(steps,1,"run");
+  const S={rpm:[],temp:[],rail:[],boost:[],volt:[]}; const map={"0C":"rpm","05":"temp","23":"rail","0B":"boost"}; const t0=Date.now();
+  while(Date.now()-t0<20000&&OBD.connected){
+    for(const pid of ["0C","05","23","0B"]){ if(!OBD.supported.has(pid)) continue; const p=LIVE_PIDS.find(x=>x.pid===pid);
+      const h=hexOf(await OBD.send("01"+pid,2500)); const i=h.indexOf("41"+pid); if(i>=0){ const a=parseInt(h.substr(i+4,2),16),b=parseInt(h.substr(i+6,2),16); const v=p.f(a,isNaN(b)?0:b); S[map[pid]].push(v); live.vals[p.k]=v; paintReal(p,v); } }
+    const vr=parseFloat(lines(await OBD.send("ATRV",1500)).join("").replace(/[^0-9.]/g,"")); if(!isNaN(vr)){ S.volt.push(vr); live.vals.volt=vr; }
+    fcStep(steps,1,"run",`${Math.round((Date.now()-t0)/1000)} / 20 s`);
+  }
+  const st={}; for(const k in S) st[k]=stats(S[k]);
+  fcStep(steps,1,"done",`${S.rpm.length||S.volt.length} merenja`);
+  fcStep(steps,2,"run");
+  // rule-based findings from Renault factory values (offline, no AI needed)
+  const F=[]; const add=(lvl,t)=>F.push({lvl,t});
+  scan.codes.forEach(c=>{ const i=codeInfo(c); add("bad",`${c}${i.df?" ("+i.df+")":""}: ${i.txt}`); });
+  if(scan.mil&&!scan.codes.length) add("warn","Lampica motora svetli, a standardna memorija je prazna — uradi i Renault očitavanje.");
+  const warm=st.temp&&st.temp.avg>=75;
+  if(st.temp&&!warm) add("info",`Motor je hladan (${st.temp.avg.toFixed(0)} °C). Za tačno poređenje ponovi kad se zagreje (preko 80 °C).`);
+  if(st.temp&&st.temp.max>=104) add("bad",`Temperatura ${st.temp.max.toFixed(0)} °C — pregrevanje! Ugasi motor.`);
+  if(st.rpm&&warm){ if(st.rpm.avg<700||st.rpm.avg>1000) add("warn",`Ler ${st.rpm.avg.toFixed(0)} o/min (Renault: ~805). Moguć zaštitni režim ili problem sa vazduhom/gorivom.`); else add("ok",`Ler ${st.rpm.avg.toFixed(0)} o/min — normalno.`);
+    if(st.rpm.sd>40) add("warn",`Ler „šeta“ ±${st.rpm.sd.toFixed(0)} o/min — moguće brizgaljke ili vazduh u gorivu.`); }
+  if(st.rail&&warm){ if(st.rail.avg<170||st.rail.avg>320) add("warn",`Pritisak goriva u leru ${st.rail.avg.toFixed(0)} bar (Renault: ~230). Pumpa, IMV ventil ili filter.`); else add("ok",`Pritisak goriva ${st.rail.avg.toFixed(0)} bar — normalno.`);
+    if(st.rail.sd>40) add("warn",`Pritisak goriva nestabilan (±${st.rail.sd.toFixed(0)} bar).`); }
+  if(st.boost&&st.rpm&&st.rpm.avg<1100){ if(st.boost.avg>1150) add("warn",`Pritisak u usisu u leru ${st.boost.avg.toFixed(0)} mbar — trebalo bi ~1000 (atmosferski). Proveri senzor.`); }
+  if(st.volt){ const running=st.rpm?st.rpm.avg>400:true; if(running&&(st.volt.avg<13||st.volt.avg>14.8)) add("warn",`Napon ${st.volt.avg.toFixed(1)} V dok motor radi (treba 13–14,5 V) — alternator/akumulator.`); else if(running) add("ok",`Punjenje ${st.volt.avg.toFixed(1)} V — normalno.`); }
+  const base=loadJSON("dd_base",null);
+  if(base&&warm) for(const k of ["rpm","rail","boost"]){ if(st[k]&&base.vals[k]){ const d=(st[k].avg-base.vals[k])/base.vals[k]; if(Math.abs(d)>.15) add("warn",`${k==="rpm"?"Obrtaji":k==="rail"?"Pritisak goriva":"Pritisak u usisu"}: ${d>0?"+":""}${(d*100).toFixed(0)}% u odnosu na tvoje „zdravo stanje“.`); } }
+  // before/after comparison
+  let cmp=null;
+  if(prev){ const fixed=prev.codes.filter(c=>!scan.codes.includes(c)), still=prev.codes.filter(c=>scan.codes.includes(c)), fresh=scan.codes.filter(c=>!prev.codes.includes(c));
+    cmp={kad:prev.kad,fixed,still,fresh,rail:prev.st&&prev.st.rail&&st.rail?[prev.st.rail.avg,st.rail.avg]:null,rpmsd:prev.st&&prev.st.rpm&&st.rpm?[prev.st.rpm.sd,st.rpm.sd]:null}; }
+  fcStep(steps,2,F.some(f=>f.lvl!=="ok"&&f.lvl!=="info")?"warn":"done",`${F.filter(f=>f.lvl==="ok").length} u redu · ${F.filter(f=>f.lvl==="warn"||f.lvl==="bad").length} za pažnju`);
+  const check={kad:Date.now(),codes:scan.codes,mil:scan.mil,st,findings:F,cmp};
+  if(OBD.demo) OBD.demoCheck=check; else saveJSON("dd_check",check);
+  addHistory({tip:"Kompletna provera",kad:Date.now(),ulaz:OBD.protoName,rez:F.filter(f=>f.lvl!=="ok").map(f=>f.t).slice(0,3).join(" | ")||"sve u redu"});
+  // render
+  const ico={ok:"✅",warn:"⚠️",bad:"🔴",info:"ℹ️"};
+  let h=`<div class="divider"></div><div class="row" style="justify-content:space-between"><h3>Rezultat</h3>${srcBadge()}</div>`;
+  h+=F.map(f=>`<div class="row" style="align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)"><span style="flex:none">${ico[f.lvl]}</span><span class="small">${esc(f.t)}</span></div>`).join("")||`<div class="small muted">Nema dovoljno podataka.</div>`;
+  if(cmp){ h+=`<div class="card" style="margin-top:14px"><h3>Pre i posle (od ${esc(new Date(cmp.kad).toLocaleDateString('sr-RS'))})</h3>
+    ${cmp.fixed.length?`<div class="small" style="margin-top:8px;color:var(--ok)">✅ Nestalo: ${esc(cmp.fixed.join(", "))} — popravka je izgleda uspela.</div>`:""}
+    ${cmp.still.length?`<div class="small" style="margin-top:8px;color:var(--warn)">⚠️ I dalje tu: ${esc(cmp.still.join(", "))} — kvar nije rešen (ili greška nije obrisana posle popravke).</div>`:""}
+    ${cmp.fresh.length?`<div class="small" style="margin-top:8px;color:var(--bad)">🔴 Novo: ${esc(cmp.fresh.join(", "))}</div>`:""}
+    ${!cmp.fixed.length&&!cmp.still.length&&!cmp.fresh.length?`<div class="small muted" style="margin-top:8px">Bez grešaka i pre i sada.</div>`:""}
+    ${cmp.rail?`<div class="small muted" style="margin-top:8px">Pritisak goriva u leru: ${cmp.rail[0].toFixed(0)} → ${cmp.rail[1].toFixed(0)} bar</div>`:""}
+    ${cmp.rpmsd?`<div class="small muted" style="margin-top:4px">Mirnoća lera: ±${cmp.rpmsd[0].toFixed(0)} → ±${cmp.rpmsd[1].toFixed(0)} o/min</div>`:""}</div>`; }
+  $("#fcRes").innerHTML=h;
+  fcStep(steps,3,"run");
+  if(AI.ready()){
+    const box=el("div","ai"); $("#fcRes").appendChild(el("div",null,`<div class="divider"></div><div class="eyebrow">Zaključak</div>`)); $("#fcRes").appendChild(box);
+    const prompt=`${AI_RULES}\n\n${carCtx()}\n${NORM_CTX}\nPRAVI PODACI IZ KOMPLETNE PROVERE (20 s u leru, ${OBD.protoName}):\nGreške: ${scan.codes.length?scan.codes.map(c=>c+" ("+codeInfo(c).txt+")").join(", "):"nema"}; lampica: ${scan.mil==null?"nepoznato":scan.mil?"upaljena":"ugašena"}\nStatistika: ${Object.entries(st).filter(([k,v])=>v).map(([k,v])=>`${k}: prosek ${v.avg.toFixed(1)}, min ${v.min.toFixed(1)}, max ${v.max.toFixed(1)}, kolebanje ±${v.sd.toFixed(1)}`).join("; ")}\nNalazi po pravilima: ${F.map(f=>f.t).join(" | ")}\n${cmp?`POREĐENJE SA PRETHODNOM PROVEROM: nestalo ${cmp.fixed.join(",")||"-"}; i dalje ${cmp.still.join(",")||"-"}; novo ${cmp.fresh.join(",")||"-"}.`:""}\n\nMarkdown naslovi:\n### Ukratko (1-2 rečenice)\n### Šta prvo da uradiš (od najjeftinijeg)\n### Smeš li da voziš\n${cmp?"### Da li je popravka uspela\n":""}Kratko.`;
+    try{ const t=await AI.text(prompt,{onText:t=>{box.innerHTML=md(t);}}); box.innerHTML=md(t); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); fcStep(steps,3,"done","Gotovo"); }
+    catch(e){ box.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; fcStep(steps,3,"warn","AI nije uspeo — nalazi gore važe"); }
+  } else { fcStep(steps,3,"done","Nalazi po Renault vrednostima su gore (AI nije uključen)"); $("#fcRes").insertAdjacentHTML("beforeend",MONEY_NOTE); }
+  btn.disabled=false; showAfter();
+  const bads=F.filter(f=>f.lvl==="bad"||f.lvl==="warn").map(f=>f.t);
+  lastSpoken=bads.length?("Pronašao sam "+bads.length+(bads.length===1?" stvar":" stvari")+" za pažnju. "+bads.slice(0,3).join(". ")):"Sve proverene vrednosti su u redu. Nema grešaka.";
+  Voice.say(lastSpoken);
+}
+
+function gaugeSVG(frac){ const r=42,cx=50,cy=48,len=Math.PI*r,off=len*(1-Math.max(0,Math.min(1,frac)));
+  return `<svg viewBox="0 0 100 54" aria-hidden="true"><path d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="rgba(120,165,255,.16)" stroke-width="7" stroke-linecap="round"/><path class="arc" d="M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}" fill="none" stroke="url(#gg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#2f52ff"/><stop offset="1" stop-color="#27e5ff"/></linearGradient></defs></svg>`; }
+/* ===================================================================== CODES / LAMPS / KB / NORMS */
+function buildFaults(){
+  const cc=$("#commonCodes"); cc.innerHTML=""; ["DF053","DF130","P0401","P0101","P0299","DF007","DF016","P0380","DF038","P0335"].forEach(k=>{ const b=el("button","chip mono",k); b.onclick=()=>{ $("#codeInput").value=k; lookupCode(); }; cc.appendChild(b); });
+  const ll=$("#lampList"); ll.innerHTML=""; LAMPS.forEach(l=>{ const b=el("button","",`<div class="ic">${l.emoji}</div><div style="flex:1"><b>${esc(l.ime)}</b></div><span class="sev s-${l.sev}">${l.sev==="opasno"?"Stani":l.sev==="srednji"?"Proveri":"Sitno"}</span>`); b.onclick=()=>openLamp(l); ll.appendChild(b); });
+  const kb=$("#kbList"); kb.innerHTML=""; KB.forEach(k=>{ const b=el("button","",`<div class="ic">${k.emoji}</div><div style="flex:1;min-width:0"><b>${esc(k.ime)}</b><span class="s">${esc(k.kratko)}</span></div><span class="sev s-${k.sev}">${esc(k.sevTxt)}</span>`); b.onclick=()=>openKB(k); kb.appendChild(b); });
+  $("#normTable").innerHTML=NORMS.map(n=>`<tr><td>${esc(n[0])}</td><td>${esc(n[1])}</td></tr>`).join("");
+}
+function normCode(c){ c=c.trim().toUpperCase().replace(/\s/g,""); const m=c.match(/^DF0*(\d{1,3})$/); if(m) return "DF"+m[1].padStart(3,"0"); return c; }
+async function lookupCode(){
+  const code=normCode($("#codeInput").value); if(!code) return;
+  const box=$("#codeResult"); let df=null,p=null;
+  if(DF[code]){ df=code; p=DF[code][0]; } else if(P2DF[code]){ p=code; df=P2DF[code]; } else p=code;
+  let h=`<div class="card hi"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><div style="font-family:var(--f-mono);font-size:22px;color:var(--cyan)">${esc(code)}</div>${df&&p&&code!==p?`<span class="tag">= <b>${esc(p)}</b></span>`:df&&code!==df?`<span class="tag">Renault <b>${esc(df)}</b></span>`:""}</div>`;
+  if(df) h+=`<div style="margin-top:8px"><b>${esc(DF[df][1])}</b></div><div class="small muted" style="margin-top:4px">${esc(DF[df][2])}</div><div class="tiny muted" style="margin-top:8px">Izvor: Renault fabrička tabela za Delphi DDCR računar (2004). Na Siemens računaru (od 2005) isti DF broj može značiti nešto drugo.</div>`;
+  else if(PEXTRA[p]) h+=`<div style="margin-top:8px"><b>${esc(PEXTRA[p])}</b></div>`;
+  else h+=`<div class="small muted" style="margin-top:8px">Ovaj kod nije u ugrađenoj tabeli.</div>`;
+  h+=`</div><div id="codeAI" style="margin-top:12px"></div>`;
+  box.innerHTML=h;
+  const holder=$("#codeAI");
+  if(!AI.ready()){ holder.innerHTML=`<div class="notice">Za objašnjenje „kako da proveriš i koliko košta“ uključi veštačku inteligenciju (Podešavanja).</div>`; return; }
+  holder.innerHTML=`<button class="btn ghost sm" id="codeAIbtn">Objasni jednostavno + šta da radim</button>`;
+  $("#codeAIbtn").onclick=async()=>{
+    holder.innerHTML=thinking("Objašnjavam…");
+    const prompt=`${AI_RULES}\n\n${carCtx()}\n${NORM_CTX}\nKod greške: ${code}${df?` (Renault ${df} = ${p}, fabrički opis: ${DF[df][1]}; napomena: ${DF[df][2]})`:""}${PEXTRA[p]?` (${PEXTRA[p]})`:""}.\n\nMarkdown naslovi:\n### Šta znači (jednostavno)\n### Najčešći uzrok baš na ovom motoru\n### Šta da proveriš prvo (od najjeftinijeg)\n### Smeš li da voziš\n### Okvirna cena u dinarima\nKratko.`;
+    try{ const a=el("div","ai"); holder.innerHTML=""; holder.appendChild(a); const t=await AI.text(prompt,{onText:t=>{a.innerHTML=md(t);}}); a.innerHTML=md(t); holder.insertAdjacentHTML("beforeend",MONEY_NOTE); addHistory({tip:"Kod greške",kad:Date.now(),ulaz:code,rez:df?DF[df][1]:(PEXTRA[p]||"objašnjen")}); }
+    catch(e){ holder.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; }
+  };
+  addHistory({tip:"Kod greške",kad:Date.now(),ulaz:code,rez:df?DF[df][1]:(PEXTRA[p]||"nepoznat")});
+}
+function openLamp(l){ openSheet(`<h2>${l.emoji} ${esc(l.ime)}</h2><div class="banner ${l.sev==="opasno"?"danger":"warn"}" style="margin:14px 0">${SVG_WARN}<div class="small">${l.txt}</div></div><button class="btn ghost" onclick="closeSheet();go('car')">Opiši problem detaljnije</button>`); }
+async function openKB(k){
+  openSheet(`<h2>${k.emoji} ${esc(k.ime)}</h2><div class="small muted">${esc(k.kratko)}</div>
+  <div class="card" style="margin:14px 0"><div class="eyebrow">Znaci</div><div class="small" style="margin-top:6px">${esc(k.znaci)}</div><div class="divider"></div><div class="eyebrow">Zašto se dešava</div><div class="small" style="margin-top:6px">${esc(k.uzrok)}</div><div class="divider"></div><div class="eyebrow">Kako da sprečiš</div><div class="small" style="margin-top:6px">${esc(k.prevencija)}</div><div class="divider"></div><div class="eyebrow">Okvirna cena (Srbija, 2026)</div><div class="small" style="margin-top:6px">${esc(k.cena)}${k.rad&&k.rad!=="—"?`<br>Rad: ${esc(k.rad)} × ${rsd(LABOR)}/h`:""}</div></div>
+  <div id="kbAI"></div>`);
+  const h=$("#kbAI"); if(!AI.ready()) return;
+  h.innerHTML=`<button class="btn ghost" id="kbAIbtn">Pitaj AI: šta mogu sam da proverim?</button>`;
+  $("#kbAIbtn").onclick=async()=>{ h.innerHTML=thinking("Pišem savet…");
+    try{ const a=el("div","ai"); h.innerHTML=""; h.appendChild(a); const t=await AI.text(`${AI_RULES}\n\n${carCtx()}\nTema: ${k.ime}. Poznato: ${k.znaci} Uzrok: ${k.uzrok}\n\nMarkdown naslovi:\n### Šta možeš sam da proveriš\n### Kada odmah kod majstora\n### Šta da tražiš od majstora\nKratko.`,{onText:t=>{a.innerHTML=md(t);}}); a.innerHTML=md(t); h.insertAdjacentHTML("beforeend",MONEY_NOTE); }
+    catch(e){ h.innerHTML=`<div class="small">${aiErr(e.code)}</div>`; } };
+}
+
+function getMaint(){ return loadJSON("dd_maint",{km:0,items:{}}); }
+function maintDue(){
+  const m=getMaint(), now=Date.now();
+  return MAINT.map(it=>{
+    const last=m.items[it.id]; let frac=null, txt="Nije uneto kad je rađeno", state="unknown";
+    if(last){
+      const fk = it.km&&m.km&&last.km!=null ? (m.km-last.km)/it.km : null;
+      const ft = it.god&&last.date ? (now-new Date(last.date).getTime())/(it.god*365.25*864e5) : null;
+      frac=Math.max(fk||0,ft||0);
+      const leftKm = it.km&&m.km&&last.km!=null ? it.km-(m.km-last.km) : null;
+      const leftMo = it.god&&last.date ? Math.round((it.god*12)-(now-new Date(last.date).getTime())/(30.44*864e5)) : null;
+      const parts=[]; if(leftKm!=null) parts.push(leftKm>=0?`još ${leftKm.toLocaleString('sr-RS')} km`:`kasni ${(-leftKm).toLocaleString('sr-RS')} km`); if(leftMo!=null) parts.push(leftMo>=0?`još ${leftMo} mes.`:`kasni ${-leftMo} mes.`);
+      txt=parts.join(" · ")||"urađeno"; state=frac>=1?"late":frac>=.85?"soon":"ok";
+    }
+    return {...it,frac,txt,state};
+  });
+}
+/* ===================================================================== REPORT */
+function buildReport(){
+  const v=VARIANTS[car.kw], s=loadJSON("dd_scan",null), d=loadJSON("dd_lastdiag",null), m=getMaint(), base=loadJSON("dd_base",null);
+  const L=[]; L.push("IZVEŠTAJ — Dizel Doktor", "Datum: "+new Date().toLocaleString('sr-RS'), "");
+  L.push("AUTO: "+car.model+", "+car.godina+(v?", "+v.name+" ("+v.code+")":"")+(car.vin?", VIN "+car.vin:"")+(m.km?", "+m.km+" km":""));
+  L.push("");
+  if(s){ L.push("OČITAVANJE IZ AUTA ("+new Date(s.kad).toLocaleString('sr-RS')+", "+(s.proto||"")+"):"); L.push("  Lampica motora: "+(s.mil==null?"nepoznato":s.mil?"upaljena":"ugašena"));
+    L.push("  Greške: "+(s.codes.length?s.codes.map(c=>c+" — "+codeInfo(c).txt+(P2DF[c]?" ("+P2DF[c]+")":"")).join("; "):"nema")); if(s.pending.length) L.push("  Na čekanju: "+s.pending.join(", ")); L.push(""); }
+  if(Object.keys(live.vals).length){ L.push("VREDNOSTI UŽIVO: "+Object.entries(live.vals).map(([k,v])=>k+"="+Number(v).toFixed(1)).join(", ")); }
+  if(base) L.push("ZDRAVO STANJE ("+new Date(base.kad).toLocaleDateString('sr-RS')+"): "+Object.entries(base.vals).map(([k,v])=>k+"="+Number(v).toFixed(1)).join(", "));
+  if(d){ L.push("", "OPIS VOZAČA: "+[d.syms.join(", "),d.free].filter(Boolean).join(" · ")); L.push("AI PROCENA (nije konačna dijagnoza):"); d.uzroci.forEach((u,i)=>L.push("  "+(i+1)+". "+u.naziv+" ("+u.verovatnoca+") — provera: "+(u.kako||""))); if(d.sazetak) L.push("  Prvo: "+d.sazetak); }
+  const ag=loadJSON("dd_lastagent",null); if(ag){ L.push("", "AI AGENT ("+new Date(ag.kad).toLocaleString('sr-RS')+") — cilj: "+ag.goal); L.push(plain(ag.text).slice(0,1500)); }
+  const due=maintDue().filter(x=>x.state==="late"||x.state==="soon"); if(due.length){ L.push("", "SERVIS NA REDU: "+due.map(x=>x.ime+" ("+x.txt+")").join("; ")); }
+  const hist=loadJSON("dd_hist",[]).filter(h=>h.tip.startsWith("Provera")).slice(0,5); if(hist.length){ L.push("", "PROVERE VOZAČA:"); hist.forEach(h=>L.push("  "+h.tip.replace("Provera: ","")+": "+h.ulaz)); }
+  L.push("", "Napomena: aplikacija samo čita podatke; nalazi su procena za pomoć majstoru.");
+  return L.join("\n");
+}
+function openReport(){ const t=buildReport();
+  openSheet(`<h2>Izveštaj za majstora</h2><div class="codebox" id="repText" style="margin:12px 0">${esc(t)}</div><div class="row"><button class="btn" onclick="copyReport()">Kopiraj</button><button class="btn ghost" onclick="saveReport()">Sačuvaj fajl</button></div>`); }
+async function copyReport(){ const t=buildReport(); try{ await navigator.clipboard.writeText(t); toast("Kopirano."); }catch(e){ const r=document.createRange(); r.selectNodeContents($("#repText")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Označeno — kopiraj ručno."); } }
+async function saveReport(){ const t=buildReport(); let dl=null; try{ dl=window.claude?.use?await window.claude.use("downloads"):null; }catch(e){}
+  if(dl){ try{ await dl.save({filename:"izvestaj-megane.txt",data:t}); }catch(e){ if(e&&e.code!=="declined") toast("Čuvanje nije uspelo."); } return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"})); a.download="izvestaj-megane.txt"; a.click(); }
+
+/* ===================================================================== HISTORY / SHEETS / SETTINGS */
+function addHistory(e){ if(OBD.demo) return; const h=loadJSON("dd_hist",[]); h.unshift(e); saveJSON("dd_hist",h.slice(0,80)); }
+function renderHistory(){
+  const h=loadJSON("dd_hist",[]), w=$("#histList");
+  if(!h.length){ w.innerHTML=`<div class="card center"><div style="font-size:30px">🗂️</div><div class="small muted" style="margin-top:8px">Još nema sačuvanih provera.</div><button class="btn sm" style="margin:14px auto 0" onclick="go('diag')">Uradi prvu proveru</button></div>`; return; }
+  w.innerHTML=h.map(e=>{ const d=new Date(e.kad); return `<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between;align-items:flex-start"><b style="font-family:var(--f-display);font-size:14px">${esc(e.tip)}</b><span class="tiny muted" style="white-space:nowrap">${d.toLocaleDateString('sr-RS')} ${d.toLocaleTimeString('sr-RS',{hour:'2-digit',minute:'2-digit'})}</span></div><div class="small" style="margin-top:6px"><span class="muted">Uneto:</span> ${esc(e.ulaz||"—")}</div>${e.rez?`<div class="small" style="margin-top:3px"><span class="muted">Nalaz:</span> ${esc(e.rez)}</div>`:""}</div>`; }).join("")+`<button class="btn ghost sm" style="display:flex;margin:6px auto 0" onclick="saveJSON('dd_hist',[]);renderHistory()">Obriši istoriju</button>`;
+}
+function openSheet(html){ $("#sheetBody").innerHTML=html; $("#sheetBg").classList.add("open"); $("#sheet").classList.add("open"); }
+function closeSheet(){ $("#sheetBg").classList.remove("open"); $("#sheet").classList.remove("open"); }
+function openCar(){ openSheet(`<h2>Tvoj auto</h2><div class="small muted">Najlakše: u saobraćajnoj dozvoli pogledaj <b style="color:var(--fg)">snagu motora u kW</b>.</div>
+  <div class="small muted" style="margin:14px 0 8px;font-weight:700">Snaga iz saobraćajne:</div>
+  <div class="seg" style="grid-template-columns:1fr 1fr 1fr"><button class="${car.kw==="60"?"on":""}" onclick="setKw('60')">60 kW</button><button class="${car.kw==="74"?"on":""}" onclick="setKw('74')">74 kW</button><button class="${!car.kw?"on":""}" onclick="setKw('')">Ne znam</button></div>
+  <div id="kwInfo" style="margin-top:12px"></div>
+  <div class="stack" style="margin-top:14px"><label class="fld">Godina<input type="text" id="c-god" value="${esc(car.godina)}"></label><label class="fld">Broj šasije (VIN) — ako želiš<input type="text" id="c-vin" value="${esc(car.vin)}" placeholder="VF1BM…" style="font-family:var(--f-mono)"></label>
+  <div class="notice">VIN je na pločici na levom srednjem stubu (kod vozačevih vrata) i u saobraćajnoj. Oznaka motora (K9K + 3 cifre) je utisnuta na bloku, iza šipke za ulje.</div>
+  <button class="btn" onclick="saveCar()">Sačuvaj</button></div>`); showKwInfo(); }
+function setKw(k){ car.kw=k; document.querySelectorAll("#sheetBody .seg button").forEach(b=>b.classList.toggle("on",(k==="60"&&b.textContent==="60 kW")||(k==="74"&&b.textContent==="74 kW")||(!k&&b.textContent==="Ne znam"))); showKwInfo(); }
+function showKwInfo(){ const v=VARIANTS[car.kw], b=$("#kwInfo"); if(!b) return; b.innerHTML=v?`<div class="card hi small"><b>${v.name} · ${v.code}</b><div class="muted" style="margin-top:4px">${v.turbo}; ubrizgavanje ${v.rail}; ${v.torque}; računar ${v.ecu}; menjač JR5 (5 brzina).</div></div>`:`<div class="notice">U 2004. postoje dve verzije: 60 kW (dCi 80) i 74 kW (dCi 100).</div>`; }
+function saveCar(){ car.godina=$("#c-god").value||"2004"; car.vin=($("#c-vin").value||"").toUpperCase().trim(); const v=VARIANTS[car.kw]; car.ecu=v?v.ecu:"Delphi DDCR (najverovatnije)"; saveJSON("dd_car",car); closeSheet(); updateHeader(); toast("Sačuvano."); }
+function confirmWipe(){ const b=document.activeElement; if(b&&b.dataset.armed){ ["dd_car","dd_hist","dd_scan","dd_base","dd_maint","dd_lastdiag"].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} }); return true; } if(b){ b.dataset.armed="1"; b.textContent="Dodirni ponovo za potvrdu"; } return false; }
+async function copyUrl(){ try{ await navigator.clipboard.writeText(PUBLIC_URL); toast("Kopirano."); }catch(e){ toast("Označi adresu i kopiraj ručno."); } }
+function saveKey(){ try{ localStorage.setItem("dd_key",$("#set-key").value.trim()); }catch(e){} AI.init().then(()=>toast(AI.mode?"AI uključen.":"Ključ obrisan.")); closeSheet(); }
+
+
+/* ===================================================================== v4 UI: connection step, header, nav, main flow */
+let lastConnKind="";
+function renderConn(){
+  const c=$("#connCard"); if(!c) return;
+  if(connState.kind!==lastConnKind){ lastConnKind=connState.kind; if(connState.kind==="ok") Voice.say(OBD.demo?"Povezan je primer auto, za vežbu.":"Auto je povezan."); else if(connState.kind==="fail") Voice.say("Veza nije uspela. Pogledaj poruku na ekranu."); }
+  if(OBD.connected&&OBD.demo){ c.innerHTML=`<div class="banner warn">${SVG_WARN}<div style="flex:1"><b>1 · Povezan PRIMER auto (vežba)</b><div class="small" style="margin-top:3px;color:#ffe0b0">Izmišljen auto sa kvarom pritiska goriva i EGR-a. Ništa se ne čuva.</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
+  if(OBD.connected){ c.innerHTML=`<div class="banner ok">${SVG_OK}<div style="flex:1;min-width:0"><b>1 · Auto povezan</b><div class="small" style="margin-top:3px">${esc(OBD.protoName)}${OBD.vin?" · VIN "+esc(OBD.vin):""}${OBD.voltage?" · "+OBD.voltage.toFixed(1)+" V":""}</div></div><button class="btn ghost sm" onclick="disconnect()">Prekini</button></div>`; return; }
+  let st="";
+  if(connState.kind==="wait") st=`<div class="card hi" style="margin-top:12px"><span class="thinking"><i></i><i></i><i></i></span> <span class="small" style="margin-left:6px">${esc(connState.msg)}</span></div>`;
+  if(connState.kind==="fail") st=`<div class="banner warn" style="margin-top:12px">${SVG_WARN}<div class="small">${esc(connState.msg)}</div></div>`;
+  c.innerHTML=`<div class="stepcard"><div class="stephead"><div class="num">1</div><div><h3>Poveži auto</h3><div class="opt">Adapter u utičnicu ispod volana, kontakt uključen</div></div></div>
+    <div class="stack"><button class="btn" onclick="connectBLE()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>Bluetooth adapter</button>
+    <button class="btn ghost" onclick="connectSerial()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M8 6h8"/><circle cx="12" cy="19" r="3"/></svg>USB kabl</button></div>
+    ${st}
+    <div class="row" style="justify-content:center;margin-top:8px"><button class="linkbtn" onclick="connectDemo()">Nema auta ovde? Probaj na primer autu →</button></div></div>`;
+}
+function updateHeader(){
+  const pill=$("#carPill"), d=$("#carDot"), t=$("#carTxt");
+  if(OBD.connected){ d.className="dot on"; t.textContent=OBD.demo?"Primer":"Povezan"; pill.classList.add("on"); }
+  else if(connState.kind==="wait"){ d.className="dot wait"; t.textContent="Veza…"; pill.classList.remove("on"); }
+  else { d.className="dot"; t.textContent="Nije povezan"; pill.classList.remove("on"); }
+  const v=VARIANTS[car.kw]; $("#hdrCar").textContent=`${v?v.name:"Mégane 1.5 dCi"} · ${car.godina}`;
+  const n=$("#carName"), s=$("#carSub"); if(n) n.textContent=car.model; if(s) s.textContent=`${v?v.code+" · "+v.name:"K9K"} · ${car.godina}${car.vin?" · "+car.vin:""}`;
+  const lbl=$("#checkLbl"); if(lbl&&!agentCtl) lbl.textContent=OBD.connected?"POKRENI PROVERU":"PROVERI PO OPISU";
+  const h=$("#checkHint"); if(h) h.textContent=OBD.connected?"AI sam pita auto, traži od tebe pomoć kad treba i kaže rezultat naglas.":"Bez auta: procena samo po onome što kaže mušterija. Za pravu proveru poveži auto (korak 1).";
+  const n2=$("#num2"); if(n2) n2.className="num"+(selected.size||($("#symText")&&$("#symText").value.trim())?" done":"");
+}
+function renderCar(){ renderConn(); const sp=$("#scanPane"); if(sp) sp.hidden=!OBD.connected; updateHeader(); }
+
+const TABS=[
+  {id:"car",lbl:"Provera",svg:'<path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/>'},
+  {id:"faults",lbl:"Šifre",svg:'<path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/><path d="M8 12h8"/>'},
+  {id:"more",lbl:"Više",svg:'<path d="M4 6h16M4 12h16M4 18h16"/>'},
+];
+let current="car";
+function buildTabs(){ const n=$("#tabs"); n.innerHTML=""; TABS.forEach(t=>{ const b=el("button",t.id===current?"on":"",`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg><span>${t.lbl}</span>`); b.onclick=()=>go(t.id); n.appendChild(b); }); }
+function go(id){
+  current=id; document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  const sc=$("#s-"+id); if(sc) sc.classList.add("active");
+  const navId=id==="history"?"more":id; document.querySelectorAll("#tabs button").forEach((b,i)=>b.classList.toggle("on",TABS[i].id===navId));
+  if(id==="history") renderHistory(); if(id==="car") renderCar();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function goCode(){ go("faults"); setTimeout(()=>{ $("#codeInput").focus(); },60); }
+
+function buildMechSymptoms(){ const w=$("#symChips"); w.innerHTML=""; MECH_SYMPTOMS.forEach(s=>{ const c=el("button","chip",esc(s)); c.onclick=()=>{ selected.has(s)?(selected.delete(s),c.classList.remove("on")):(selected.add(s),c.classList.add("on")); updateHeader(); }; w.appendChild(c); }); $("#symText").addEventListener("input",updateHeader); }
+function showAfter(){ $("#afterActions").hidden=false; $("#clearBtn").hidden=!OBD.connected; }
+const hClass=h=>{h=(h||"").toLowerCase(); return h.includes("opasno")?"h-opasno":(h.includes("uskoro")||h.includes("hitno"))?"h-hitno":"h-ok";};
+const verBadge=v=>{v=(v||"").toLowerCase(); return v.includes("vis")?'<span class="badge b-vis">VISOKA</span>':v.includes("sre")?'<span class="badge b-sre">SREDNJA</span>':'<span class="badge b-niz">NISKA</span>';};
+function summaryOf(t){ const get=h=>{ const parts=t.split(new RegExp("###\\s*"+h,"i")); if(!parts[1]) return ""; const body=parts[1].split("###")[0]; const nl=body.indexOf("\n"); return nl>=0?body.slice(nl+1):body; };
+  const a=get("Ukratko"), b=get("Šta prvo"); const first=(b||"").replace(/\n/g," ").split(/(?<=[.!?])\s/).slice(0,2).join(" ");
+  return ((a||"")+" "+(first?"Prvo: "+first:"")).trim()||t.slice(0,400); }
+
+async function runCheck(){
+  if(agentCtl){ agentCtl.abort(); return; }
+  Voice.stop();
+  const symTxt=[[...selected].join(", "),$("#symText").value.trim()].filter(Boolean).join(". ");
+  $("#afterActions").hidden=true;
+  if(OBD.connected){
+    if(AI.ready()){ const r=await runAgentFlow(symTxt); if(r!=="fallback") return; }
+    return runFullCheck();
+  }
+  if(!symTxt){ const m="Prvo poveži auto, ili izaberi šta mušterija kaže."; $("#checkHint").textContent=m; Voice.say(m); toast(m); return; }
+  return runDiagOnly(symTxt);
+}
+async function runAgentFlow(symTxt){
+  const out=$("#result"); if(live.on){ live.on=false; await sleep(300); }
+  agentCtl=new AbortController(); $("#checkLbl").textContent="ZAUSTAVI";
+  const goal=symTxt?`Mušterija kaže: ${symTxt}. Pronađi uzrok.`:"Uradi kompletan pregled motora.";
+  out.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-family:var(--f-display)">Agent proverava auto</b>${srcBadge()}</div><div id="agentLog"></div><div class="divider"></div><div class="ai" id="agentText"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted">Planiram…</span></div></div>`;
+  Voice.say("Počinjem proveru.");
+  const prev=OBD.demo?null:loadJSON("dd_check",null);
+  const prompt=`${AGENT_RULES}\n\nVEZA: ${OBD.demo?"PRIMER AUTO (simulacija za vežbu, NIJE pravi auto)":"pravi auto"}, protokol ${OBD.protoName}.\nCILJ: ${goal}\n${prev?`PRETHODNA PROVERA (${new Date(prev.kad).toLocaleDateString('sr-RS')}): greške ${prev.codes.join(", ")||"nema"}. Ako je cilj provera posle popravke, uporedi.`:""}`;
+  try{
+    const t=await AI.agent(prompt,agentTools(),{signal:agentCtl.signal,onText:t=>{ $("#agentText").innerHTML=md(t); }});
+    $("#agentText").innerHTML=md(t); out.insertAdjacentHTML("beforeend",MONEY_NOTE);
+    lastSpoken=summaryOf(t); Voice.say(lastSpoken); showAfter();
+    if(!OBD.demo){ saveJSON("dd_lastagent",{kad:Date.now(),goal,text:t}); if(OBD.lastScan) saveJSON("dd_check",{kad:Date.now(),codes:OBD.lastScan.codes,mil:OBD.lastScan.mil,st:null,findings:[],cmp:null}); }
+    addHistory({tip:"Provera (AI agent)",kad:Date.now(),ulaz:goal,rez:plain(summaryOf(t)).slice(0,180)});
+    return "ok";
+  }catch(e){
+    if(e.code==="tools_unavailable"){ out.innerHTML=""; return "fallback"; }
+    $("#agentText").innerHTML=e.code==="cancelled"?`<div class="small muted">Zaustavljeno.</div>`:`<div class="small">${aiErr(e.code)}</div>`;
+    if(e.code!=="cancelled") Voice.say(aiErr(e.code));
+    return "err";
+  }finally{ agentCtl=null; updateHeader(); }
+}
+async function runDiagOnly(symTxt){
+  const out=$("#result"); if(!AI.ready()){ out.innerHTML=aiOff(); return; }
+  const btn=$("#checkBtn"); btn.disabled=true; out.innerHTML=`<div class="card"><span class="thinking"><i></i><i></i><i></i></span> <span class="muted" style="margin-left:6px">Tražim najverovatnije uzroke…</span></div>`;
+  const prompt=`${AI_RULES}\n\n${carCtx()}\n${KB_CTX}\n${NORM_CTX}\n${scanCtx()}\n\nMUŠTERIJA KAŽE: ${symTxt}\nAuto NIJE povezan — procena samo po opisu.\n\nOdgovori ISKLJUČIVO JSON-om:\n{"uzroci":[{"naziv":"kratko","verovatnoca":"visoka|srednja|niska","objasnjenje":"1 rečenica","kako_proveriti":"konkretan korak za majstora","cena_min_rsd":0,"cena_max_rsd":0,"hitnost":"nije hitno|može da čeka|uskoro|opasno - ne vozi"}],"sazetak":"jedna rečenica: šta prvo da proveriš","upozorenje":""}\nNajviše 4, od najverovatnijeg. Cena = delovi + rad.`;
+  try{
+    const data=await AI.json(prompt); const list=(data&&data.uzroci)||[]; let h="";
+    const danger=(data.upozorenje&&data.upozorenje.trim())||list.some(u=>(u.hitnost||"").includes("opasno"))||selected.has("Kuca");
+    if(danger) h+=`<div class="banner danger" style="margin:12px 0">${SVG_WARN}<div><b>Pažnja — možda je ozbiljno.</b><div class="small" style="margin-top:3px;color:#ffc9cf">${esc(data.upozorenje||"Ako motor kuca ili svetli lampica ulja — ne paliti dalje.")}</div></div></div>`;
+    h+=`<div class="banner warn" style="margin:12px 0">${SVG_WARN}<div class="small"><b>Procena bez auta</b> — samo po opisu. Za siguran nalaz poveži auto.</div></div>`;
+    if(data.sazetak) h+=`<div class="card hi"><div class="eyebrow">Prvo proveri</div><div style="margin-top:6px;font-size:18px">${esc(data.sazetak)}</div></div>`;
+    list.forEach(u=>{ const c=(u.cena_min_rsd||u.cena_max_rsd)?`${rsd(u.cena_min_rsd||0)} – ${rsd(u.cena_max_rsd||0)}`:"zavisi";
+      h+=`<div class="cause ${hClass(u.hitnost)}"><h3>${esc(u.naziv)} ${verBadge(u.verovatnoca)}</h3><div class="small" style="margin-top:6px">${esc(u.objasnjenje||"")}</div><div class="small muted" style="margin-top:8px"><b style="color:var(--fg)">Provera:</b> ${esc(u.kako_proveriti||"—")}</div><div class="meta"><span class="tag">Okvirno: <b>${c}</b></span><span class="tag">${esc(u.hitnost||"—")}</span></div></div>`; });
+    out.innerHTML=h+MONEY_NOTE;
+    lastSpoken=(data.sazetak||"")+(list[0]?" Najverovatnije: "+list[0].naziv+".":""); Voice.say((danger?"Pažnja. ":"")+lastSpoken); showAfter();
+    saveJSON("dd_lastdiag",{kad:Date.now(),syms:[...selected],free:$("#symText").value.trim(),uzroci:list.map(u=>({naziv:u.naziv,verovatnoca:u.verovatnoca,kako:u.kako_proveriti})),sazetak:data.sazetak||""});
+    addHistory({tip:"Procena po opisu",kad:Date.now(),ulaz:symTxt,rez:list.slice(0,3).map(u=>u.naziv).join(", ")});
+  }catch(e){ out.innerHTML=`<div class="card small">${aiErr(e.code)}</div>`; Voice.say(aiErr(e.code)); }
+  finally{ btn.disabled=false; }
+}
+
+function buildMore(){
+  $("#intervalList").innerHTML=MAINT.map(m=>`<div class="row" style="justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span class="small"><b>${esc(m.ime)}</b><br><span class="muted tiny">${esc(m.txt)}</span></span><span class="small" style="text-align:right;white-space:nowrap;font-family:var(--f-mono)">${m.km?m.km.toLocaleString('sr-RS')+" km":""}${m.km&&m.god?"<br>":""}${m.god?m.god+" god.":""}</span></div>`).join("");
+  $("#recallList").innerHTML=`<div class="tiny muted" style="margin-bottom:6px">Proveriti po VIN-u u Renault servisu.</div>`+RECALLS.map(r=>`<div class="row" style="justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span class="small">${esc(r[0])}</span><span class="tiny muted" style="text-align:right;max-width:45%">${esc(r[1])}</span></div>`).join("");
+}
+function openHelp(){ openSheet(`<h2>Kako se koristi</h2><div class="stack" style="margin-top:14px">
+  <div class="row" style="align-items:flex-start"><div class="num">1</div><div class="small"><b>Poveži auto.</b> Adapter u OBD utičnicu (ispod volana, levo). Kontakt ili motor upaljen. Dodirni „Bluetooth adapter“ ili „USB kabl“.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">2</div><div class="small"><b>Šta kaže mušterija</b> — dodirni ili dodirni 🎤 i izgovori. Nije obavezno.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">3</div><div class="small"><b>POKRENI PROVERU.</b> AI sam pita auto (greške, vrednosti, Renault memorija). Ako mu treba nešto od tebe (npr. „drži 2500 obrtaja“), kaže naglas — odgovori „gotovo“ ili dodirni dugme.</div></div>
+  <div class="row" style="align-items:flex-start"><div class="num">4</div><div class="small"><b>Posle popravke:</b> „Obriši greške“, provozaj auto, pa „Proveri ponovo“ — vidiš šta je nestalo.</div></div>
+  <div class="notice">Aplikacija ništa ne menja u autu bez tvoje potvrde. Rezultat je procena — konačnu reč daje majstor.</div></div>`); }
+function openSettings(){ const inClaude=AI.mode==="claude"; const baud=loadJSON("dd_baud",38400);
+  openSheet(`<h2>Podešavanja</h2><div class="stack" style="margin-top:14px">
+  <div class="card"><h3>Glas</h3><div class="small muted" style="margin:6px 0 12px">${Voice.voice?`Glas: ${esc(Voice.voice.name)}`:"Srpski glas nije pronađen — koristi se podrazumevani. Android: Podešavanja → Pretvaranje teksta u govor → Google → instaliraj srpski (ili hrvatski)."}</div>
+    <div class="seg"><button class="${Voice.on?"on":""}" onclick="if(!Voice.on)toggleVoice();openSettings()">Uključen</button><button class="${!Voice.on?"on":""}" onclick="if(Voice.on)toggleVoice();openSettings()">Isključen</button></div>
+    <button class="btn ghost sm" style="margin-top:12px" onclick="Voice.say('Auto je povezan. Pronađena greška P0089, regulacija pritiska goriva.')">🔊 Probaj glas</button></div>
+  <div class="card"><h3>AI</h3><div class="small muted" style="margin-top:6px">${inClaude?"Radi preko Claude naloga — ništa ne treba.":"Van Claude aplikacije: unesi Anthropic API ključ (ostaje samo na ovom uređaju)."}</div>
+  ${inClaude?"":`<input type="password" id="set-key" value="${esc(getKey())}" placeholder="sk-ant-…" autocomplete="off" style="margin-top:12px"><button class="btn sm" style="margin-top:10px" onclick="saveKey()">Sačuvaj ključ</button>`}</div>
+  <div class="card"><h3>USB brzina</h3><div class="small muted" style="margin:6px 0 10px">ELM327: 38400. vLinker / OBDLink: probaj 115200.</div><div class="seg"><button class="${baud==38400?"on":""}" onclick="saveJSON('dd_baud',38400);openSettings()">38400</button><button class="${baud==115200?"on":""}" onclick="saveJSON('dd_baud',115200);openSettings()">115200</button></div></div>
+  <div class="card"><h3>Aplikacija za telefon</h3><div class="small muted" style="margin-top:6px">Za rad na autu (Bluetooth, USB, mikrofon) otvori u <b style="color:var(--fg)">Chrome-u na Android telefonu</b>, pa u meniju ⋮ izaberi <b style="color:var(--fg)">„Instaliraj aplikaciju“</b>:</div><div class="codebox" style="margin-top:10px;user-select:all">${PUBLIC_URL}</div><button class="btn ghost sm" style="margin-top:10px" onclick="copyUrl()">Kopiraj adresu</button></div>
+  <div class="card"><h3>Podaci</h3><button class="btn ghost sm" style="margin-top:10px" onclick="if(confirmWipe())location.reload()">Obriši sve podatke</button></div></div>`); }
+
+/* ===================================================================== INIT */
+buildTabs(); buildMechSymptoms(); buildFaults(); buildMore(); renderVoiceBtn(); renderCar();
+AI.init();
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); if(e.key!=="Enter") return; if(e.target.id==="codeInput") lookupCode(); });
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

@@ -264,6 +264,7 @@
    DATA — sourced from Renault workshop manuals (MR 364/372, DDCR chapter),
    owner/club sources and Serbian price research (Oct 2026). See repo notes.
    ===================================================================== */
+const PUBLIC_URL = "https://ilicvix02.github.io/Claude/renault-dci-dijagnostika/app/";
 const EUR = 117.5; // RSD per EUR (NBS, Oct 2026)
 const LABOR = 3000; // RSD per hour, typical Serbian workshop rate
 
@@ -636,7 +637,7 @@ async function connectSerial(){
   OBD.link={ kind:"USB", name:"USB adapter", async write(s){ await writer.write(enc.encode(s)); }, async close(){ reading=false; try{ writer.releaseLock(); await port.close(); }catch(e){} } };
   await initELM();
 }
-function frameMsg(){ return "U ovom prikazu (unutar Claude-a) pregledač ne dozvoljava povezivanje sa uređajima. Otvori samostalnu verziju aplikacije u Chrome-u na Android telefonu ili računaru (vidi Podešavanja → Samostalna verzija)."; }
+function frameMsg(){ return "U ovom prikazu (unutar Claude-a) pregledač ne dozvoljava povezivanje sa uređajima. Otvori aplikaciju u Chrome-u na Android telefonu: "+PUBLIC_URL; }
 const PROTO={ "1":"SAE J1850 PWM","2":"SAE J1850 VPW","3":"ISO 9141-2 (K-linija)","4":"KWP2000 5-baud (K-linija)","5":"KWP2000 brzi start (K-linija)","6":"CAN 11-bit 500k","7":"CAN 29-bit 500k","8":"CAN 11-bit 250k","9":"CAN 29-bit 250k" };
 async function initELM(){
   setConn("wait","Budim adapter…");
@@ -1140,6 +1141,7 @@ function setKw(k){ car.kw=k; document.querySelectorAll("#sheetBody .seg button")
 function showKwInfo(){ const v=VARIANTS[car.kw], b=$("#kwInfo"); if(!b) return; b.innerHTML=v?`<div class="card hi small"><b>${v.name} · ${v.code}</b><div class="muted" style="margin-top:4px">${v.turbo}; ubrizgavanje ${v.rail}; ${v.torque}; računar ${v.ecu}; menjač JR5 (5 brzina).</div></div>`:`<div class="notice">U 2004. postoje dve verzije: 60 kW (dCi 80) i 74 kW (dCi 100).</div>`; }
 function saveCar(){ car.godina=$("#c-god").value||"2004"; car.vin=($("#c-vin").value||"").toUpperCase().trim(); const v=VARIANTS[car.kw]; car.ecu=v?v.ecu:"Delphi DDCR (najverovatnije)"; saveJSON("dd_car",car); closeSheet(); updateHeader(); toast("Sačuvano."); }
 function confirmWipe(){ const b=document.activeElement; if(b&&b.dataset.armed){ ["dd_car","dd_hist","dd_scan","dd_base","dd_maint","dd_lastdiag"].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} }); return true; } if(b){ b.dataset.armed="1"; b.textContent="Dodirni ponovo za potvrdu"; } return false; }
+async function copyUrl(){ try{ await navigator.clipboard.writeText(PUBLIC_URL); toast("Kopirano."); }catch(e){ toast("Označi adresu i kopiraj ručno."); } }
 function saveKey(){ try{ localStorage.setItem("dd_key",$("#set-key").value.trim()); }catch(e){} AI.init().then(()=>toast(AI.mode?"AI uključen.":"Ključ obrisan.")); closeSheet(); }
 
 
@@ -1268,7 +1270,7 @@ function openSettings(){ const inClaude=AI.mode==="claude"; const baud=loadJSON(
   <div class="card"><h3>AI</h3><div class="small muted" style="margin-top:6px">${inClaude?"Radi preko Claude naloga — ništa ne treba.":"Van Claude aplikacije: unesi Anthropic API ključ (ostaje samo na ovom uređaju)."}</div>
   ${inClaude?"":`<input type="password" id="set-key" value="${esc(getKey())}" placeholder="sk-ant-…" autocomplete="off" style="margin-top:12px"><button class="btn sm" style="margin-top:10px" onclick="saveKey()">Sačuvaj ključ</button>`}</div>
   <div class="card"><h3>USB brzina</h3><div class="small muted" style="margin:6px 0 10px">ELM327: 38400. vLinker / OBDLink: probaj 115200.</div><div class="seg"><button class="${baud==38400?"on":""}" onclick="saveJSON('dd_baud',38400);openSettings()">38400</button><button class="${baud==115200?"on":""}" onclick="saveJSON('dd_baud',115200);openSettings()">115200</button></div></div>
-  <div class="card"><h3>Povezivanje sa autom</h3><div class="small muted" style="margin-top:6px">Unutar Claude aplikacije Bluetooth, USB i mikrofon nisu dozvoljeni. Za rad na autu otvori aplikaciju kao stranicu u <b style="color:var(--fg)">Chrome-u na Android telefonu</b> ili računaru.</div></div>
+  <div class="card"><h3>Aplikacija za telefon</h3><div class="small muted" style="margin-top:6px">Za rad na autu (Bluetooth, USB, mikrofon) otvori u <b style="color:var(--fg)">Chrome-u na Android telefonu</b>, pa u meniju ⋮ izaberi <b style="color:var(--fg)">„Instaliraj aplikaciju“</b>:</div><div class="codebox" style="margin-top:10px;user-select:all">${PUBLIC_URL}</div><button class="btn ghost sm" style="margin-top:10px" onclick="copyUrl()">Kopiraj adresu</button></div>
   <div class="card"><h3>Podaci</h3><button class="btn ghost sm" style="margin-top:10px" onclick="if(confirmWipe())location.reload()">Obriši sve podatke</button></div></div>`); }
 
 /* ===================================================================== INIT */

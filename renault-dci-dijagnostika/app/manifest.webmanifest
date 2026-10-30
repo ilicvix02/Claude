@@ -1,0 +1,16 @@
+{
+  "name": "Dizel Doktor — Renault Mégane 1.5 dCi",
+  "short_name": "Dizel Doktor",
+  "description": "Dijagnostika za Renault Mégane II 1.5 dCi preko OBD adaptera, na srpskom, sa glasom.",
+  "lang": "sr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
