@@ -1580,15 +1580,6 @@
    "type": "news"
   },
   {
-   "id": "tolo-news",
-   "name": "Tolo News",
-   "url": "https://tolonews.com/rss.xml",
-   "homepage": "https://tolonews.com/",
-   "lang": "en",
-   "country": "af",
-   "type": "news"
-  },
-  {
    "id": "kabul-now",
    "name": "Kabul Now",
    "url": "https://kabulnow.com/feed/",
@@ -2705,15 +2696,6 @@
    "type": "news"
   },
   {
-   "id": "24sata-hr",
-   "name": "24sata.hr",
-   "url": "https://www.24sata.hr/feeds/aktualno.xml",
-   "homepage": "https://www.24sata.hr/",
-   "lang": "hr",
-   "country": "hr",
-   "type": "news"
-  },
-  {
    "id": "rtv-slovenija",
    "name": "RTV Slovenija",
    "url": "https://img.rtvslo.si/feeds/00.xml",
@@ -2957,15 +2939,6 @@
    "type": "news"
   },
   {
-   "id": "global-times",
-   "name": "Global Times",
-   "url": "https://www.globaltimes.cn/rss/outbrain.xml",
-   "homepage": "https://www.globaltimes.cn/",
-   "lang": "en",
-   "country": "cn",
-   "type": "news"
-  },
-  {
    "id": "cgtn-world",
    "name": "CGTN World",
    "url": "https://www.cgtn.com/subscribe/rss/section/world.xml",
@@ -3168,15 +3141,6 @@
    "name": "Tempo",
    "url": "https://rss.tempo.co/nasional",
    "homepage": "https://rss.tempo.co/",
-   "lang": "id",
-   "country": "id",
-   "type": "news"
-  },
-  {
-   "id": "detik",
-   "name": "Detik",
-   "url": "https://news.detik.com/rss",
-   "homepage": "https://news.detik.com/",
    "lang": "id",
    "country": "id",
    "type": "news"
@@ -3944,24 +3908,6 @@
    "homepage": "https://www.esteri.it/",
    "lang": "it",
    "country": "it",
-   "type": "official"
-  },
-  {
-   "id": "belgian-foreign-affairs",
-   "name": "Belgian Foreign Affairs",
-   "url": "https://diplomatie.belgium.be/en/rss.xml",
-   "homepage": "https://diplomatie.belgium.be/",
-   "lang": "en",
-   "country": "be",
-   "type": "official"
-  },
-  {
-   "id": "riksbank",
-   "name": "Riksbank",
-   "url": "https://www.riksbank.se/en-gb/rss/press-releases/",
-   "homepage": "https://www.riksbank.se/",
-   "lang": "en",
-   "country": "se",
    "type": "official"
   },
   {
@@ -7871,15 +7817,6 @@
    "type": "news"
   },
   {
-   "id": "global-voices-ar",
-   "name": "Global Voices (ar)",
-   "url": "https://ar.globalvoices.org/feed/",
-   "homepage": "https://ar.globalvoices.org/",
-   "lang": "ar",
-   "country": "int",
-   "type": "news"
-  },
-  {
    "id": "global-voices-sr",
    "name": "Global Voices (sr)",
    "url": "https://sr.globalvoices.org/feed/",
@@ -8726,15 +8663,6 @@
    "type": "news"
   },
   {
-   "id": "republika-online-rss-feed",
-   "name": "Republika Online RSS Feed",
-   "url": "https://www.republika.co.id/rss/",
-   "homepage": "https://www.republika.co.id/",
-   "lang": "id",
-   "country": "id",
-   "type": "news"
-  },
-  {
    "id": "thejournal-ie",
    "name": "TheJournal.ie",
    "url": "https://www.thejournal.ie/feed/",
@@ -9086,15 +9014,6 @@
    "type": "news"
   },
   {
-   "id": "who-news",
-   "name": "WHO News",
-   "url": "https://www.who.int/rss-feeds/news-english.xml",
-   "homepage": "https://www.who.int/",
-   "lang": "en",
-   "country": "int",
-   "type": "official"
-  },
-  {
    "id": "abc-news",
    "name": "ABC News",
    "url": "https://www.abc.net.au/news/feed/1948/rss.xml",
@@ -9182,24 +9101,6 @@
    "homepage": "http://rss.home.uol.com.br/",
    "lang": "pt",
    "country": "br",
-   "type": "news"
-  },
-  {
-   "id": "financial-post",
-   "name": "Financial Post",
-   "url": "https://business.financialpost.com/feed/",
-   "homepage": "https://business.financialpost.com/",
-   "lang": "en",
-   "country": "ca",
-   "type": "news"
-  },
-  {
-   "id": "national-post",
-   "name": "National Post",
-   "url": "https://nationalpost.com/feed/",
-   "homepage": "https://nationalpost.com/",
-   "lang": "en",
-   "country": "ca",
    "type": "news"
   },
   {
@@ -9716,15 +9617,6 @@
    "type": "news"
   },
   {
-   "id": "suspilne",
-   "name": "Suspilne",
-   "url": "https://suspilne.media/rss/all.rss",
-   "homepage": "https://suspilne.media/",
-   "lang": "uk",
-   "country": "ua",
-   "type": "news"
-  },
-  {
    "id": "haiti-libre",
    "name": "Haiti Libre",
    "url": "https://www.haitilibre.com/rss-flash-en.xml",
@@ -9785,6 +9677,132 @@
    "homepage": "https://newsnblogs.com/",
    "lang": "en",
    "country": "pk",
+   "type": "news"
+  },
+  {
+   "id": "the-reporter-ethiopia",
+   "name": "The Reporter Ethiopia",
+   "url": "https://www.thereporterethiopia.com/feed/",
+   "homepage": "https://www.thereporterethiopia.com/",
+   "lang": "en",
+   "country": "et",
+   "type": "news"
+  },
+  {
+   "id": "err-news",
+   "name": "ERR News",
+   "url": "https://news.err.ee/rss",
+   "homepage": "https://news.err.ee/",
+   "lang": "en",
+   "country": "ee",
+   "type": "news"
+  },
+  {
+   "id": "moldova-org",
+   "name": "Moldova.org",
+   "url": "https://www.moldova.org/feed/",
+   "homepage": "https://www.moldova.org/",
+   "lang": "ro",
+   "country": "md",
+   "type": "news"
+  },
+  {
+   "id": "kun-uz",
+   "name": "Kun.uz",
+   "url": "https://kun.uz/en/news/rss",
+   "homepage": "https://kun.uz/",
+   "lang": "en",
+   "country": "uz",
+   "type": "news"
+  },
+  {
+   "id": "msf",
+   "name": "MSF",
+   "url": "https://www.msf.org/rss/all",
+   "homepage": "https://www.msf.org/",
+   "lang": "en",
+   "country": "int",
+   "type": "official"
+  },
+  {
+   "id": "bank-of-canada",
+   "name": "Bank of Canada",
+   "url": "https://www.bankofcanada.ca/content_type/press-releases/feed/",
+   "homepage": "https://www.bankofcanada.ca/",
+   "lang": "en",
+   "country": "ca",
+   "type": "official"
+  },
+  {
+   "id": "swiss-national-bank",
+   "name": "Swiss National Bank",
+   "url": "https://www.snb.ch/public/en/rss/pressrel",
+   "homepage": "https://www.snb.ch/",
+   "lang": "en",
+   "country": "ch",
+   "type": "official"
+  },
+  {
+   "id": "global-voices-ro",
+   "name": "Global Voices (ro)",
+   "url": "https://ro.globalvoices.org/feed/",
+   "homepage": "https://ro.globalvoices.org/",
+   "lang": "ro",
+   "country": "int",
+   "type": "news"
+  },
+  {
+   "id": "gov-uk-wales-office",
+   "name": "GOV.UK – Wales Office",
+   "url": "https://www.gov.uk/government/organisations/wales-office.atom",
+   "homepage": "https://www.gov.uk/",
+   "lang": "en",
+   "country": "gb",
+   "type": "official"
+  },
+  {
+   "id": "gov-uk-met-office",
+   "name": "GOV.UK – Met Office",
+   "url": "https://www.gov.uk/government/organisations/met-office.atom",
+   "homepage": "https://www.gov.uk/",
+   "lang": "en",
+   "country": "gb",
+   "type": "official"
+  },
+  {
+   "id": "opindia",
+   "name": "OpIndia",
+   "url": "https://feeds.feedburner.com/opindia",
+   "homepage": "https://feeds.feedburner.com/",
+   "lang": "en",
+   "country": "in",
+   "type": "news"
+  },
+  {
+   "id": "yjc",
+   "name": "خبرگزاری باشگاه خبرنگاران | آخرین اخبار ایران و جهان | YJC",
+   "url": "https://www.yjc.ir/fa/rss/allnews",
+   "homepage": "https://www.yjc.ir/",
+   "lang": "en",
+   "country": "ir",
+   "type": "news"
+  },
+  {
+   "id": "tribune-online",
+   "name": "Tribune Online",
+   "url": "http://tribuneonlineng.com/feed/",
+   "homepage": "http://tribuneonlineng.com/",
+   "lang": "en",
+   "country": "ng",
+   "type": "news"
+  },
+  {
+   "id": "abante-tonite",
+   "name": "Abante Tonite",
+   "url": "https://tonite.abante.com.ph/feed/",
+   "homepage": "https://tonite.abante.com.ph/",
+   "lang": "en",
+   "country": "ph",
    "type": "news"
   }
  ]
